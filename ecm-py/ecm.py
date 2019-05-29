@@ -432,7 +432,8 @@ def run_exe(exe, args, inp = '', in_file = None, out_file = None,
 #   priority_idle = 0x00000040
     al['creationflags'] = al.get('creationflags', 0) | 0x00000040
   else:
-    al['preexec_fn'] = NICE_PATH
+    if NICE_PATH:
+      al['preexec_fn'] = NICE_PATH
 
   if in_file and os.path.exists(in_file):
     al['stdin'] = open(in_file, 'r')
@@ -796,7 +797,11 @@ def num_digits_old(n):
 def num_digits(n):
   cmd = [ECM_PATH + ECM + EXE_SUFFIX, '10']
   p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-  out, err = p.communicate(n)
+  if sys.version_info[0] == 3:
+    out, res = p.communicate(n.encode())
+    out = out.decode()
+  else:
+    out, err = p.communicate(n)
   # print('out = ' + out)
   # print('err = ' + err)
   for line in out.split('\n'):
@@ -1058,7 +1063,7 @@ def print_work_done():
       my_msg = my_msg + 'Report Time: ' + time.strftime('%Y/%m/%d %H:%M:%S UTC', time.gmtime()) + '\n\n'
       my_msg = my_msg + '{0:s}\n'.format(version_info)
       my_msg = my_msg + '{0:s}\n'.format(using_line)
-      my_msg = my_msg + 'Input number is {0:s} ({1:d} digits)\n'.format(ecm_n, num_digits(ecm_n))
+      my_msg = my_msg + 'Input number is {0} ({1} digits)\n'.format(ecm_n, num_digits(ecm_n))
       my_msg = my_msg + '____________________________________________________________________________\n'
       my_msg = my_msg + ' Curves Complete |   Average seconds/curve   |    Runtime    |      ETA\n'
       my_msg = my_msg + '-----------------|---------------------------|---------------|--------------\n'
