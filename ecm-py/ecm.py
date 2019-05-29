@@ -2580,9 +2580,8 @@ for ecm_n in number_list:
       new_curves = 0
   else:
 # ################################################
-    ud = factor_data.split(',')
-    print(factor_found, factor_data, ud)
-    b1b2_info = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, ('' if (actual_num_threads == 1) else 's'))
+    #ud = factor_data.split(',')
+    #b1b2_info = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, ('' if (actual_num_threads == 1) else 's'))
     zd = '{0:.0f}'.format(math.floor(t_total/86400.0)).rjust(3) + 'd '
     zh = '{0:.0f}'.format(math.floor((t_total%86400)/3600.0)).zfill(2) + 'h '
     zm = '{0:.0f}'.format(math.floor((t_total%3600)/60.0)).zfill(2) + 'm '
@@ -2593,7 +2592,7 @@ for ecm_n in number_list:
     line2 = 'Report Time: ' + time.strftime('%Y/%m/%d %H:%M:%S UTC', time.gmtime())
     line3 = '{0:s}'.format(version_info)
     line4 = 'Input number is {0:s} ({1:d} digits)'.format(ecm_n, num_digits(ecm_n))
-    line5 = b1b2_info
+    line5 = using_line #b1b2_info
     line6 = 'Finished {0:d} of {1:d} curves'.format(ecm_c_completed, ecm_c+prev_ecm_c_completed)
     line7 = 'Average time per curve, Stage 1: {0:.3f}s, Stage 2: {1:.3f}s'.format(tt_stg1/ecm_s1_completed, tt_stg2/ecm_c_completed)
     line8 = 'Total runtime = ' + rt
