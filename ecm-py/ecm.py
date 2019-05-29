@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 # ecm.py - A Python driver for GMP-ECM
 #
 # Copyright (c) 2011-2016 David Cleaver
+# Copyright (c) 2019 Seth Troisi
 #
 # All rights reserved.
 #
@@ -43,11 +46,9 @@
 # the original Perl script.
 
 
-from __future__ import print_function
-
-import os, random, re, functools, string, socket, signal, smtplib
-import time, subprocess, gzip, glob, math, tempfile, datetime, sys
-import atexit, threading, collections, multiprocessing, platform
+import os, random, re, socket, signal, smtplib
+import time, subprocess, gzip, glob, math, datetime, sys
+import atexit
 
 try:
     from Queue import Queue, Empty
