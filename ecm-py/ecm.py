@@ -943,7 +943,7 @@ def get_runtime(t_total):
   return rt
 
 def get_eta(c_complete, c_total, t_stg1, t_stg2, t_total):
-  global time_info, e_total, ECM_THREADS
+  global time_info, e_total, intNumThreads
   eta = ''
 
   c_avg_time = t_stg1 + t_stg2
@@ -954,7 +954,7 @@ def get_eta(c_complete, c_total, t_stg1, t_stg2, t_total):
   # total job runtime (for a single continuous run) should be close to (c_total * c_avg_time) ~= t_full
   # total runtime left should be close to (c_total-c_complete)*c_avg_time
   if t_total%60 < 1.0 or e_total < 0:
-    e_total = ((c_total-c_complete)*c_avg_time)/ECM_THREADS + t_total
+    e_total = ((c_total-c_complete)*c_avg_time)/intNumThreads + t_total
 
   e_left = e_total - t_total
   if e_left <= 0: e_left = 0.0;
