@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-
 # ecm.py - A Python driver for GMP-ECM
 #
 # Copyright (c) 2011-2016 David Cleaver
-# Copyright (c) 2019 Seth Troisi
 #
 # All rights reserved.
 #
@@ -46,9 +43,11 @@
 # the original Perl script.
 
 
-import os, random, re, socket, signal, smtplib
-import time, subprocess, gzip, glob, math, datetime, sys
-import atexit
+from __future__ import print_function
+
+import os, random, re, functools, string, socket, signal, smtplib
+import time, subprocess, gzip, glob, math, tempfile, datetime, sys
+import atexit, threading, collections, multiprocessing, platform
 
 try:
     from Queue import Queue, Empty
@@ -433,8 +432,7 @@ def run_exe(exe, args, inp = '', in_file = None, out_file = None,
 #   priority_idle = 0x00000040
     al['creationflags'] = al.get('creationflags', 0) | 0x00000040
   else:
-    if NICE_PATH:
-      al['preexec_fn'] = NICE_PATH
+    al['preexec_fn'] = NICE_PATH
 
   if in_file and os.path.exists(in_file):
     al['stdin'] = open(in_file, 'r')
@@ -798,11 +796,7 @@ def num_digits_old(n):
 def num_digits(n):
   cmd = [ECM_PATH + ECM + EXE_SUFFIX, '10']
   p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-  if sys.version_info[0] == 3:
-    out, res = p.communicate(n.encode())
-    out = out.decode()
-  else:
-    out, err = p.communicate(n)
+  out, err = p.communicate(n)
   # print('out = ' + out)
   # print('err = ' + err)
   for line in out.split('\n'):
@@ -853,7 +847,7 @@ def read_resume_file(res_file):
           if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
             prev_tt_stg2 += this_time
           prev_ecm_c_completed += 1
-        elif line.startswith('Using') and not "for NTT" in line:
+        elif line.startswith('Using'):
           factor_data = line # if a factor was found, this will contain its B1, B2, and sigma...
         elif line.find('Factor found') >= 0:
           factor_found = True
@@ -949,7 +943,7 @@ def get_runtime(t_total):
   return rt
 
 def get_eta(c_complete, c_total, t_stg1, t_stg2, t_total):
-  global time_info, e_total, intNumThreads
+  global time_info, e_total, ECM_THREADS
   eta = ''
 
   c_avg_time = t_stg1 + t_stg2
@@ -960,7 +954,7 @@ def get_eta(c_complete, c_total, t_stg1, t_stg2, t_total):
   # total job runtime (for a single continuous run) should be close to (c_total * c_avg_time) ~= t_full
   # total runtime left should be close to (c_total-c_complete)*c_avg_time
   if t_total%60 < 1.0 or e_total < 0:
-    e_total = ((c_total-c_complete)*c_avg_time)/intNumThreads + t_total
+    e_total = ((c_total-c_complete)*c_avg_time)/ECM_THREADS + t_total
 
   e_left = e_total - t_total
   if e_left <= 0: e_left = 0.0;
@@ -1064,7 +1058,7 @@ def print_work_done():
       my_msg = my_msg + 'Report Time: ' + time.strftime('%Y/%m/%d %H:%M:%S UTC', time.gmtime()) + '\n\n'
       my_msg = my_msg + '{0:s}\n'.format(version_info)
       my_msg = my_msg + '{0:s}\n'.format(using_line)
-      my_msg = my_msg + 'Input number is {0} ({1} digits)\n'.format(ecm_n, num_digits(ecm_n))
+      my_msg = my_msg + 'Input number is {0:s} ({1:d} digits)\n'.format(ecm_n, num_digits(ecm_n))
       my_msg = my_msg + '____________________________________________________________________________\n'
       my_msg = my_msg + ' Curves Complete |   Average seconds/curve   |    Runtime    |      ETA\n'
       my_msg = my_msg + '-----------------|---------------------------|---------------|--------------\n'
@@ -2581,8 +2575,7 @@ for ecm_n in number_list:
   else:
 # ################################################
     ud = factor_data.split(',')
-    print(factor_found, factor_data, ud)
-    b1b2_info = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, ('' if (actual_num_threads == 1) else 's'))
+    b1b2_info = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, '' if (actual_num_threads == 1) else 's')
     zd = '{0:.0f}'.format(math.floor(t_total/86400.0)).rjust(3) + 'd '
     zh = '{0:.0f}'.format(math.floor((t_total%86400)/3600.0)).zfill(2) + 'h '
     zm = '{0:.0f}'.format(math.floor((t_total%3600)/60.0)).zfill(2) + 'm '
