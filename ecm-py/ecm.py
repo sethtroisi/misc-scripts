@@ -192,7 +192,7 @@ ecm_s1_completed = 0
 prev_ecm_s1_completed = 0
 intResume = 0
 output_file = ''
-save_to_file = False 
+save_to_file = False
 number_list = []
 resume_file = ''
 job_start = time.time()
@@ -395,8 +395,8 @@ def proc_speed():
       from _winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
     else:
       from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
-    h = OpenKey(HKEY_LOCAL_MACHINE, 
-                'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0')      
+    h = OpenKey(HKEY_LOCAL_MACHINE,
+                'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0')
     mhz = float(QueryValueEx(h, '~MHz')[0])
   else:
     tmp = grep_f('cpu MHz\s+:\s+', '/proc/cpuinfo')
@@ -773,7 +773,7 @@ def is_valid_input(instr):
     return False
 
   for i in range(len(mystr)):
-    if mystr[i] not in ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','x', 
+    if mystr[i] not in ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','x',
                         ' ','+','-','*','/','^','%','!','#','.','(',')','{','}','[',']','"']:
       return False
   # If we get down here, all the characters must have been valid...
@@ -806,7 +806,7 @@ def num_digits(n):
       return int(line[j+1:k])
   # if we don't find the digits line, we'll just report -1...
   return -1
-      
+
 
 
 def read_resume_file(res_file):
@@ -1156,7 +1156,7 @@ def gather_work_done(job_file):
         #  return
 
   first_getsizes = False
-          
+
 
 def monitor_ecm_threads():
   global procs, ecm_job, factor_found, ecm_c_completed, tt_stg1, tt_stg2, poll_file_delay
@@ -1576,7 +1576,7 @@ def gather_resume_work_done():
       # when we're done with them, delete the temporary input and output files
       delete_file(threadList[i][3])
       delete_file(threadList[i][4])
-      
+
 
   return any_factor_found, any_factor_info
 
@@ -1660,7 +1660,7 @@ def run_ecm_resume_job(p95_b1):
   # 3) remove each finished line from our list of resume lines...
   # 4) delete any temporary files from previous resumed work that wasn't completed, ie "resume_job_<ecm_resume_file>_t00.txt" etc...
   # 5) print info on how many previous resume lines were finished (if any) and how many we have to work on...
-  # 6) 
+  # 6)
 
   # resume file must exist for us to do any work...
   if not os.path.exists(ecm_resume_file):
