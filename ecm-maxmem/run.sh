@@ -15,6 +15,10 @@ echo gcloud compute instances create \
     --scopes storage-rw
 
 echo
+echo "Cleanup:"
+echo "gsutil rm gs://cloudy-go/ecm-maxmem/*"
+
+echo
 echo "SSH:"
 echo
 echo "screen -S maxmem -t 0 -d -m"
@@ -25,11 +29,12 @@ for i in `seq 1 8`; do
     echo gcloud compute scp --zone "us-west1-b" client.sh prime_$i.txt "gmp-ecm-maxmem-test-"$i:~/
     echo "screen -S maxmem -X screen -t $i"
     echo "screen -S maxmem -p $i -X stuff $'gcloud compute ssh --zone "us-west1-b" "gmp-ecm-maxmem-test-"$i\\\r'"
+    echo "screen -S maxmem -p $i -X stuff $'time ./client.sh\\\r'"
 done
 
 echo
 echo "Stats:"
 echo
 echo "mkdir -p results"
-echo "gsutil -m cp gs://cloudy-go/ecm-maxmem/* results/"
-echo 'grep "Step . took\|Peak memory" $(find results/ | sort -n -t_ -k1,5)'
+echo "gsutil -m rsync -d gs://cloudy-go/ecm-maxmem/ results/"
+echo 'grep --color=always "Using B1=\|Step . took\|Peak memory" $(find results/*.log | sort -t_ -n -k2.2,2.4 -k3 -k5) | awk -F: '\''{$1 = sprintf("%-65s", $1); print}'\'
