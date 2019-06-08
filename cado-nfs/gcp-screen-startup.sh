@@ -1,7 +1,7 @@
 #!/bin/bash
 
-processes="$1"
-server="$2"
+processes="$(($(cat /proc/cpuinfo  | grep proces | wc -l)/4 + 1))"
+server="$1"
 
 
 cd_dir="cd Math/cado-nfs"
