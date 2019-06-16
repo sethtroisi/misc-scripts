@@ -29,3 +29,8 @@ cat mersenneca_prime_numbers_0.sql | tqdm | sed \
 ```
 
 Sadly TF_limits = 1 for all primes with known factors.
+
+```bash
+cat results | grep '^M' | awk -M '{ m = substr($1,2,length($1)); bad = 0; for(k=1; k<100; k++) if ($5 % (2 * m * k + 1) == 0) { bad = 1; break; }; if (bad == 0) print $0 }'
+```
+

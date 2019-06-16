@@ -12,7 +12,7 @@ FACTOR_FILE="/home/eights/Downloads/GIMPS/gimps-klist20181219.txt"
 TF_DB_FILE="/home/eights/Downloads/GIMPS/mersenne_tf_limits.db"
 
 STATUS_FILE="many_factor_progress.txt"
-MANY_THRESHOLD = 5
+MANY_THRESHOLD = 6
 
 REPROCESS = False
 
@@ -29,7 +29,7 @@ def process():
                 count = len(cur_factors)
                 if count >= MANY_THRESHOLD:
                     cur_factors = sorted(map(int, cur_factors))
-                    many.append((cur_p, cur_factors))
+                    many.append((int(cur_p), cur_factors))
                     many_counts[count] += 1
                     if many_counts[count] <= 50:
                         counts = ", ".join("{}x{}".format(*p) for p in sorted(many_counts.items()))
