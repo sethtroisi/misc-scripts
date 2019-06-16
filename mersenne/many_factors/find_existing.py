@@ -2,12 +2,14 @@
 
 import gmpy2
 import re
+import sqlite3
 
 from collections import Counter
 from tqdm import tqdm
 
 
 FACTOR_FILE="/home/eights/Downloads/GIMPS/gimps-klist20181219.txt"
+TF_DB_FILE="/home/eights/Downloads/GIMPS/mersenne_tf_limits.db"
 
 STATUS_FILE="many_factor_progress.txt"
 MANY_THRESHOLD = 5
@@ -56,6 +58,24 @@ def load():
             many.append((m, factors))
     return many
 
+def load_tf_db(many):
+    with sqlite3.connect(TF_DB_FILE) as conn:
+        conn.row_factory = sqlite3.Row
+
+        cur = conn.cursor()
+
+        # Create a temp table so we can join on it to retrieve all exponents.
+        cur.execute("CREATE TEMP TABLE lookup_exp (e integer)")
+
+        exponents = [(e,) for e, factors in many]
+        cur.executemany('INSERT INTO temp.lookup_exp VALUES (?)', exponents)
+
+        cur.execute('SELECT exponent, tf from prime_numbers_0 '
+                    'INNER JOIN lookup_exp on exponent = e ')
+        rows = list(map(tuple, cur.fetchall()))
+        cur.close()
+    return rows
+
 
 def verify(many):
     print ("Checking existing factors")
@@ -83,10 +103,27 @@ def verify(many):
                 assert t == 1, (m, k, p, factors)
 
 
+def generate_worktodo(many):
+    exps = sorted([m for m, factors in many], reverse=True)
+    exps = [e for e in exps if e > 1e6]
+
+    with open("worktodo.txt", "w") as todo:
+        for bits in range(66, 75):
+            for e in exps:
+                todo.write(f"Factor=,{e},{bits},{bits+1}\n")
+
+
 if REPROCESS:
     many = process()
     save(many)
 else:
     many = load()
-    verify(many)
+
+#verify(many)
+generate_worktodo(many)
+
+#tf_data = load_tf_db(many)
+#for m, tf in tf_data:
+#    if tf > 1:
+#        print (m)
 
