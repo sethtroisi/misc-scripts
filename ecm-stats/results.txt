@@ -1,0 +1,308 @@
+B1: 11e4
+  Numbers: 100
+      8 dF=1024, k=4, d=9240, d2=13, i0=-1
+      8 Using B1=110000, B2=40877772, polynomial x^2, sigma=<S>
+     92 dF=1440, k=2, d=13860, d2=13, i0=-5
+     92 Using B1=110000, B2=42993732, polynomial x^2, sigma=<S>
+
+B1: 50e4
+  Numbers: 100
+     12 dF=4096, k=2, d=39270, d2=13, i0=0
+     12 Using B1=500000, B2=348010752, polynomial Dickson(3), sigma=<S>
+     88 dF=4320, k=2, d=43890, d2=13, i0=-1
+     88 Using B1=500000, B2=410195952, polynomial Dickson(3), sigma=<S>
+
+B1: 250e4
+  Numbers: 100
+     11 dF=8192, k=5, d=79170, d2=11, i0=21
+     11 Using B1=2500000, B2=3567875230, polynomial Dickson(6), sigma=<S>
+     89 dF=13440, k=2, d=133980, d2=13, i0=6
+     89 Using B1=2500000, B2=3900559752, polynomial Dickson(6), sigma=<S>
+
+B1: 1e6
+  Numbers: 100
+     11 dF=4096, k=6, d=39270, d2=13, i0=13
+     11 Using B1=1000000, B2=1045563762, polynomial Dickson(6), sigma=<S>
+     89 dF=6720, k=2, d=66990, d2=13, i0=2
+     89 Using B1=1000000, B2=974637522, polynomial Dickson(3), sigma=<S>
+
+B1: 3e6
+  Numbers: 100
+      7 dF=16384, k=2, d=158340, d2=11, i0=8
+      7 Using B1=3000000, B2=5706890290, polynomial Dickson(6), sigma=<S>
+     89 dF=14400, k=2, d=150150, d2=17, i0=3
+     89 Using B1=3000000, B2=4592487916, polynomial Dickson(6), sigma=<S>
+
+B1: 11e6
+  Numbers: 100
+      2 dF=32768, k=3, d=324870, d2=11, i0=23
+      2 Using B1=11000000, B2=35133391030, polynomial Dickson(12), sigma=<S>
+     88 dF=36864, k=2, d=371280, d2=11, i0=19
+     88 Using B1=11000000, B2=30114149530, polynomial Dickson(12), sigma=<S>
+
+B1: 43e6
+  Numbers: 100
+      2 dF=65536, k=5, d=690690, d2=17, i0=46
+      2 Using B1=43000000, B2=240490660426, polynomial Dickson(12), sigma=<S>
+     90 dF=92160, k=2, d=1021020, d2=19, i0=24
+     90 Using B1=43000000, B2=198654756318, polynomial Dickson(12), sigma=<S>
+
+B1: 110e6
+  Numbers: 100
+      3 dF=131072, k=4, d=1345890, d2=11, i0=71
+      3 Using B1=110000000, B2=776278396540, polynomial Dickson(30), sigma=<S>
+     88 dF=199680, k=2, d=2081310, d2=13, i0=40
+     88 Using B1=110000000, B2=900514153782, polynomial Dickson(30), sigma=<S>
+
+B1: 260e6
+  Numbers: 100
+      3 dF=262144, k=4, d=2852850, d2=17, i0=75
+      3 Using B1=260000000, B2=3178559884516, polynomial Dickson(30), sigma=<S>
+     88 dF=362880, k=2, d=3993990, d2=17, i0=49
+     88 Using B1=260000000, B2=3079973376496, polynomial Dickson(30), sigma=<S>
+
+B1: 850e6
+  Numbers: 100
+      2 dF=524288, k=5, d=5705700, d2=17, i0=132
+      2 Using B1=850000000, B2=15892628251516, polynomial Dickson(30), sigma=<S>
+     91 dF=823680, k=2, d=8978970, d2=17, i0=78
+     91 Using B1=850000000, B2=15716618487586, polynomial Dickson(30), sigma=<S>
+
+B1: 2900e6
+  Numbers: 100
+      2 dF=2097152, k=2, d=23130030, d2=13, i0=113
+      2 Using B1=2900000000, B2=105101237217912, polynomial Dickson(30), sigma=<S>
+     92 dF=1900800, k=2, d=21411390, d2=17, i0=119
+     92 Using B1=2900000000, B2=86487091861186, polynomial Dickson(30), sigma=<S>
+
+B1: 7600e6
+  Numbers: 100
+      3 dF=4194304, k=2, d=48498450, d2=23, i0=134
+      3 Using B1=7600000000, B2=425332376469022, polynomial Dickson(30), sigma=<S>
+     89 dF=3870720, k=2, d=44414370, d2=19, i0=153
+     89 Using B1=7600000000, B2=362938864267998, polynomial Dickson(30), sigma=<S>
+
+B1: 25e9
+  Numbers: 100
+      2 dF=8388608, k=3, d=96996900, d2=23, i0=235
+      2 Using B1=25000000000, B2=2551982328195322, polynomial Dickson(30), sigma=<S>
+     92 dF=9504000, k=2, d=107056950, d2=17, i0=217
+     92 Using B1=25000000000, B2=2162143573590016, polynomial Dickson(30), sigma=<S>
+
+B1: 21905
+  Numbers: 100
+      9 dF=512, k=2, d=4620, d2=13, i0=-8
+      9 Using B1=21905, B2=5026572, polynomial x^1, sigma=<S>
+     91 dF=480, k=2, d=4620, d2=13, i0=-8
+     91 Using B1=21905, B2=4707792, polynomial x^1, sigma=<S>
+
+B1: 24433
+  Numbers: 100
+     12 dF=512, k=2, d=4620, d2=13, i0=-7
+     12 Using B1=24433, B2=5031192, polynomial x^1, sigma=<S>
+     88 dF=480, k=2, d=4620, d2=13, i0=-7
+     88 Using B1=24433, B2=4712412, polynomial x^1, sigma=<S>
+
+B1: 32918
+  Numbers: 100
+     12 dF=512, k=3, d=4620, d2=13, i0=-5
+     12 Using B1=32918, B2=7604532, polynomial x^1, sigma=<S>
+     88 dF=672, k=2, d=6090, d2=11, i0=-5
+     88 Using B1=32918, B2=8903590, polynomial x^1, sigma=<S>
+
+B1: 64703
+  Numbers: 100
+     12 dF=1024, k=2, d=9240, d2=13, i0=-5
+     12 Using B1=64703, B2=20337252, polynomial x^2, sigma=<S>
+     88 dF=960, k=2, d=9240, d2=13, i0=-5
+     88 Using B1=64703, B2=19052892, polynomial x^2, sigma=<S>
+
+B1: 76620
+  Numbers: 100
+     13 dF=1024, k=3, d=9240, d2=13, i0=-4
+     13 Using B1=76620, B2=30593652, polynomial x^2, sigma=<S>
+     87 dF=1152, k=2, d=10920, d2=11, i0=-3
+     87 Using B1=76620, B2=27529330, polynomial x^2, sigma=<S>
+
+B1: 155247
+  Numbers: 100
+     12 dF=2048, k=2, d=19110, d2=11, i0=-2
+     12 Using B1=155247, B2=85861240, polynomial x^2, sigma=<S>
+     88 dF=1920, k=2, d=18480, d2=13, i0=-4
+     88 Using B1=155247, B2=76562652, polynomial x^2, sigma=<S>
+
+B1: 183849
+  Numbers: 100
+     10 dF=2048, k=2, d=19110, d2=11, i0=-1
+     10 Using B1=183849, B2=85880350, polynomial x^2, sigma=<S>
+     90 dF=2160, k=2, d=20790, d2=13, i0=-4
+     90 Using B1=183849, B2=96943782, polynomial x^2, sigma=<S>
+
+B1: 245335
+  Numbers: 100
+     12 dF=2048, k=3, d=19110, d2=11, i0=2
+     12 Using B1=245335, B2=128973400, polynomial Dickson(3), sigma=<S>
+     88 dF=2880, k=2, d=30030, d2=17, i0=-8
+     88 Using B1=245335, B2=183032866, polynomial Dickson(3), sigma=<S>
+
+B1: 445657
+  Numbers: 100
+     11 dF=4096, k=2, d=39270, d2=13, i0=-1
+     11 Using B1=445657, B2=347971482, polynomial Dickson(3), sigma=<S>
+     89 dF=3840, k=2, d=39270, d2=13, i0=-1
+     89 Using B1=445657, B2=326176632, polynomial Dickson(3), sigma=<S>
+
+B1: 643986
+  Numbers: 100
+      5 dF=4096, k=3, d=39270, d2=13, i0=4
+      5 Using B1=643986, B2=522408822, polynomial Dickson(3), sigma=<S>
+     95 dF=5040, k=2, d=48510, d2=13, i0=1
+     95 Using B1=643986, B2=529147092, polynomial Dickson(3), sigma=<S>
+
+B1: 1305195
+  Numbers: 100
+     10 dF=8192, k=2, d=79170, d2=11, i0=6
+     10 Using B1=1305195, B2=1426405900, polynomial Dickson(6), sigma=<S>
+     90 dF=8640, k=2, d=90090, d2=17, i0=-2
+     90 Using B1=1305195, B2=1652340706, polynomial Dickson(6), sigma=<S>
+
+B1: 3071166
+  Numbers: 100
+      2 dF=16384, k=2, d=158340, d2=11, i0=9
+      2 Using B1=3071166, B2=5707048630, polynomial Dickson(6), sigma=<S>
+     90 dF=14400, k=2, d=150150, d2=17, i0=4
+     90 Using B1=3071166, B2=4592638066, polynomial Dickson(6), sigma=<S>
+
+B1: 3784867
+  Numbers: 100
+      1 dF=16384, k=3, d=158340, d2=11, i0=13
+      1 Using B1=3784867, B2=8561285470, polynomial Dickson(6), sigma=<S>
+     91 dF=17280, k=2, d=180180, d2=17, i0=5
+     91 Using B1=3784867, B2=6614047456, polynomial Dickson(6), sigma=<S>
+
+B1: 4572523
+  Numbers: 100
+      3 dF=16384, k=3, d=158340, d2=11, i0=18
+      3 Using B1=4572523, B2=8562077170, polynomial Dickson(6), sigma=<S>
+     89 dF=20160, k=2, d=210210, d2=17, i0=5
+     89 Using B1=4572523, B2=9002873896, polynomial Dickson(6), sigma=<S>
+
+B1: 7982718
+  Numbers: 100
+      3 dF=32768, k=2, d=324870, d2=11, i0=14
+      3 Using B1=7982718, B2=23420528050, polynomial Dickson(12), sigma=<S>
+     88 dF=28800, k=2, d=300300, d2=17, i0=10
+     88 Using B1=7982718, B2=18376257916, polynomial Dickson(12), sigma=<S>
+
+B1: 9267681
+  Numbers: 100
+      3 dF=32768, k=2, d=324870, d2=11, i0=18
+      3 Using B1=9267681, B2=23422152400, polynomial Dickson(12), sigma=<S>
+     91 dF=33600, k=2, d=334950, d2=13, i0=15
+     91 Using B1=9267681, B2=24385029912, polynomial Dickson(12), sigma=<S>
+
+B1: 22025673
+  Numbers: 100
+      3 dF=65536, k=2, d=690690, d2=17, i0=15
+      3 Using B1=22025673, B2=96186870796, polynomial Dickson(12), sigma=<S>
+     90 dF=60480, k=2, d=630630, d2=17, i0=18
+     90 Using B1=22025673, B2=81049198246, polynomial Dickson(12), sigma=<S>
+
+B1: 26345943
+  Numbers: 100
+      3 dF=65536, k=3, d=690690, d2=17, i0=22
+      3 Using B1=26345943, B2=144285831706, polynomial Dickson(12), sigma=<S>
+     89 dF=69120, k=2, d=746130, d2=13, i0=23
+     89 Using B1=26345943, B2=111747890112, polynomial Dickson(12), sigma=<S>
+
+B1: 35158748
+  Numbers: 100
+      3 dF=65536, k=4, d=690690, d2=17, i0=34
+      3 Using B1=35158748, B2=192388936756, polynomial Dickson(12), sigma=<S>
+     89 dF=80640, k=2, d=870870, d2=17, i0=24
+     89 Using B1=35158748, B2=149238379306, polynomial Dickson(12), sigma=<S>
+
+B1: 46919468
+  Numbers: 100
+      2 dF=65536, k=5, d=690690, d2=17, i0=51
+      2 Using B1=46919468, B2=240494804566, polynomial Dickson(12), sigma=<S>
+     89 dF=103680, k=2, d=1141140, d2=17, i0=25
+     89 Using B1=46919468, B2=251425093936, polynomial Dickson(12), sigma=<S>
+
+B1: 47862548
+  Numbers: 100
+      3 dF=65536, k=5, d=690690, d2=17, i0=53
+      3 Using B1=47862548, B2=240495495256, polynomial Dickson(12), sigma=<S>
+     88 dF=103680, k=2, d=1141140, d2=17, i0=25
+     88 Using B1=47862548, B2=251425093936, polynomial Dickson(12), sigma=<S>
+
+B1: 153319098
+  Numbers: 100
+      2 dF=262144, k=2, d=2852850, d2=17, i0=37
+      2 Using B1=153319098, B2=1589254266616, polynomial Dickson(30), sigma=<S>
+     89 dF=230400, k=2, d=2552550, d2=19, i0=42
+     89 Using B1=153319098, B2=1241619028668, polynomial Dickson(30), sigma=<S>
+
+B1: 188949210
+  Numbers: 100
+      1 dF=262144, k=3, d=2852850, d2=17, i0=50
+      1 Using B1=188949210, B2=2383889958466, polynomial Dickson(30), sigma=<S>
+     90 dF=299520, k=2, d=3183180, d2=17, i0=43
+     90 Using B1=188949210, B2=2026113169096, polynomial Dickson(30), sigma=<S>
+
+B1: 410593604
+  Numbers: 100
+      3 dF=524288, k=2, d=5705700, d2=17, i0=55
+      3 Using B1=410593604, B2=6357005655016, polynomial Dickson(30), sigma=<S>
+     89 dF=460800, k=2, d=5105100, d2=19, i0=62
+     89 Using B1=410593604, B2=4966460799318, polynomial Dickson(30), sigma=<S>
+
+B1: 496041799
+  Numbers: 100
+      2 dF=524288, k=3, d=5705700, d2=17, i0=70
+      2 Using B1=496041799, B2=9535485659716, polynomial Dickson(30), sigma=<S>
+     90 dF=591360, k=2, d=6322470, d2=13, i0=66
+     90 Using B1=496041799, B2=8101189452522, polynomial Dickson(30), sigma=<S>
+
+B1: 491130495
+  Numbers: 100
+      1 dF=524288, k=3, d=5705700, d2=17, i0=70
+      1 Using B1=491130495, B2=9535485659716, polynomial Dickson(30), sigma=<S>
+     92 dF=591360, k=2, d=6322470, d2=13, i0=65
+     92 Using B1=491130495, B2=8101189452522, polynomial Dickson(30), sigma=<S>
+
+B1: 1067244762
+  Numbers: 100
+      3 dF=1048576, k=2, d=11741730, d2=19, i0=72
+      3 Using B1=1067244762, B2=25992832085238, polynomial Dickson(30), sigma=<S>
+     89 dF=921600, k=2, d=10210200, d2=19, i0=86
+     89 Using B1=1067244762, B2=19865649203418, polynomial Dickson(30), sigma=<S>
+
+B1: 1056677983
+  Numbers: 100
+      3 dF=1048576, k=2, d=11741730, d2=19, i0=71
+      3 Using B1=1056677983, B2=25992820343508, polynomial Dickson(30), sigma=<S>
+     89 dF=921600, k=2, d=10210200, d2=19, i0=85
+     89 Using B1=1056677983, B2=19865638993218, polynomial Dickson(30), sigma=<S>
+
+B1: 1328416470
+  Numbers: 100
+      2 dF=1048576, k=3, d=11741730, d2=19, i0=95
+      2 Using B1=1328416470, B2=38989201160928, polynomial Dickson(30), sigma=<S>
+     92 dF=1140480, k=2, d=13123110, d2=17, i0=85
+     92 Using B1=1328416470, B2=31805025041806, polynomial Dickson(30), sigma=<S>
+
+B1: 1315263832
+  Numbers: 100
+      3 dF=1048576, k=3, d=11741730, d2=19, i0=94
+      3 Using B1=1315263832, B2=38989189419198, polynomial Dickson(30), sigma=<S>
+     88 dF=1140480, k=2, d=13123110, d2=17, i0=84
+     88 Using B1=1315263832, B2=31804998795586, polynomial Dickson(30), sigma=<S>
+
+B1: 2858117139
+  Numbers: 100
+      3 dF=2097152, k=2, d=23130030, d2=13, i0=111
+      3 Using B1=2858117139, B2=105101167827822, polynomial Dickson(30), sigma=<S>
+     87 dF=1900800, k=2, d=21411390, d2=17, i0=117
+     87 Using B1=2858117139, B2=86487027627016, polynomial Dickson(30), sigma=<S>
+
