@@ -4,12 +4,13 @@ import gmpy2
 import re
 import sqlite3
 
-from collections import Counter
+from collections import Counter, defaultdict
 from tqdm import tqdm
 
 
 FACTOR_FILE="/home/eights/Downloads/GIMPS/gimps-klist20181219.txt"
 TF_DB_FILE="/home/eights/Downloads/GIMPS/mersenne_tf_limits.db"
+RESULTS_FILE="/home/eights/Downloads/megaresults.txt"
 
 STATUS_FILE="many_factor_progress.txt"
 MANY_THRESHOLD = 6
@@ -17,7 +18,7 @@ MANY_THRESHOLD = 6
 REPROCESS = False
 
 def process():
-    many = []
+    many = {}
     many_counts = Counter()
 
     with open(FACTOR_FILE) as factor_f:
@@ -29,7 +30,7 @@ def process():
                 count = len(cur_factors)
                 if count >= MANY_THRESHOLD:
                     cur_factors = sorted(map(int, cur_factors))
-                    many.append((int(cur_p), cur_factors))
+                    many[int(cur_p)] = cur_factors
                     many_counts[count] += 1
                     if many_counts[count] <= 50:
                         counts = ", ".join("{}x{}".format(*p) for p in sorted(many_counts.items()))
@@ -43,19 +44,19 @@ def process():
 
 def save(many):
     with open(STATUS_FILE, "w") as status_f:
-        for m, factors in many:
+        for m, factors in sorted(many.items()):
             status_f.write("{}:{}\n".format(m, ",".join(map(str, factors))))
 
 
 def load():
-    many = []
+    many = {}
     with open(STATUS_FILE) as status_f:
         for line in status_f:
-            m, factors = line.split(":")
-            m = int(m)
+            M, factors = line.split(":")
+            M = int(M)
             factors = list(map(int, factors.split(",")))
-            factors = [2 * m * f + 1 for f in factors]
-            many.append((m, factors))
+            factors = [2 * M * f + 1 for f in factors]
+            many[M] = factors
     return many
 
 def load_tf_db(many):
@@ -90,6 +91,8 @@ def verify(many):
         if m <= 1e6:
             continue
 
+        assert len(factors) == len(set(factors)), (m, factors)
+
         kmax = 2 ** 34 // (2 * m) + 1
 
         for k in range(1, kmax + 1):
@@ -112,6 +115,60 @@ def generate_worktodo(many):
             for e in exps:
                 todo.write(f"Factor=,{e},{bits},{bits+1}\n")
 
+def add_new_results(many):
+    tf_level = defaultdict(int)
+
+    no_factor = 0
+    composite = set()
+    known_prime = 0
+    new_primes = set()
+
+    with open(RESULTS_FILE) as results_file:
+        for result in results_file:
+            match = re.match("no factor for M([0-9]*) from 2\^.. to 2\^(..)", result)
+            if match:
+                no_factor += 1
+                M, upper_tf = map(int, match.groups())
+                tf_level[M] = max(tf_level[M], upper_tf)
+
+            match = re.match("M([0-9]*) has a factor: ([0-9]*).*TF:..:([0-9]{2})", result)
+            if match:
+                M, factor, upper_tf = map(int, match.groups())
+                if gmpy2.is_prime(factor):
+                    if factor in many.get(M, []):
+                        known_prime += 1
+                    else:
+                        new_primes.add((M, factor))
+                        tf_level[M] = max(tf_level[M], upper_tf)
+                else:
+                    composite.add((M, factor))
+
+    new_primes = sorted(new_primes)
+    original = {}
+    delta = Counter()
+    for M, test in new_primes:
+        factors = many.get(M, [])
+        for f in factors:
+            assert test % f != 0, (M, test, f)
+
+        if M not in original:
+            original[M] = len(factors)
+        factors.append(test)
+        count_f = len(factors)
+        delta[(original[M], len(factors) - original[M])] += 1
+        if count_f >= 8:
+            tf_next = tf_level[M]
+            cost_next = 2 ** tf_level[M] / M / 1.4e10
+            print ("M{}: factor {}<{}>, +{} to {} total factors, cost next({}): ~{:.2f}s".format(
+                M, test, len(str(test)), count_f - original[M], count_f, tf_next, cost_next))
+
+    print ()
+    print ("{} no factor, {} compsite factors found, {} prime factors found".format(
+        no_factor, len(composite), len(new_primes)))
+    print ()
+    for (orig, new), instances in delta.most_common():
+        print (f"\tHad {orig} factors + {new} = {orig + new} x{instances}")
+    print ()
 
 if REPROCESS:
     many = process()
@@ -119,8 +176,10 @@ if REPROCESS:
 else:
     many = load()
 
+add_new_results(many)
+
 #verify(many)
-generate_worktodo(many)
+#generate_worktodo(many)
 
 #tf_data = load_tf_db(many)
 #for m, tf in tf_data:
