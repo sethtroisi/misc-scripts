@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import gmpy2
 import re
 import sqlite3
@@ -16,6 +17,7 @@ STATUS_FILE="many_factor_progress.txt"
 MANY_THRESHOLD = 6
 
 REPROCESS = False
+
 
 def process():
     many = {}
@@ -40,6 +42,11 @@ def process():
 
             cur_factors.append(f)
     return many
+
+
+def work_time(M, tf):
+    '''Approx time to TF M from 2^(tf-1) to 2^tf on 1080ti'''
+    return 2 ** tf / M / 1.4e12
 
 
 def save(many):
@@ -113,7 +120,33 @@ def generate_worktodo(many):
     with open("worktodo.txt", "w") as todo:
         for bits in range(66, 75):
             for e in exps:
-                todo.write(f"Factor=,{e},{bits},{bits+1}\n")
+                todo.write(f"Factor={e},{bits},{bits+1}\n")
+
+def generate_doublecheck(many):
+    # min tf
+    min_tf = 65 # TJAI has checked everything less than this.
+
+    count = 0
+    num_factors = 0
+    double_check = []
+    for M, factors in many.items():
+        bits = sorted(len(bin(factor)) - 2 for factor in factors)
+        bits = [b for b in bits if b > min_tf]
+        bits = [b for b in bits if work_time(M, b) <= 120]
+
+        num_factors += len(bits)
+        for b in set(bits):
+            time_guess = work_time(M, b)
+            double_check.append((time_guess, f"Factor={M},{b-1},{b}\n"))
+            count += 1
+
+
+    with open("worktodo.txt.doublecheck", "w") as todo:
+        for t, line in sorted(double_check):
+            todo.write(line)
+
+    print (f"Wrote {count} lines should find {num_factors} factors")
+
 
 def add_new_results(many):
     tf_level = defaultdict(int)
@@ -121,7 +154,7 @@ def add_new_results(many):
     no_factor = 0
     composite = set()
     known_prime = 0
-    new_primes = set()
+    new_primes = Counter()
 
     with open(RESULTS_FILE) as results_file:
         for result in results_file:
@@ -138,10 +171,28 @@ def add_new_results(many):
                     if factor in many.get(M, []):
                         known_prime += 1
                     else:
-                        new_primes.add((M, factor))
+                        new_primes[(M, factor)] += 1
                         tf_level[M] = max(tf_level[M], upper_tf)
+#                        print(result.strip())
                 else:
                     composite.add((M, factor))
+    print()
+
+    ''' These were all known (discovered after, logs lost...)
+    not_found_twice = 0
+    for (M, f), count in new_primes.most_common():
+        if count != 2:
+            bits = math.log2(f)
+            if bits <= 65 or work_time(M, int(bits+1)) > 120:
+                continue
+            print (count, M, "\t", f, math.log2(f))
+            print (f"M{M} has a factor: {f}")
+
+            not_found_twice += 1
+    print (not_found_twice, "were not found twice")
+    print ()
+    '''
+
 
     new_primes = sorted(new_primes)
     original = {}
@@ -158,7 +209,7 @@ def add_new_results(many):
         delta[(original[M], len(factors) - original[M])] += 1
         if count_f >= 8:
             tf_next = tf_level[M]
-            cost_next = 2 ** tf_level[M] / M / 1.4e10
+            cost_next = work_time(M, tf_next)
             print ("M{}: factor {}<{}>, +{} to {} total factors, cost next({}): ~{:.2f}s".format(
                 M, test, len(str(test)), count_f - original[M], count_f, tf_next, cost_next))
 
@@ -180,6 +231,7 @@ add_new_results(many)
 
 #verify(many)
 #generate_worktodo(many)
+#generate_doublecheck(many)
 
 #tf_data = load_tf_db(many)
 #for m, tf in tf_data:
