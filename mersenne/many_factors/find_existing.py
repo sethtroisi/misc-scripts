@@ -46,7 +46,7 @@ def process():
 
 def work_time(M, tf):
     '''Approx time to TF M from 2^(tf-1) to 2^tf on 1080ti'''
-    return 2 ** tf / M / 1.4e12
+    return 2 ** tf / M / 7.0e10
 
 
 def save(many):
@@ -193,7 +193,6 @@ def add_new_results(many):
     print ()
     '''
 
-
     new_primes = sorted(new_primes)
     original = {}
     delta = Counter()
@@ -210,7 +209,7 @@ def add_new_results(many):
         if count_f >= 8:
             tf_next = tf_level[M]
             cost_next = work_time(M, tf_next)
-            print ("M{}: factor {}<{}>, +{} to {} total factors, cost next({}): ~{:.2f}s".format(
+            print ("M{:<9}: factor {:23}<{}>, +{} to {} total factors, cost next({}): ~{:.2f}s".format(
                 M, test, len(str(test)), count_f - original[M], count_f, tf_next, cost_next))
 
     print ()
