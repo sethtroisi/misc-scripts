@@ -1,7 +1,6 @@
 ### Do additional TF on Mersenne numbers with many know factors
 ---
 
-
 ## Commands
 
 ```bash
@@ -9,6 +8,12 @@ FACTOR_FILE=gimpsfactors20181219.txt
 time cat $FACTOR_FILE | cut -d, -f1 | uniq -c | awk '$1 >= 8' | tqdm | sort -n > 8_plus_factors
 ```
 
+Useful for checking for prime (not composite) factors in a results.txt file
+```bash
+wc -l results.txt; echo -e "Found $(cat results.txt | grep '^M' | wc -l) factors\n"; cat results.txt | grep '^M' | awk -M '{ m = substr($1,2,length($1)); for(k=1; k<200; k++) if   ($5 % (2*m*k + 1) == 0) { break; }; if (k == 200) print $0 }'
+```
+
+## Old
 Download TF limits from James' Wonderful [mersenne.ca/export/](https://www.mersenne.ca/export/)
 
 ```bash
@@ -29,8 +34,4 @@ cat mersenneca_prime_numbers_0.sql | tqdm | sed \
 ```
 
 Sadly TF_limits = 1 for all primes with known factors.
-
-```bash
-cat results | grep '^M' | awk -M '{ m = substr($1,2,length($1)); bad = 0; for(k=1; k<100; k++) if ($5 % (2 * m * k + 1) == 0) { bad = 1; break; }; if (bad == 0) print $0 }'
-```
 
