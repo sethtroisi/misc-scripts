@@ -25,7 +25,7 @@ and `2^e+1 == 0 mod f <=> pow(2, e, f) == 1`
 for JSON this is as simple as adding a new field "proof" or "proofk" which is an array of several proof-numbers.
 Ideally you should send 2-4 numbers (this leads to better determinism while balancing amount of data stored).
 
-See [Format Notes](#Format_Notes) for more details
+See [Format Notes](#format-notes) for more details
 
 
 ### Verification
