@@ -14,7 +14,7 @@ BASE_FOLDER = os.path.expanduser("~/Downloads/GIMPS/")
 
 FACTOR_FILE = os.path.join(BASE_FOLDER, "gimps-klist20181219.txt")
 TF_DB_FILE = os.path.join(BASE_FOLDER, "mersenne_tf_limits.db")
-RESULTS_FILE = os.path.join(BASE_FOLDER, "megaresults.txt")
+RESULTS_FILE = os.path.join(BASE_FOLDER, "results/megaresults.txt")
 
 STATUS_FILE="many_factor_progress.txt"
 MANY_THRESHOLD = 6
@@ -26,35 +26,35 @@ MIN_TF = 67
 # A large number
 MAX_TF = 100
 
-MAX_TIME = 3600
+MAX_TIME = 10 * 60
 GHZ_DAYS_PER_DAY = 1400     # Based on 1080ti with mfaktc
 
 
 REPROCESS = False
 
 def process():
-    many = {}
-    many_counts = Counter()
+    factors = defaultdict(list)
+    factor_counts = Counter()
 
     with open(FACTOR_FILE) as factor_f:
         cur_p = None
         cur_factors = []
         for line in factor_f:
-            p, f = line.strip().split(",")
+            p, f = map(int, line.strip().split(","))
             if p != cur_p:
                 count = len(cur_factors)
                 if count >= MANY_THRESHOLD:
-                    cur_factors = sorted(map(int, cur_factors))
-                    many[int(cur_p)] = cur_factors
-                    many_counts[count] += 1
-                    if many_counts[count] <= 50:
-                        counts = ", ".join("{}x{}".format(*p) for p in sorted(many_counts.items()))
-                        print ("{}: {:50} M{}".format(len(many), counts, many[-1][0]))
+                    factors[cur_p] = cur_factors
+                    factor_counts[count] += 1
+                    if factor_counts[count] <= 20:
+                        # Z expontents x 6 factors
+                        counts = ", ".join("{1}x{0}".format(*p) for p in factor_counts.most_common())
+                        print ("{}: {:50} M{}".format(len(factors), counts, p))
                 cur_p = p
                 cur_factors = []
 
             cur_factors.append(f)
-    return many
+    return factors
 
 
 def work_time(M, tf):
@@ -62,122 +62,90 @@ def work_time(M, tf):
     return 2 ** tf / M / 5.0e7 / GHZ_DAYS_PER_DAY
 
 
-def save(many):
+def save(factors):
     with open(STATUS_FILE, "w") as status_f:
-        for m, factors in sorted(many.items()):
+        for m, factors in sorted(factors.items()):
             status_f.write("{}:{}\n".format(m, ",".join(map(str, factors))))
 
 
 def load():
-    many = {}
+    factors = defaultdict(list)
     with open(STATUS_FILE) as status_f:
         for line in status_f:
-            M, factors = line.split(":")
-            M = int(M)
-            factors = list(map(int, factors.split(",")))
-            factors = [2 * M * f + 1 for f in factors]
-            many[M] = factors
-    return many
+            e, k_factors = line.split(":")
+            e = int(e)
+            factors[e] = [2 * e * int(k) + 1 for k in k_factors.split(",")]
+    return factors
 
 
-def load_tf_db(many):
-    ''' Mersenne.ca wips the tf data :('''
-    with sqlite3.connect(TF_DB_FILE) as conn:
-        conn.row_factory = sqlite3.Row
-
-        cur = conn.cursor()
-
-        # Create a temp table so we can join on it to retrieve all exponents.
-        cur.execute("CREATE TEMP TABLE lookup_exp (e integer)")
-
-        exponents = [(e,) for e, factors in many.items()]
-        cur.executemany('INSERT INTO temp.lookup_exp VALUES (?)', exponents)
-
-        cur.execute('SELECT exponent, tf from prime_numbers_0 '
-                    'INNER JOIN lookup_exp on exponent = e ')
-        rows = list(map(tuple, cur.fetchall()))
-        cur.close()
-    return rows
-
-
-def verify(many):
+def verify(factors):
     print ("Checking existing factors")
-    for m, factors in tqdm(many):
-        for f in factors:
+    for m, m_factors in tqdm(factors.items()):
+        for f in m_factors:
             assert pow(2, m, f) == 1, (m, f)
 
     print ("Verifying factors up to 2^34")
-    for m, factors in tqdm(many):
+    for m, m_factors in tqdm(factors.items()):
         # for really small m we want to avoid this as it takes a long time
         # we also can't use mfaktc so skip them.
         if m <= MIN_EXP:
             continue
 
-        assert len(factors) == len(set(factors)), (m, factors)
-
+        assert len(m_factors) == len(set(m_factors)), (m, m_factors)
         kmax = 2 ** 34 // (2 * m) + 1
-
         for k in range(1, kmax + 1):
             p = 2 * m * k + 1
             if pow(2, m, p) == 1:
                 # Maybe a composite factor.
                 t = p
-                for f in factors:
+                for f in m_factors:
                     while t % p == 0:
                         t //= p
-                assert t == 1, (m, k, p, factors)
+                assert t == 1, (m, k, p, m_factors)
 
 
-def generate_worktodo_ordered(many, tf_data):
-    prime_count = Counter({m:len(factors) for m, factors in many.items() if m > MIN_EXP})
+def generate_worktodo_ordered(factors, tf_data):
+    prime_count = Counter({m:len(fs) for m, fs in factors.items() if fs and m > MIN_EXP})
 
     # Divide cost when we find this many primes
     value = {
-        5:1,
-        6:1,
-        7:1,
-        8:2,
-        9:3,
-        10:1,   # Searched by others
-        11:1,   # Searched by others
+        5:1, 6:1, 7:1,
+        8:4, 9:6,
+        10:2, 11:3,
     }
 
     work = []
     for e, count in prime_count.items():
-        start = tf_data.get(e, MIN_TF)
+        assert count >= MANY_THRESHOLD
+        next_tf = tf_data.get(e, MIN_TF-1)+1
 
-        for bits in range(start, MAX_TF+1):
-            # We are willing
-            cost = int(work_time(e, bits)) / value[count]
+        for bits in range(next_tf, MAX_TF+1):
+            cost = int(work_time(e, bits))
+            priority = cost / value[count]
             if cost > MAX_TIME:
                 break
-            work.append((cost, e, bits))
+            work.append((priority, cost, e, bits))
 
-    if work:
-        print ("{} exponents, {} work items, {}s to {}s".format(
-            len(prime_count), len(work), min(work)[0], max(work)[0]))
-    else:
-        print ("No work!!!")
+    print ("{} exponents, {} work items, {:.1f}s to {:.1f}s".format(
+        len(prime_count), len(work), min(work)[0], max(work)[0]))
 
     with open("worktodo.txt", "w") as todo:
-        count = 0
-        last_cost = 0
-        for cost, e, bits in sorted(work):
-            count += 1
-            if cost // 100 != last_cost // 100:
-                # If this is first workitem that will take X00seconds
-                todo.write(f"#{count} item, tf {e},{bits} ~ {cost} seconds\n")
-                print (f"\t{count} entry, {e},{bits} ~{(cost//100)*100} seconds")
+        sum_cost = 0
+        for i, (priority, cost, e, bits) in enumerate(sorted(work), 1):
+            sum_cost += cost / 3600
+            if i < 20 or i * 25 % len(work) < 25:
+                todo.write(f"#{i}th,  TF {e},{bits} ~ {cost} seconds\n")
+                print ("\t{:>5}th entry, {:10},{} | ({} factors) ~{}s, total {:.1f}h"
+                    .format(i, e, bits, prime_count[e], cost, sum_cost))
             todo.write(f"Factor={e},{bits},{bits+1}\n")
-            last_cost = cost
 
 
-def generate_doublecheck(many):
+def generate_doublecheck(factors):
     count = 0
     num_factors = 0
     double_check = []
-    for M, factors in many.items():
-        bits = sorted(len(bin(factor)) - 2 for factor in factors)
+    for M, e_factors in factors.items():
+        bits = sorted(len(bin(factor)) - 2 for factor in e_factors)
         bits = [b for b in bits if b > MIN_TF]
         bits = [b for b in bits if work_time(M, b) <= 120]
 
@@ -195,13 +163,13 @@ def generate_doublecheck(many):
     print (f"Wrote {count} lines should find {num_factors} factors")
 
 
-def add_new_results(many):
+def add_new_results(factors):
     tf_level = defaultdict(int)
 
     no_factor = 0
-    composite = set()
     known_prime = 0
-    new_primes = Counter()
+    composite = set()
+    new_factors = defaultdict(set)
 
     assert os.path.isfile(RESULTS_FILE), RESULTS_FILE
     with open(RESULTS_FILE) as results_file:
@@ -218,74 +186,55 @@ def add_new_results(many):
                 # Assumes that mfaktc was run with StopAfterFactor=0
                 tf_level[M] = max(tf_level[M], upper_tf)
                 if gmpy2.is_prime(factor):
-                    if factor in many.get(M, []):
+                    if factor in factors[M]:
                         known_prime += 1
                     else:
-                        new_primes[(M, factor)] += 1
+                        new_factors[M].add(factor)
                 else:
                     composite.add((M, factor))
 
-    ''' These were all known (discovered after, logs lost...)
-    not_found_twice = 0
-    for (M, f), count in new_primes.most_common():
-        if count != 2:
-            bits = math.log2(f)
-            if bits <= MIN_TF or work_time(M, int(bits+1)) > 120:
-                continue
-            print (count, M, "\t", f, math.log2(f))
-            print (f"M{M} has a factor: {f}")
+    for M, new_primes in sorted(new_factors.items()):
+        for f1 in new_primes:
+            for f2 in factors[M]:
+                assert f1 % f2 != 0 and f2 % f1 != 0, (M, f1, f2)
 
-            not_found_twice += 1
-    print (not_found_twice, "were not found twice")
-    print ()
-    '''
+        count_f = len(factors[M])
+        new_count = count_f + len(new_primes)
 
-    new_primes = sorted(new_primes)
-    original = {}
-    delta = Counter()
-    for M, test in new_primes:
-        factors = many.get(M, [])
-        for f in factors:
-            assert test % f != 0, (M, test, f)
-
-        if M not in original:
-            original[M] = len(factors)
-        factors.append(test)
-        count_f = len(factors)
-        delta[(original[M], len(factors) - original[M])] += 1
-        if count_f >= 8:
-            tf_next = tf_level[M]
+        if new_count >= 8:
+            tf_next = tf_level[M] + 1
             cost_next = work_time(M, tf_next)
-            print ("M{:<9}: factor {:23}<{}>, +{} to {} total factors, cost next({}): ~{:.2f}s".format(
-                M, test, len(str(test)), count_f - original[M], count_f, tf_next, cost_next))
+            for new_prime in new_primes:
+                prime_len = len(str(new_prime))
+                print ("M{:<9}: {:23}<{}>, {} => {} factors, cost({}): ~{:.2f}s".format(
+                    M, new_prime, prime_len, count_f, new_count, tf_next, cost_next))
 
     print ()
     print ("{} no factor, {} compsite factors found, {} prime factors found".format(
-        no_factor, len(composite), len(new_primes)))
+        no_factor, len(composite), len(new_factors)))
     print ()
-    for (orig, new), instances in delta.most_common():
-        print (f"\tHad {orig} factors + {new} = {orig + new} x{instances}")
+    deltas = Counter([(len(factors[M]), len(added)) for M, added in new_factors.items()])
+    for (orig, added), count in deltas.most_common():
+        print (f"\tHad {orig} factors + {added} = {orig + added} x{count}")
     print ()
 
     return tf_level
 
 
 if REPROCESS:
-    many = process()
-    save(many)
+    factors = process()
+    verify(factors)
+    save(factors)
 else:
-    many = load()
+    factors = load()
 
 # Used to verify the db & local results
-#verify(many)
 
 # Used if you've been running and have new local results
-tf_data = add_new_results(many)
+tf_data = add_new_results(factors)
 
 # Used if you want to generate worktodo in effort order.
-generate_worktodo_ordered(many, tf_data)
+generate_worktodo_ordered(factors, tf_data)
 
 # Used to generate worktodo with lines that should all find factors.
-#generate_doublecheck(many)
-
-
+#generate_doublecheck(factors)
