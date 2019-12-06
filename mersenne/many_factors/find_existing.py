@@ -17,7 +17,7 @@ TF_DB_FILE = os.path.join(BASE_FOLDER, "mersenne_tf_limits.db")
 RESULTS_FILE = os.path.join(BASE_FOLDER, "results/megaresults.txt")
 
 STATUS_FILE="many_factor_progress.txt"
-MANY_THRESHOLD = 6
+MANY_THRESHOLD = 7
 
 MIN_EXP = 2 ** 20 + 100
 
@@ -110,20 +110,24 @@ def generate_worktodo_ordered(factors, tf_data):
     # Divide cost when we find this many primes
     value = {
         5:1, 6:1, 7:1,
-        8:4, 9:6,
+        8:6, 9:30,
         10:2, 11:3,
     }
 
     work = []
     for e, count in prime_count.items():
+        # Handles if we accidentally get extra numbers added by megaresult.txt
+        if count < MANY_THRESHOLD:
+            continue
         assert count >= MANY_THRESHOLD
         next_tf = tf_data.get(e, MIN_TF-1)+1
 
         for bits in range(next_tf, MAX_TF+1):
             cost = int(work_time(e, bits))
             priority = cost / value[count]
-            if cost > MAX_TIME:
+            if priority > MAX_TIME:
                 break
+
             work.append((priority, cost, e, bits))
 
     print ("{} exponents, {} work items, {:.1f}s to {:.1f}s".format(
@@ -137,7 +141,7 @@ def generate_worktodo_ordered(factors, tf_data):
                 todo.write(f"#{i}th,  TF {e},{bits} ~ {cost} seconds\n")
                 print ("\t{:>5}th entry, {:10},{} | ({} factors) ~{}s, total {:.1f}h"
                     .format(i, e, bits, prime_count[e], cost, sum_cost))
-            todo.write(f"Factor={e},{bits},{bits+1}\n")
+            todo.write(f"Factor={e},{bits-1},{bits}\n")
 
 
 def generate_doublecheck(factors):
@@ -163,6 +167,20 @@ def generate_doublecheck(factors):
     print (f"Wrote {count} lines should find {num_factors} factors")
 
 
+def add_manual_tf_data(tf_data):
+    # Manual tf data
+    tf_data[1938317] = 76 # Thanks Kriesel (~8000 GHz-days!)
+    tf_data[5977753] = 74 # Thanks ATH & BloodERazor
+    tf_data[9325159] = 75 # Thanks ATH
+    tf_data[27366961] = 76 # Thanks ATH
+    tf_data[28035701] = 76 # Thanks ATH
+    tf_data[31866377] = 76 # Thanks Ducho_YYZ & ATH
+    tf_data[60593041] = 77 # Thanks ATH
+    tf_data[458703437] = 82 # Thanks Kriesel & Ramgeis
+    tf_data[940572491] = 81 # Thanks Kriesel
+    tf_data[566448359] = 83 # Thanks Matthew M. and ATH
+
+
 def add_new_results(factors):
     tf_level = defaultdict(int)
 
@@ -170,6 +188,9 @@ def add_new_results(factors):
     known_prime = 0
     composite = set()
     new_factors = defaultdict(set)
+
+    # TODO recover missing bit ranges bits+1 problem
+    # Related to 630486799
 
     assert os.path.isfile(RESULTS_FILE), RESULTS_FILE
     with open(RESULTS_FILE) as results_file:
@@ -200,6 +221,9 @@ def add_new_results(factors):
 
         count_f = len(factors[M])
         new_count = count_f + len(new_primes)
+
+        for new_prime in new_primes:
+            factors[M].append(new_prime)
 
         if new_count >= 8:
             tf_next = tf_level[M] + 1
@@ -232,6 +256,7 @@ else:
 
 # Used if you've been running and have new local results
 tf_data = add_new_results(factors)
+add_manual_tf_data(tf_data)
 
 # Used if you want to generate worktodo in effort order.
 generate_worktodo_ordered(factors, tf_data)
