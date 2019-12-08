@@ -120,8 +120,15 @@ def generate_worktodo_ordered(factors, tf_data):
         if count < MANY_THRESHOLD:
             continue
         assert count >= MANY_THRESHOLD
-        next_tf = tf_data.get(e, MIN_TF-1)+1
 
+        # check if none consecutive set
+        if tf_data[e]:
+            tf = tf_data[e]
+            missing = set(range(MIN_TF, max(tf))) - set(tf)
+            for bit in missing:
+                print ("Missing TF range {} for {} | {}".format(bit, e, sorted(tf_data[e])))
+
+        next_tf = max(tf_data[e], default=MIN_TF-1)+1
         for bits in range(next_tf, MAX_TF+1):
             cost = int(work_time(e, bits))
             priority = cost / value[count]
@@ -169,20 +176,20 @@ def generate_doublecheck(factors):
 
 def add_manual_tf_data(tf_data):
     # Manual tf data
-    tf_data[1938317] = 76 # Thanks Kriesel (~8000 GHz-days!)
-    tf_data[5977753] = 74 # Thanks ATH & BloodERazor
-    tf_data[9325159] = 75 # Thanks ATH
-    tf_data[27366961] = 76 # Thanks ATH
-    tf_data[28035701] = 76 # Thanks ATH
-    tf_data[31866377] = 76 # Thanks Ducho_YYZ & ATH
-    tf_data[60593041] = 77 # Thanks ATH
-    tf_data[458703437] = 82 # Thanks Kriesel & Ramgeis
-    tf_data[940572491] = 81 # Thanks Kriesel
-    tf_data[566448359] = 83 # Thanks Matthew M. and ATH
+    tf_data[1938317].update(set(range(1,76+1)))     # Thanks Kriesel (~8000 GHz-days!)
+    tf_data[5977753].update(set(range(1,74+1)))     # Thanks ATH & BloodERazor
+    tf_data[9325159].update(set(range(1,75+1)))     # Thanks ATH
+    tf_data[27366961].update(set(range(1,76+1)))    # Thanks ATH
+    tf_data[28035701].update(set(range(1,76+1)))    # Thanks ATH
+    tf_data[31866377].update(set(range(1,76+1)))    # Thanks Ducho_YYZ & ATH
+    tf_data[60593041].update(set(range(1,77+1)))    # Thanks ATH
+    tf_data[458703437].update(set(range(1,82+1)))   # Thanks Kriesel & Ramgeis
+    tf_data[940572491].update(set(range(1,81+1)))   # Thanks Kriesel
+    tf_data[566448359].update(set(range(1,83+1)))   # Thanks Matthew M. and ATH
 
 
 def add_new_results(factors):
-    tf_level = defaultdict(int)
+    tf_level = defaultdict(set)
 
     no_factor = 0
     known_prime = 0
@@ -199,13 +206,13 @@ def add_new_results(factors):
             if match:
                 no_factor += 1
                 M, upper_tf = map(int, match.groups())
-                tf_level[M] = max(tf_level[M], upper_tf)
+                tf_level[M].add(upper_tf)
 
             match = re.match("M([0-9]*) has a factor: ([0-9]*).*TF:..:([0-9]{2})", result)
             if match:
                 M, factor, upper_tf = map(int, match.groups())
                 # Assumes that mfaktc was run with StopAfterFactor=0
-                tf_level[M] = max(tf_level[M], upper_tf)
+                tf_level[M].add(upper_tf)
                 if gmpy2.is_prime(factor):
                     if factor in factors[M]:
                         known_prime += 1
@@ -226,7 +233,7 @@ def add_new_results(factors):
             factors[M].append(new_prime)
 
         if new_count >= 8:
-            tf_next = tf_level[M] + 1
+            tf_next = max(tf_level[M]) + 1
             cost_next = work_time(M, tf_next)
             for new_prime in new_primes:
                 prime_len = len(str(new_prime))
