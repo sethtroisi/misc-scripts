@@ -26,7 +26,7 @@ MIN_TF = 67
 # A large number
 MAX_TF = 100
 
-MAX_TIME = 10 * 60
+MAX_TIME = 5 * 60
 GHZ_DAYS_PER_DAY = 1400     # Based on 1080ti with mfaktc
 
 
@@ -59,7 +59,13 @@ def process():
 
 def work_time(M, tf):
     '''Approx time to TF M from 2^(tf-1) to 2^tf'''
-    return 2 ** tf / M / 5.0e7 / GHZ_DAYS_PER_DAY
+    return 2 ** tf / M / 1.0e8 / GHZ_DAYS_PER_DAY
+
+
+def format_time(time):
+    if time < 1000:
+        return f"{time:.1f}s"
+    return f"{time/3600:.2f}h"
 
 
 def save(factors):
@@ -119,7 +125,6 @@ def generate_worktodo_ordered(factors, tf_data):
         # Handles if we accidentally get extra numbers added by megaresult.txt
         if count < MANY_THRESHOLD:
             continue
-        assert count >= MANY_THRESHOLD
 
         # check if none consecutive set
         if tf_data[e]:
@@ -143,11 +148,12 @@ def generate_worktodo_ordered(factors, tf_data):
     with open("worktodo.txt", "w") as todo:
         sum_cost = 0
         for i, (priority, cost, e, bits) in enumerate(sorted(work), 1):
-            sum_cost += cost / 3600
+            sum_cost += cost
             if i < 20 or i * 25 % len(work) < 25:
                 todo.write(f"#{i}th,  TF {e},{bits} ~ {cost} seconds\n")
-                print ("\t{:>5}th entry, {:10},{} | ({} factors) ~{}s, total {:.1f}h"
-                    .format(i, e, bits, prime_count[e], cost, sum_cost))
+                print ("\t{:>5}th entry, {:10},{} | ({} factors) ~{}, total {}"
+                    .format(i, e, bits, prime_count[e],
+                            format_time(cost), format_time(sum_cost)))
             todo.write(f"Factor={e},{bits-1},{bits}\n")
 
 
@@ -238,8 +244,10 @@ def add_new_results(factors):
             for i, new_prime in enumerate(sorted(new_primes)):
                 lead = "M{:<9}:".format(M) if i == 0 else " " * 11
                 prime_len = len(str(new_prime))
-                print ("{} {:23}<{}>, {} => {} factors, cost({}): ~{:.2f}s".format(
-                    lead, new_prime, prime_len, count_f, new_count, tf_next, cost_next))
+                cost_time = "%" % cost_next if cost_next < 1000 else "%.2h"
+                print ("{} {:23}<{}>, {} => {} factors, cost({}): ~{}".format(
+                    lead, new_prime, prime_len, count_f, new_count,
+                    tf_next, format_time(cost_next)))
 
     print ()
     print ("{} no factor, {} compsite factors found, {} prime factors found".format(
