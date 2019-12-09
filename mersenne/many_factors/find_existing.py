@@ -232,21 +232,23 @@ def add_new_results(factors):
         for new_prime in new_primes:
             factors[M].append(new_prime)
 
-        if new_count >= 8:
+        if new_count >= 9:
             tf_next = max(tf_level[M]) + 1
             cost_next = work_time(M, tf_next)
-            for new_prime in new_primes:
+            for i, new_prime in enumerate(sorted(new_primes)):
+                lead = "M{:<9}:".format(M) if i == 0 else " " * 11
                 prime_len = len(str(new_prime))
-                print ("M{:<9}: {:23}<{}>, {} => {} factors, cost({}): ~{:.2f}s".format(
-                    M, new_prime, prime_len, count_f, new_count, tf_next, cost_next))
+                print ("{} {:23}<{}>, {} => {} factors, cost({}): ~{:.2f}s".format(
+                    lead, new_prime, prime_len, count_f, new_count, tf_next, cost_next))
 
     print ()
     print ("{} no factor, {} compsite factors found, {} prime factors found".format(
         no_factor, len(composite), len(new_factors)))
     print ()
     deltas = Counter([(len(factors[M]), len(added)) for M, added in new_factors.items()])
-    for (orig, added), count in deltas.most_common():
-        print (f"\tHad {orig} factors + {added} = {orig + added} x{count}")
+    for (new, added), count in deltas.most_common():
+        if new == added: continue
+        print (f"\tHad {new-added} factors + {added} = {new:2} x{count}")
     print ()
 
     return tf_level
