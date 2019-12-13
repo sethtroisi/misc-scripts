@@ -57,6 +57,63 @@ def process():
     return factors
 
 
+def generate_no_results_for_combosite_factors(known_factors):
+    '''Generate no factor for M... when the only factor is composite'''
+
+    factor_results = defaultdict(set)
+    found_factor_results = {}
+
+    assert os.path.isfile(RESULTS_FILE), RESULTS_FILE
+    with open(RESULTS_FILE) as results_file:
+        for result_line in results_file:
+            # Correctly reported
+            #match = re.match("no factor for M([0-9]*) from", result_line)
+
+            match = re.match("found ([0-9]*) factors? for M([0-9]*) from 2\^(..) to 2\^(..)", result_line)
+            if match:
+                count, e, low, high = map(int, match.groups())
+                key = (e, low, high, result_line.strip())
+                assert found_factor_results.get(key) in (None, count)
+                found_factor_results[key] = count
+
+
+            match = re.match("M([0-9]*) has a factor: ([0-9]*)", result_line)
+            if match:
+                e, factor = map(int, match.groups())
+                # Assert that mfaktc was not run with StopAfterFactor=2
+                assert '*' not in result_line
+                factor_results[e].add(factor)
+
+    i = 0
+    for (e, low, high, result_line), count in found_factor_results.items():
+        # Weirdness with 67.0002 bit factor
+        if e == 960477823 and high == 67: continue
+
+        factors = [f for f in factor_results[e] if low < math.log2(f) < high]
+        primes = [f for f in factors if gmpy2.is_prime(f)]
+        assert count == len(factors), (e, low, high, count, factors, factor_results[e])
+
+        if len(primes) == 0:
+            known = known_factors[e]
+            # These are clearly known.
+            for test in [2 * e * k+ 1 for k in range(1000)]:
+                if test not in known and gmpy2.is_prime(test):
+                    known.append(test)
+
+            # all factors should be composite
+            for f in factors:
+                known = [f_old for f_old in known_factors[e] if f % f_old == 0]
+                assert len(known) == 2, (e, f, known, known_factors[e])
+
+            i += 1
+            #print (f"[{i}] Actually found {count} composite factor(s) for {e} from 2^{low} to 2^{high}")
+            new_result_line = result_line.replace(f"found {count} factor" + "s" * (count > 1), "no factor")
+            assert new_result_line != result_line, (result_line)
+            if i % 100 == 0:
+                print ("\t", i)
+            print (new_result_line)
+
+
 def work_time(M, tf):
     '''Approx time to TF M from 2^(tf-1) to 2^tf'''
     return 2 ** tf / M / 1.0e8 / GHZ_DAYS_PER_DAY
@@ -202,9 +259,6 @@ def add_new_results(factors):
     composite = set()
     new_factors = defaultdict(set)
 
-    # TODO recover missing bit ranges bits+1 problem
-    # Related to 630486799
-
     assert os.path.isfile(RESULTS_FILE), RESULTS_FILE
     with open(RESULTS_FILE) as results_file:
         for result in results_file:
@@ -269,14 +323,17 @@ if REPROCESS:
 else:
     factors = load()
 
+
+generate_no_results_for_combosite_factors(factors)
+
 # Used to verify the db & local results
 
 # Used if you've been running and have new local results
-tf_data = add_new_results(factors)
-add_manual_tf_data(tf_data)
+#tf_data = add_new_results(factors)
+#add_manual_tf_data(tf_data)
 
 # Used if you want to generate worktodo in effort order.
-generate_worktodo_ordered(factors, tf_data)
+#generate_worktodo_ordered(factors, tf_data)
 
 # Used to generate worktodo with lines that should all find factors.
 #generate_doublecheck(factors)
