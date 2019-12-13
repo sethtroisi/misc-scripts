@@ -174,7 +174,7 @@ def generate_worktodo_ordered(factors, tf_data):
     value = {
         5:1, 6:1, 7:1,
         8:6, 9:30,
-        10:2, 11:3,
+        10:60, 11:300,
     }
 
     work = []
@@ -241,12 +241,15 @@ def add_manual_tf_data(tf_data):
     # Manual tf data
     tf_data[1938317].update(set(range(1,76+1)))     # Thanks Kriesel (~8000 GHz-days!)
     tf_data[5977753].update(set(range(1,74+1)))     # Thanks ATH & BloodERazor
+    tf_data[7508981].update(set(range(1,77+1)))     # Thanks M. Miller & Kriesel
+    tf_data[9100919].update(set(range(1,75+1)))     # Thanks ATH
     tf_data[9325159].update(set(range(1,75+1)))     # Thanks ATH
     tf_data[27366961].update(set(range(1,76+1)))    # Thanks ATH
     tf_data[28035701].update(set(range(1,76+1)))    # Thanks ATH
     tf_data[31866377].update(set(range(1,76+1)))    # Thanks Ducho_YYZ & ATH
     tf_data[60593041].update(set(range(1,77+1)))    # Thanks ATH
     tf_data[458703437].update(set(range(1,82+1)))   # Thanks Kriesel & Ramgeis
+    tf_data[566448359].update(set(range(1,83+1)))   # Thanks ATH & M. Miller
     tf_data[940572491].update(set(range(1,81+1)))   # Thanks Kriesel
     tf_data[566448359].update(set(range(1,83+1)))   # Thanks Matthew M. and ATH
 
@@ -324,16 +327,16 @@ else:
     factors = load()
 
 
-generate_no_results_for_combosite_factors(factors)
+#generate_no_results_for_combosite_factors(factors)
 
 # Used to verify the db & local results
 
 # Used if you've been running and have new local results
-#tf_data = add_new_results(factors)
-#add_manual_tf_data(tf_data)
+tf_data = add_new_results(factors)
+add_manual_tf_data(tf_data)
 
 # Used if you want to generate worktodo in effort order.
-#generate_worktodo_ordered(factors, tf_data)
+generate_worktodo_ordered(factors, tf_data)
 
 # Used to generate worktodo with lines that should all find factors.
 #generate_doublecheck(factors)
