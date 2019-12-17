@@ -17,7 +17,7 @@ TF_DB_FILE = os.path.join(BASE_FOLDER, "mersenne_tf_limits.db")
 RESULTS_FILE = os.path.join(BASE_FOLDER, "results/megaresults.txt")
 
 STATUS_FILE="many_factor_progress.txt"
-MANY_THRESHOLD = 7
+MANY_THRESHOLD = 5
 
 MIN_EXP = 2 ** 20 + 100
 
@@ -172,9 +172,10 @@ def generate_worktodo_ordered(factors, tf_data):
 
     # Divide cost when we find this many primes
     value = {
-        5:1, 6:1, 7:1,
-        8:6, 9:30,
-        10:60, 11:300,
+        8:6,
+        9:30,
+        10:60,
+        11:300,
     }
 
     work = []
@@ -190,10 +191,12 @@ def generate_worktodo_ordered(factors, tf_data):
             for bit in missing:
                 print ("Missing TF range {} for {} | {}".format(bit, e, sorted(tf_data[e])))
 
-        next_tf = max(tf_data[e], default=MIN_TF-1)+1
-        for bits in range(next_tf, MAX_TF+1):
+        for bits in range(MIN_TF, MAX_TF+1):
+            if bits in tf_data[e]:
+                continue
+
             cost = int(work_time(e, bits))
-            priority = cost / value[count]
+            priority = cost / value.get(count, 1)
             if priority > MAX_TIME:
                 break
 
