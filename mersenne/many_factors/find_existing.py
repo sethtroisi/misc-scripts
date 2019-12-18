@@ -178,6 +178,7 @@ def generate_worktodo_ordered(factors, tf_data):
         11:300,
     }
 
+    count_missing = 0
     work = []
     for e, count in prime_count.items():
         # Handles if we accidentally get extra numbers added by megaresult.txt
@@ -189,6 +190,7 @@ def generate_worktodo_ordered(factors, tf_data):
             tf = tf_data[e]
             missing = set(range(MIN_TF, max(tf))) - set(tf)
             for bit in missing:
+                count_missing += 1
                 print ("Missing TF range {} for {} | {}".format(bit, e, sorted(tf_data[e])))
 
         for bits in range(MIN_TF, MAX_TF+1):
@@ -201,6 +203,9 @@ def generate_worktodo_ordered(factors, tf_data):
                 break
 
             work.append((priority, cost, e, bits))
+
+    if count_missing:
+        print ("\t{} missing exponents".format(count_missing))
 
     print ("{} exponents, {} work items, {:.1f}s to {:.1f}s".format(
         len(prime_count), len(work), min(work)[0], max(work)[0]))
