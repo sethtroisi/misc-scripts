@@ -17,7 +17,7 @@ TF_DB_FILE = os.path.join(BASE_FOLDER, "mersenne_tf_limits.db")
 RESULTS_FILE = os.path.join(BASE_FOLDER, "results/megaresults.txt")
 
 STATUS_FILE="many_factor_progress.txt"
-MANY_THRESHOLD = 5
+MANY_THRESHOLD = 9
 
 MIN_EXP = 2 ** 20 + 100
 
@@ -26,7 +26,7 @@ MIN_TF = 67
 # A large number
 MAX_TF = 100
 
-MAX_TIME = 5 * 60
+MAX_TIME = 20 * 60
 GHZ_DAYS_PER_DAY = 1400     # Based on 1080ti with mfaktc
 
 
