@@ -1,5 +1,5 @@
-// g++ gmp-test.cpp -l gmp
-// ./a.out power_primes.txt | tee gmp.log
+// g++ gmp-test.cpp -l gmp -o gmp-test
+// ./gmp-test power_primes.txt
 
 #include <cassert>
 #include <chrono>
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     mpz_init(ptest);
 
     std::ifstream prime_file (argv[1], std::ios::in);
-    while (!prime_file.eof()) {
+    while (prime_file.good() && !prime_file.eof()) {
         int base, exp, add;
         std::string delim;
         char exp_sign;
@@ -40,9 +40,14 @@ int main(int argc, char* argv[]) {
             // Lines are of the form "31#+1"
             prime_file >> add;
 
-            mpz_primorial_ui(ptest, base);
-            mpz_add_ui(ptest, ptest, add);
+            mpz_primorial_ui(ptest, base + 1);
+            if (add >= 0)
+                mpz_add_ui(ptest, ptest, add);
+            else
+                mpz_sub_ui(ptest, ptest, -add);
+
         } else {
+            printf("What: %d | %c\n", base, exp_sign);
             assert( false );
         }
 
