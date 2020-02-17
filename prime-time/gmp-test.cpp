@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
             printf("%d# + %d", base, add);
         }
 
-        printf(" => %s (%f seconds)\n",
+        printf(" => %8s (%f seconds)\n",
             is_prime == 0 ? "composite": "prime",
             secs);
     }
