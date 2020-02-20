@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <locale>
 #include <vector>
@@ -86,16 +88,19 @@ vector<uint64_t> get_sieve_primes_segmented(uint64_t n) {
     return primes;
 }
 
+
 class PrimeIterator {
     class PrimeIter {
         public:
             PrimeIter(uint64_t start, bool update) {
-                current_prime = start;
-
                 if (update) {
-                    //is_prime.resize(PrimeIter::ODD_BLOCKSIZE);
-                    is_prime.resize(PrimeIter::BLOCKSIZE);
+                    first_prime = start;
+                    B = (start / BLOCKSIZE) * BLOCKSIZE;
+
+                    is_prime.resize(PrimeIter::ODD_BLOCKSIZE);
                     nextPrime();
+                } else {
+                    first_prime = B = start;
                 }
             }
 
@@ -105,21 +110,25 @@ class PrimeIterator {
             }
 
             bool operator!=(const PrimeIter & other) const {
-                return current_prime <= other.current_prime; }
+                uint64_t comp = B;
+                if (current_primes.size()) {
+                    comp = current_primes.front();
+                }
+                return comp < other.B;
+            }
 
             const vector<uint64_t>& operator*() const { return current_primes; }
 
         private:
             void nextPrime() {
-                B += BLOCKSIZE;
                 uint64_t B_END = B + BLOCKSIZE - 1;
                 while (true) {
-                    uint64_t p2 = ((uint64_t) primes.back()) * primes.back();
-                    if (p2 > B_END) break;
+                    uint64_t lastp = primes.empty() ? 0 : primes.back();
+                    if (lastp * lastp > B_END) break;
 
                     // Find a next prime via brute force.
-                    uint32_t nextp = 0;
-                    for (nextp = primes.back() + 2; ; nextp += 2) {
+                    uint64_t nextp = lastp == 0 ? 3 : lastp + 2;
+                    for (; ; nextp += 2) {
                         bool isp = true;
                         for (uint32_t p : primes) {
                             if (nextp % p == 0) {
@@ -131,7 +140,10 @@ class PrimeIterator {
                     }
 
                     primes.push_back(nextp);
-                    uint64_t first = ((uint64_t) nextp) * nextp - B;
+                    // Next odd multiple of nextp > B
+                    uint64_t mult = (B-1)/nextp + 1;
+                    uint64_t first = (mult | 1) * nextp;
+                    first -= B;
                     next_mod.push_back(first >> 1);
                 }
 
@@ -148,32 +160,39 @@ class PrimeIterator {
                 }
 
                 current_primes.clear();
-                for (size_t p = 0; p < ODD_BLOCKSIZE; p++) {
+                if (B == 0 && first_prime <= 2) {
+                    current_primes.push_back(2);
+                }
+
+                // deal with start > B
+                size_t p = 0;
+                if (first_prime > B) {
+                    p = (first_prime - B) / 2;
+                }
+
+                for (; p < ODD_BLOCKSIZE; p++) {
                     if (is_prime[p]) {
                         current_primes.push_back(B + 2 * p + 1);
                     }
                 }
-                current_prime = current_primes.back();
+                B += BLOCKSIZE;
             }
 
-            uint64_t current_prime;
+            uint64_t first_prime;
             vector<uint64_t> current_primes;
 
             // Large enough to be fast and still fit in L1/L2 cache.
-            const uint32_t BLOCKSIZE = 1 << 16;
-            const uint32_t ODD_BLOCKSIZE = BLOCKSIZE >> 1;
+            const uint64_t BLOCKSIZE = 1 << 16;
+            const uint64_t ODD_BLOCKSIZE = BLOCKSIZE >> 1;
 
             uint64_t is_prime_i = BLOCKSIZE;
-            // So that on first call B = 0
-            int64_t B = -((int64_t)BLOCKSIZE);
-            //vector<char> is_prime(PrimeIter::ODD_BLOCKSIZE, true);
+            uint64_t B = 0;
             vector<char> is_prime;
 
-            vector<uint32_t> primes = {3};
+            vector<uint32_t> primes;
 
             // First number in next block that primes[pi] divides.
-            vector<int32_t> next_mod = {9 >> 1};
-            //vector<int32_t> next_mod = {9};
+            vector<int32_t> next_mod;
     };
 
     private:
@@ -182,7 +201,7 @@ class PrimeIterator {
 
     public:
         PrimeIterator(uint64_t n) {
-            first_prime = 2;
+            first_prime = 0;
             last = n;
         }
 
@@ -202,19 +221,30 @@ int main(int argc, char** argv)
 {
     uint64_t limit = argc >= 2 ? std::atoll(argv[1]) : 1e9;
 
-    get_sieve_primes_segmented(limit);
-//    cout << endl;
+    if (argc == 2) {
+        get_sieve_primes_segmented(limit);
+        return 0;
+    }
 
-/*
+    uint64_t start = std::atoll(argv[2]);
+
     int z = 0;
     size_t count = 0;
-    for (auto primes : PrimeIterator(limit)) {
-        count += primes.size();
+    for (auto primes : PrimeIterator(start, limit)) {
+        if (primes.size() && primes.back() > limit) {
+            for (auto p : primes) {
+                count += p <= limit;
+                if (p <= limit) cout << p << endl;
+            }
+        } else {
+            count += primes.size();
+        }
+
         z += 1;
-        if (primes.size() && (z < 20 || z % 200 == 0))
-            cout << count << " : " << primes[0] << " " << primes.back() << endl;
+        if (primes.size() && (z < 20 || z % 800 == 0))
+            cout << count << " : " << primes.size() << " "
+                << primes[0] << " to " << primes.back() << endl;
     }
     cout << "Found " << count << " Primes <= " << limit << endl;
-*/
-  return 0;
+    return 0;
 }
