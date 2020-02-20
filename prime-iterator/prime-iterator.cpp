@@ -234,7 +234,6 @@ int main(int argc, char** argv)
         if (primes.size() && primes.back() > limit) {
             for (auto p : primes) {
                 count += p <= limit;
-                if (p <= limit) cout << p << endl;
             }
         } else {
             count += primes.size();
