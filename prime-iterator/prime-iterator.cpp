@@ -31,7 +31,7 @@ vector<uint32_t> get_sieve_primes(uint32_t n) {
 vector<uint64_t> get_sieve_primes_segmented(uint64_t n) {
     assert( n > 10'000 );
     uint64_t sqrt_n = sqrt(n);
-    while (sqrt_n * sqrt_n < n) sqrt_n++;
+    while (sqrt_n * sqrt_n <= n) sqrt_n++;
 
     const vector<uint32_t> small_primes = get_sieve_primes(sqrt_n);
 
@@ -54,10 +54,11 @@ vector<uint64_t> get_sieve_primes_segmented(uint64_t n) {
             B_END = n;
         }
 
-        while ((max_pi < small_primes.size()) &&
-               small_primes[max_pi] * small_primes[max_pi] <= B_END) {
-            uint64_t first = small_primes[max_pi] * small_primes[max_pi];
-            next_mod[max_pi] = (first - B) >> 1;
+        while (max_pi < small_primes.size()) {
+            uint64_t p2 = small_primes[max_pi];
+            p2 = p2 * p2;
+            if (p2 > B_END) break;
+            next_mod[max_pi] = (p2 - B) >> 1;
             max_pi += 1;
         }
 
@@ -83,7 +84,6 @@ vector<uint64_t> get_sieve_primes_segmented(uint64_t n) {
 
     // For commas in numbers.
     std::cout.imbue(std::locale(""));
-
     cout << "Found " << primes.size() << " Primes <= " << n << endl;
     return primes;
 }
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
         }
 
         z += 1;
-        if (primes.size() && (z < 20 || z % 800 == 0))
+        if (primes.size() && (z < 6 || z % 800 == 0))
             cout << count << " : " << primes.size() << " "
                 << primes[0] << " to " << primes.back() << endl;
     }
