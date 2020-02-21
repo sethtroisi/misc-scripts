@@ -140,11 +140,17 @@ class PrimeIterator {
                     }
 
                     primes.push_back(nextp);
-                    // Next odd multiple of nextp > B
-                    uint64_t mult = (B-1)/nextp + 1;
-                    uint64_t first = (mult | 1) * nextp;
-                    first -= B;
-                    next_mod.push_back(first >> 1);
+                    if (B == 0) {
+                        next_mod.push_back(nextp * nextp >> 1);
+                    } else {
+                        // Next odd multiple of nextp >= B
+                        uint64_t mult = (B-1) / nextp + 1;
+                        uint64_t first = (mult | 1) * nextp;
+                        assert( first >= B );
+                        assert( first / nextp % 2 == 1 );
+                        first -= B;
+                        next_mod.push_back(first >> 1);
+                    }
                 }
 
                 std::fill(is_prime.begin(), is_prime.end(), true);
