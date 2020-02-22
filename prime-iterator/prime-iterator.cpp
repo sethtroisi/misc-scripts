@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <locale>
 #include <vector>
@@ -82,10 +83,71 @@ vector<uint64_t> get_sieve_primes_segmented(uint64_t n) {
         }
     }
 
-    // For commas in numbers.
-    std::cout.imbue(std::locale(""));
-    cout << "Found " << primes.size() << " Primes <= " << n << endl;
     return primes;
+}
+
+bool isprime_brute(uint32_t n) {
+    if ((n & 1) == 0)
+        return false;
+    for (uint32_t p = 3; p * p <= n; p += 2)
+        if (n % p == 0)
+            return false;
+    return true;
+}
+
+void get_sieve_primes_segmented_lambda(uint64_t n, std::function<void (uint64_t)> lambda) {
+    // Large enough to be fast and still fit in L1/L2 cache.
+    uint32_t BLOCKSIZE = 1 << 16;
+    uint32_t ODD_BLOCKSIZE = BLOCKSIZE >> 1;
+    vector<char> is_prime(ODD_BLOCKSIZE, true);
+
+    lambda(2L);
+
+    vector<int32_t> primes = {3};
+    // First number in next block that primes[pi] divides.
+    vector<int32_t> next_mod = {9 >> 1};
+
+    uint32_t p_lim = 5;
+    uint64_t p2_lim = p_lim * p_lim;
+
+    for (uint64_t B = 0; B < n; B += BLOCKSIZE) {
+        uint64_t B_END = B + BLOCKSIZE - 1;
+        if (B_END > n) {
+            BLOCKSIZE = (n - B);
+            ODD_BLOCKSIZE = (n - B + 1) >> 1;
+            B_END = n;
+        }
+
+        while (p2_lim <= B_END) {
+            if (isprime_brute(p_lim)) {
+                primes.push_back(p_lim);
+                assert( p2_lim >= B );
+                next_mod.push_back((p2_lim - B) >> 1);
+            }
+            p2_lim += 4 * p_lim + 4;
+            p_lim += 2;
+            //assert( p_lim * p_lim == p2_lim );
+        }
+
+        // reset is_prime
+        std::fill(is_prime.begin(), is_prime.end(), true);
+        if (B == 0) is_prime[0] = 0; // Skip 1
+
+        // Can skip some large pi up to certain B (would have to set next_mod correctly)
+        for (uint32_t pi = 0; pi < primes.size(); pi++) {
+            const uint32_t prime = primes[pi];
+            uint32_t first = next_mod[pi];
+            for (; first < ODD_BLOCKSIZE; first += prime) {
+                is_prime[first] = false;
+            }
+            next_mod[pi] = first - ODD_BLOCKSIZE;
+        }
+        for (uint32_t prime = 0; prime < ODD_BLOCKSIZE; prime++) {
+            if (is_prime[prime]) {
+                lambda(B + 2 * prime + 1);
+            }
+        }
+    }
 }
 
 
@@ -227,8 +289,27 @@ int main(int argc, char** argv)
 {
     uint64_t limit = argc >= 2 ? std::atoll(argv[1]) : 1e9;
 
+    // For commas in numbers.
+    std::cout.imbue(std::locale(""));
+
     if (argc == 2) {
-        get_sieve_primes_segmented(limit);
+        uint64_t count = 0;
+        uint64_t sum = 0;
+        // /*
+        get_sieve_primes_segmented_lambda(
+            limit,
+            [&count, &sum](uint64_t p) { count += 1; sum += p; return; }
+        );
+        // */
+        /*
+        auto primes = get_sieve_primes_segmented(limit);
+        count = primes.size();
+        for (auto prime : primes) {
+            sum += prime;
+        }
+        // */
+        cout << "Found " << count << " Primes <= " << limit << endl;
+        cout << "  Sum " << sum << endl;
         return 0;
     }
 
@@ -236,20 +317,26 @@ int main(int argc, char** argv)
 
     int z = 0;
     size_t count = 0;
+    uint64_t sum = 0;
     for (auto primes : PrimeIterator(start, limit)) {
         if (primes.size() && primes.back() > limit) {
             for (auto p : primes) {
                 count += p <= limit;
+                sum   += (p <= limit) * p;
             }
         } else {
             count += primes.size();
+            for (auto p : primes) {
+                sum += p;
+            }
         }
 
         z += 1;
-        if (primes.size() && (z < 6 || z % 800 == 0))
+        if (primes.size() && (z < 6 || z % (100 * (1<<4)) == 0))
             cout << count << " : " << primes.size() << " "
                 << primes[0] << " to " << primes.back() << endl;
     }
     cout << "Found " << count << " Primes <= " << limit << endl;
+    cout << "  Sum " << sum << endl;
     return 0;
 }
