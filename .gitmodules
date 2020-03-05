@@ -1,0 +1,3 @@
+[submodule "prime-records/prime-gap-list"]
+	path = prime-records/prime-gap-list
+	url = https://github.com/sethtroisi/prime-gap-list.git
