@@ -12,6 +12,9 @@ using namespace std::chrono;
 
 
 int main(int argc, char* argv[]) {
+    // Unbuffered for tee
+    setbuf(stdout, NULL);
+
     printf("Compiled with GMP %d.%d.%d\n",
         __GNU_MP_VERSION, __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL);
 

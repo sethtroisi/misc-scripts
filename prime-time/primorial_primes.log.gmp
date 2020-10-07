@@ -1,0 +1,13 @@
+Compiled with GMP 6.2.99
+31# + 1 =>    prime (0.000042 seconds)
+379# + 1 =>    prime (0.000519 seconds)
+1019# + 1 =>    prime (0.006030 seconds)
+1021# + 1 =>    prime (0.005940 seconds)
+2657# + 1 =>    prime (0.076725 seconds)
+3229# + 1 =>    prime (0.140094 seconds)
+4547# + 1 =>    prime (0.330700 seconds)
+11549# + 1 =>    prime (3.591750 seconds)
+13649# + 1 =>    prime (5.629088 seconds)
+18523# + 1 =>    prime (12.070216 seconds)
+23801# + 1 =>    prime (22.274423 seconds)
+42209# + 1 =>    prime (91.109178 seconds)

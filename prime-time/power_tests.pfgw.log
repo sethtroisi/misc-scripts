@@ -1,6 +1,6 @@
 PFGW Version 4.0.1.64BIT.20191203.x86_Dev [GWNUM 29.8]
 # Composites with no small factors - Evaluator failed
-10^48  + 7 is composite: RES64: [96D613AD1E3719F1] (0.0003s+0.0001s)
+10^48 + 7 is composite: RES64: [96D613AD1E3719F1] (0.0003s+0.0001s)
 10^116 + 7 is composite: RES64: [C0F329A31922D1A9] (0.0001s+0.0001s)
 10^204 + 7 is composite: RES64: [106A7C9377317DBF] (0.0039s+0.0001s)
 10^424 + 7 is composite: RES64: [7F1BD68B11B477B5] (0.0037s+0.0001s)
@@ -19,7 +19,7 @@ PFGW Version 4.0.1.64BIT.20191203.x86_Dev [GWNUM 29.8]
 10^43309 + 7 is composite: RES64: [B47EDB820B485342] (36.6264s+0.0002s)
 10^50340 + 7 is composite: RES64: [13C6BFC6D911ACE5] (46.6699s+0.0004s)
 # Primes - Evaluator failed
-10^60  + 7 is 3-PRP! (0.0000s+0.0002s)
+10^60 + 7 is 3-PRP! (0.0000s+0.0002s)
 10^110 + 7 is 3-PRP! (0.0000s+0.0013s)
 10^134 + 7 is 3-PRP! (0.0001s+0.0001s)
 10^222 + 7 is 3-PRP! (0.0017s+0.0001s)

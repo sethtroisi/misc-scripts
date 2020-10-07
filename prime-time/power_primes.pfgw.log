@@ -1,5 +1,5 @@
 Switching to Exponentiating using GMP
-10^60  + 7 is 3-PRP! (0.0000s+0.0001s)
+10^60 + 7 is 3-PRP! (0.0000s+0.0001s)
 10^110 + 7 is 3-PRP! (0.0000s+0.0001s)
 10^134 + 7 is 3-PRP! (0.0001s+0.0000s)
 Switching to Exponentiating using Woltman FFT's
