@@ -1,7 +1,9 @@
 # Process results in directory into Markdown tables.
 
+import math
 import os
 import re
+
 import gmpy2
 
 POWER_RE = re.compile(r"(10\^([0-9]+)\s*[+-]\s*([0-9]+))")
@@ -14,6 +16,9 @@ header    = columns.format("Number", "Bits", "Prime", "PFGW", "GMP 6.2", "Ratio"
 seperator = "|-----------------|--------|-----------|------------|------------|-------|"
 
 filenames = os.listdir()
+
+# For polyfit of composite
+composite_timings = []
 
 for fn in filenames:
     base, ext = os.path.splitext(fn)
@@ -63,9 +68,37 @@ for fn in filenames:
 
                 rows.append((number, bits, prime, p_s, g_s, ratio))
 
+                if prime == "composite" and bits in range(400, 50000):
+                    composite_timings.append((float(bits * math.log(2)), float(g_s)))
+
             print()
             print(header)
             print(seperator)
             for row in rows:
                 print(columns.format(*row))
             print()
+
+
+if True:
+    import numpy as np
+
+    # Fit Polynomial
+    log, timings = zip(*sorted(composite_timings))
+    print ("N:", len(log), len(timings))
+    for row in sorted(composite_timings):
+        print (row)
+    polyfit = np.polyfit(x=log, y=timings, deg=4)
+    #equation = " + ".join("{:.4e} * pow(K_log, {})".format(coef, p) for p, coef in enumerate(polyfit))
+    equation = " + ".join("{:.4e}{}".format(coef, p * " * K_log") for p, coef in enumerate(polyfit[::-1]))
+    print()
+    print (f"Polyfit coefs: {polyfit}")
+    print (f"Polyfit eqn: {equation}")
+
+    import matplotlib.pyplot as plt
+    plt.scatter(log, timings)
+    plt.plot(log, np.polyval(polyfit, log))
+    plt.xlabel('ln(n)')
+    plt.xscale('log')
+    plt.ylabel('Seconds')
+    plt.yscale('log')
+    plt.show()
