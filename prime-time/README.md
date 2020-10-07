@@ -7,11 +7,12 @@ Run all
 
 ```shell
 $ g++ gmp-test.cpp -lgmp -o gmp-test
-$ for fn in *.txt; do
-echo -e "\nRunning '$fn'";
-time ./gmp-test $fn |& tee ${fn%.*}.log.gmp;
+$ time for fn in *.txt; do
+    echo -e "\nRunning '$fn'";
+    time ./gmp-test $fn |& tee ${fn%.*}.log.gmp;
 done
-
+```
+```
 Running power_primes.txt
 Compiled with GMP 6.2.99
 10^60 + 7 =>    prime (0.000324 seconds)
@@ -19,22 +20,28 @@ Compiled with GMP 6.2.99
 10^134 + 7 =>    prime (0.001101 seconds)
 10^222 + 7 =>    prime (0.002566 seconds)
 10^412 + 7 =>    prime (0.005798 seconds)
-10^700 + 7 =>    prime (0.027295 seconds)
-10^999 + 7 =>    prime (0.055666 seconds)
 ...
-10^7668 + 3 =>    prime (10.233848 seconds)
-10^10470 + 3 =>    prime (22.608524 seconds)
-...
-10^21717 + 7 =>    prime (136.982649 seconds)
-10^23636 + 7 =>    prime (166.993589 seconds)
-...
-10^43186 + 9 =>    prime (715.930984 seconds)
-10^48109 + 9 =>    prime (960.283287 seconds)
+(takes ~ 1.5hr (1.5 for power_primes & 1.5 duplicated in power_tests)
+```
 
+$ rm -f pfgw-prime.log pfgw.log pfgw.ini *.pfgw.log *.pfr
+$ time for fn in *.txt; do
+    echo -e "\nRunning '$fn'";
+    time ./pfgw64 -f0 "$fn" -l"${fn%.*}.pfgw.log"
+done
 
-...
+Running 'power_primes.txt'
+PFGW Version 4.0.1.64BIT.20191203.x86_Dev [GWNUM 29.8]
 
+Output logging to file power_primes.pfgw.log
+Switching to Exponentiating using GMP
+10^60 + 7 is 3-PRP! (0.0021s+0.0001s)
+10^110 + 7 is 3-PRP! (0.0001s+0.0002s)
+10^134 + 7 is 3-PRP! (0.0001s+0.0003s)
+Switching to Exponentiating using Woltman FFT's
+10^222 + 7 is 3-PRP! (0.0029s+0.0001s)
 
+$ python create_table.py
 ```
 
 ## Primorial Numbers (P# + 1)
