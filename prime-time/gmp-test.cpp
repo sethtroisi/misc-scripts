@@ -37,10 +37,12 @@ int main(int argc, char* argv[]) {
             prime_file >> delim;
             prime_file >> add;
 
+            assert(delim == "+");
+
             mpz_ui_pow_ui(ptest, base, exp);
             mpz_add_ui(ptest, ptest, add);
         } else if (exp_sign == '#') {
-            // Lines are of the form "31#+1"
+            // Lines are of the form "31# +1"
             prime_file >> add;
 
             mpz_primorial_ui(ptest, base + 1);
@@ -48,7 +50,6 @@ int main(int argc, char* argv[]) {
                 mpz_add_ui(ptest, ptest, add);
             else
                 mpz_sub_ui(ptest, ptest, -add);
-
         } else {
             printf("What: %d | %c\n", base, exp_sign);
             assert( false );
