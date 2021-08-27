@@ -57,21 +57,28 @@ def process():
     return factors
 
 
-def generate_no_results_for_combosite_factors(known_factors):
-    '''Generate no factor for M... when the only factor is composite'''
-
+def process_results_file(filename):
     factor_results = defaultdict(set)
     found_factor_results = {}
+    no_factor_results = defaultdict(list)
 
-    assert os.path.isfile(RESULTS_FILE), RESULTS_FILE
-    with open(RESULTS_FILE) as results_file:
+    assert os.path.isfile(filename), filename
+    with open(filename) as results_file:
         for result_line in results_file:
-            # Correctly reported
-            #match = re.match("no factor for M([0-9]*) from", result_line)
+            key_match = re.search("for M([0-9]*) from 2\^(..) to 2\^(..)", result_line)
 
-            match = re.match("found ([0-9]*) factors? for M([0-9]*) from 2\^(..) to 2\^(..)", result_line)
+            # Correctly reported
+            match = re.match("no factor for M([0-9]*)", result_line)
             if match:
-                count, e, low, high = map(int, match.groups())
+                assert key_match, result_line
+                e, low, high = map(int, key_match.groups())
+                no_factor_results[e].append((low, high))
+
+            match = re.match("found ([0-9]*) factors?", result_line)
+            if match:
+                assert key_match, result_line
+                count = int(match.group(1))
+                e, low, high = map(int, key_match.groups())
                 key = (e, low, high, result_line.strip())
                 assert found_factor_results.get(key) in (None, count)
                 found_factor_results[key] = count
@@ -83,6 +90,13 @@ def generate_no_results_for_combosite_factors(known_factors):
                 # Assert that mfaktc was not run with StopAfterFactor=2
                 assert '*' not in result_line
                 factor_results[e].add(factor)
+
+    return factor_results, found_factor_results, no_factor_results
+
+
+def generate_no_results_for_combosite_factors(known_factors):
+    '''Generate no factor for M... when the only factor is composite'''
+    factor_results, found_factor_results, _ = process_results_file(RESULTS_FILE)
 
     i = 0
     for (e, low, high, result_line), count in found_factor_results.items():
@@ -327,24 +341,25 @@ def add_new_results(factors):
     return tf_level
 
 
-if REPROCESS:
-    factors = process()
-    verify(factors)
-    save(factors)
-else:
-    factors = load()
+if __name__ == "__main__":
+    if REPROCESS:
+        factors = process()
+        verify(factors)
+        save(factors)
+    else:
+        factors = load()
 
 
-#generate_no_results_for_combosite_factors(factors)
+    #generate_no_results_for_combosite_factors(factors)
 
-# Used to verify the db & local results
+    # Used to verify the db & local results
 
-# Used if you've been running and have new local results
-tf_data = add_new_results(factors)
-add_manual_tf_data(tf_data)
+    # Used if you've been running and have new local results
+    tf_data = add_new_results(factors)
+    add_manual_tf_data(tf_data)
 
-# Used if you want to generate worktodo in effort order.
-generate_worktodo_ordered(factors, tf_data)
+    # Used if you want to generate worktodo in effort order.
+    generate_worktodo_ordered(factors, tf_data)
 
-# Used to generate worktodo with lines that should all find factors.
-#generate_doublecheck(factors)
+    # Used to generate worktodo with lines that should all find factors.
+    #generate_doublecheck(factors)
