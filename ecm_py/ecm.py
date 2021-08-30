@@ -235,13 +235,13 @@ job_start = 0
 
 # Utillity Routines
 
-# return a number, abbreviated if the number is long and we're quiet
 def abbreviate(s, length = 42):
-    return s if (VERBOSE >= v_verbose or len(s) <= length) else s[:18] + "..." + s[-18:]
+  '''return a number, abbreviated if the number is long and we're quiet'''
+  return s if (VERBOSE >= v_verbose or len(s) <= length) else s[:18] + "..." + s[-18:]
 
-# print an error message and exit
 
 def die(x, rv = -1):
+  '''print an error message and exit'''
   output(x)
   sys.exit(rv)
 
@@ -249,9 +249,9 @@ def sig_exit(x, y):
   print('\n')
   die('Signal caught. Terminating...')
 
-# obtain a float or an int from a string
 
 def get_nbr(s):
+  '''obtain a float or an int from a string'''
   m = re.match('[+-]?([0-9]*\.)?[0-9]+([eE][+-]?[0-9]+)?', s)
   return float(s) if m else int(s)
 
@@ -271,8 +271,8 @@ def is_nbr_range(s):
   except:
     return False
 
-# check for command to gmp-ecm or ecm.py that require numeric arguments...
 def is_ecm_cmd(s):
+  '''check for command to gmp-ecm or ecm.py that require numeric arguments...'''
   if s in ['-x0', '-y0', '-param', '-sigma', '-A', '-torsion', '-k',
            '-power', '-dickson', '-c', '-base2', '-maxmem', '-stage1time',
            '-i', '-I', '-ve', '-B2scale', '-go', '-threads', '-pollfiles']:
@@ -280,27 +280,27 @@ def is_ecm_cmd(s):
   else:
     return False
 
-# delete a file (unlink equivalent)
 
 def delete_file(fn):
+  '''delete a file (unlink equivalent)'''
   if os.path.exists(fn):
     try:
       os.unlink(fn)
     except WindowsError:
       pass
 
-# GREP on a list of text lines
 
 def grep_l(pat, lines):
+  '''GREP on a list of text lines'''
   r = []
   for l in lines:
     if re.search(pat, l):
       r += [re.sub('\r|\n', ' ', l)]
   return r
 
-# GREP on a named file
 
 def grep_f(pat, file_path):
+  '''GREP on a named file'''
   if not os.path.exists(file_path):
     raise IOError
   else:
@@ -311,9 +311,9 @@ def grep_f(pat, file_path):
           r += [re.sub('\r|\n', ' ', l)]
     return r
 
-# concatenate file 'app' to file 'to'
 
 def cat_f(app, to):
+  '''concatenate file "app" to file "to"'''
   if os.path.exists(app):
     if VERBOSE >= v_verbose:
       print('-> appending {0:s} to {1:s}'.format(app, to))
@@ -324,9 +324,9 @@ def cat_f(app, to):
           out_file.write(buf)
           buf = in_file.read(8192)
 
-# compress file 'fr' to file 'to'
 
 def gzip_f(fr, to):
+  '''compress file "fr" to file "to"'''
   if not os.path.exists(fr):
     raise IOError
   else:
@@ -337,45 +337,49 @@ def gzip_f(fr, to):
       out_file.writelines(in_file)
       out_file.close()
 
-# remove end of line characters from a line
 
 def chomp(s):
+  '''remove end of line characters from a line'''
   p  = len(s)
   while p and (s[p - 1] == '\r' or s[p - 1] == '\n'):
     p -= 1
   return s[0:p]
 
-# remove comment lines
 
 def chomp_comment(s):
+  '''remove comment lines'''
   return re.sub('#.*', '', s)
 
-# remove all white space in a line
 
 def remove_ws(s):
+  '''remove all white space in a line'''
   return re.sub('\s', '', s)
 
-# normalize paths so that they all have '/', and no '\' or '\\'...
+
 def npath(str):
+  '''normalize paths so that they all have '/', and no '\' or '\\'...'''
   new_str = str.replace('\\', '/')
   while '//' in new_str: new_str = new_str.replace('//', '/')
   return new_str
 
-# produce date/time string for log
 
-# Thu May 29 09:05:25 2014
 def date_time_string() :
+  '''
+  produce date/time string for log
+
+  Example: Thu May 29 09:05:25 2014
+  '''
+
   dt = datetime.datetime.today()
   return dt.strftime('%a %b %d %H:%M:%S %Y ')
 
-# Thu 2014/05/29 09:05:25 UTC
 def time_utc_string():
+  '''Thu 2014/05/29 09:05:25 UTC'''
   return time.strftime("%a %Y/%m/%d %H:%M:%S UTC ", time.gmtime())
 
 
-# write string to log(s):
-
 def write_string_to_log(s):
+  '''write string to log(s):'''
   with open(LOGNAME, 'a') as out_f:
     list = s.split('\n')
     for line in list:
@@ -387,9 +391,9 @@ def output(s, console = True, log = True):
   if log:
     write_string_to_log(s)
 
-# find processor speed
 
 def proc_speed():
+  '''find processor speed'''
   if os.sys.platform.startswith('win'):
     if sys.version_info[0] == 2:
       from _winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
@@ -404,9 +408,9 @@ def proc_speed():
     mhz = float(m.group(1)) if m else 0.0
   return 1e-3 * mhz
 
-# check that an executable file exists
 
 def check_binary(exe):
+  '''check that an executable file exists'''
   if CHECK_BINARIES:
     if not os.path.exists(ECM_PATH + exe + EXE_SUFFIX):
       print('-> Could not find the program: {0:s}'.format(ECM_PATH + exe + EXE_SUFFIX))
@@ -421,10 +425,10 @@ def check_binary(exe):
       print('-> ECM_PATH = {0:s}'.format(ECM_PATH))
       sys.exit(-1)
 
-# run an executable file
 
 def run_exe(exe, args, inp = '', in_file = None, out_file = None,
             log = True, display = VERBOSE, wait = True, resume = 0):
+  '''run an executable file'''
   al = {} if VERBOSE else {'creationflags' : 0x08000000 }
   if sys.platform.startswith('win'):
 #   priority_high = 0x00000080
@@ -486,9 +490,9 @@ def run_exe(exe, args, inp = '', in_file = None, out_file = None,
   else:
     return p.wait()
 
-# generate a list of primes
 
 def prime_list(n):
+  '''generate a list of primes'''
   sieve = [False, False] + [True] * (n - 1)
   for i in range(2, int(n ** 0.5) + 1):
     if sieve[i]:
@@ -496,9 +500,9 @@ def prime_list(n):
       sieve[i * i : n + 1 : i] = [False] * (m + 1)
   return [i for i in range(n + 1) if sieve[i]]
 
-# greatest common divisor
 
 def gcd(x, y):
+  '''greatest common divisor'''
   if x == 0:
     return y
   elif y == 0:
@@ -506,14 +510,16 @@ def gcd(x, y):
   else:
     return gcd(y % x, x)
 
-# Miller Rabin 'probable prime' test
-#
-# returns 'False' if 'n' is definitely composite
-# returns 'True' if 'n' is prime or probably prime
-#
-# 'r' is the number of trials performed
-
 def miller_rabin(n, r = 10):
+  '''
+  Miller Rabin 'probable prime' test
+
+  returns False if 'n' is definitely composite
+  returns True if 'n' is prime or probably prime
+
+  'r' is the number of trials performed
+  '''
+
   t = n - 1
   s = 0
   while not t & 1:
@@ -533,12 +539,14 @@ def miller_rabin(n, r = 10):
         return False
   return True
 
-# determine if n is probably prime - return
-#    0 if n is 0, 1 or composite
-#    1 if n is probably prime
-#    2 if n is definitely prime
-
 def probable_prime_p(nn, r):
+  '''
+  determine if n is probably prime - return
+      0 if n is 0, 1 or composite
+      1 if n is probably prime
+      2 if n is definitely prime
+  '''
+
   n = abs(nn)
   if n <= 2:
     return 2 if n == 2 else 0
@@ -557,9 +565,9 @@ def probable_prime_p(nn, r):
   # Miller-Rabin test
   return 1 if miller_rabin(n, r) else 0
 
-# count the number of lines in a file
 
 def linecount(file_path):
+  '''count the number of lines in a file'''
   count = 0
   if not os.path.exists(file_path):
     die('can\'t open {0:s}'.format(file_path))
@@ -568,10 +576,8 @@ def linecount(file_path):
       count += 1
   return count
 
-# Read the log file to see if we've found all the prime
-# divisors of N yet.
-
 def get_primes(fact_p):
+  '''Read the log file to see if we've found all the prime divisors of N yet.'''
 
   with open(LOGNAME, 'r') as in_f:
     for l in in_f:
@@ -762,9 +768,11 @@ def compare_ecm_args(test_args):
   return True
 
 
-# Perform some very basic input checking to make sure we don't
-# evaluate python code that might do bad things to a users system.
 def is_valid_input(instr):
+  '''
+  Perform some very basic input checking to make sure we don't
+  evaluate python code that might do bad things to a users system.
+  '''
   mystr = str(instr)
 
   if len(mystr) == 0:
@@ -781,8 +789,8 @@ def is_valid_input(instr):
   return True
 
 
-# (old) Function to count number of decimal digits of an input number
 def num_digits_old(n):
+  '''(old) Function to count number of decimal digits of an input number'''
   n = eval(n.replace('^', '**').replace('/', '//'))
   if n > 0:
     digits = int(math.log10(n))+1
@@ -792,9 +800,11 @@ def num_digits_old(n):
     digits = int(math.log10(-n))+2 # +1 if you don't count the '-'
   return digits
 
-# We will run a throwaway curve to have the ecm binary tell us how many digits are in the number...
-# This is useful because the ecm binary already handles everything, including ^, !, and #
 def num_digits(n):
+  '''
+  We will run a throwaway curve to have the ecm binary tell us how many digits are in the number...
+  This is useful because the ecm binary already handles everything, including ^, !, and #
+  '''
   cmd = [ECM_PATH + ECM + EXE_SUFFIX, '10']
   p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
   out, err = p.communicate(n.encode())
@@ -1320,8 +1330,8 @@ def create_job_file():
 
 
 
-# Look inside an output file to find out what values GMP-ECM is using...
 def get_version_info(f):
+  '''Look inside an output file to find out what values GMP-ECM is using...'''
   global need_version_info, version_info
 
   if not os.path.exists(f): return
@@ -1335,8 +1345,9 @@ def get_version_info(f):
         output('{0:s}'.format(version_info))
         return
 
-# Look inside an output file to find out what values GMP-ECM is using...
+
 def get_using_line(f):
+  '''Look inside an output file to find out what values GMP-ECM is using...'''
   global need_using_line, using_line, intNumThreads
 
   if not os.path.exists(f): return
@@ -1382,8 +1393,8 @@ def get_step2_time(f):
   return t2_time
 
 
-# this function will return a list of each 'B1:param:sigma' that it finds in an output file
 def get_out_fin(f):
+  '''this function will return a list of each 'B1:param:sigma' that it finds in an output file'''
   if not os.path.exists(f):
     return []
 
