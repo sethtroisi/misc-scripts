@@ -2168,15 +2168,15 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
 
 # str_ver = '0.30'
 # str_date = '30th Nov 2014'.rjust(13)
-str_ver = '0.44'
-str_date = '31st May 2019'.rjust(13)
+str_ver = '0.45'
+str_date = '30st Aug 2021'.rjust(13)
 
 if VERBOSE >= v_normal:
   print('-> ___________________________________________________________________')
   print('-> | Running ecm.py, a Python driver for distributing GMP-ECM work   |')
   print('-> | on a single machine.  It is copyright, 2011-2019, David Cleaver |')
   print('-> | and is a conversion of factmsieve.py that is Copyright, 2010,   |')
-  print('-> | Brian Gladman. Version {0:s} (Python 2.6 or later) {1:s} |'.format(str_ver, str_date))
+  print('-> | Brian Gladman. Version {0:s} {1:s} (Python 3)            |'.format(str_ver, str_date))
   print('-> |_________________________________________________________________|')
   print(' ')
 else:
