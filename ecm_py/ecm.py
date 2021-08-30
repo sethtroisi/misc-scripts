@@ -45,14 +45,30 @@
 
 from __future__ import print_function
 
-import os, random, re, functools, string, socket, signal, smtplib
-import time, subprocess, gzip, glob, math, tempfile, datetime, sys
-import atexit, threading, collections, multiprocessing, platform
+import atexit
+import collections
+import datetime
+import functools
+import glob
+import gzip
+import math
+import multiprocessing
+import os
+import platform
+import random
+import re
+import shutil
+import signal
+import smtplib
+import socket
+import string
+import subprocess
+import sys
+import tempfile
+import threading
+import time
 
-try:
-    from Queue import Queue, Empty
-except ImportError:
-    from queue import Queue, Empty  # python 3.x
+from queue import Queue, Empty  # python 3.x
 
 
 
@@ -259,7 +275,7 @@ def is_nbr(s):
   try:
     float(s)
     return True
-  except:
+  except ValueError:
     return False
 
 def is_nbr_range(s):
@@ -268,17 +284,14 @@ def is_nbr_range(s):
     float(ss[0])
     float(ss[1])
     return True
-  except:
+  except (ValueError, IndexError):
     return False
 
 def is_ecm_cmd(s):
   '''check for command to gmp-ecm or ecm.py that require numeric arguments...'''
-  if s in ['-x0', '-y0', '-param', '-sigma', '-A', '-torsion', '-k',
+  return s in ['-x0', '-y0', '-param', '-sigma', '-A', '-torsion', '-k',
            '-power', '-dickson', '-c', '-base2', '-maxmem', '-stage1time',
-           '-i', '-I', '-ve', '-B2scale', '-go', '-threads', '-pollfiles']:
-    return True
-  else:
-    return False
+           '-i', '-I', '-ve', '-B2scale', '-go', '-threads', '-pollfiles']
 
 
 def delete_file(fn):
@@ -295,7 +308,7 @@ def grep_l(pat, lines):
   r = []
   for l in lines:
     if re.search(pat, l):
-      r += [re.sub('\r|\n', ' ', l)]
+      r.append([re.sub('\r|\n', ' ', l)])
   return r
 
 
@@ -303,13 +316,11 @@ def grep_f(pat, file_path):
   '''GREP on a named file'''
   if not os.path.exists(file_path):
     raise IOError
-  else:
-    r = []
-    with open(file_path, 'r') as in_file:
-      for l in in_file:
-        if re.search(pat, l):
-          r += [re.sub('\r|\n', ' ', l)]
-    return r
+
+  r = []
+  with open(file_path, 'r') as in_file:
+    r.extend(grep_l(pat, in_file))
+  return r
 
 
 def cat_f(app, to):
@@ -319,10 +330,7 @@ def cat_f(app, to):
       print('-> appending {0:s} to {1:s}'.format(app, to))
     with open(to, 'ab') as out_file:
       with open(app, 'rb') as in_file:
-        buf = in_file.read(8192)
-        while buf:
-          out_file.write(buf)
-          buf = in_file.read(8192)
+        shutil.copyfileobj(in_file, out_file)
 
 
 def gzip_f(fr, to):
@@ -340,10 +348,7 @@ def gzip_f(fr, to):
 
 def chomp(s):
   '''remove end of line characters from a line'''
-  p  = len(s)
-  while p and (s[p - 1] == '\r' or s[p - 1] == '\n'):
-    p -= 1
-  return s[0:p]
+  return s.rstrip()
 
 
 def chomp_comment(s):
@@ -373,6 +378,7 @@ def date_time_string() :
   dt = datetime.datetime.today()
   return dt.strftime('%a %b %d %H:%M:%S %Y ')
 
+
 def time_utc_string():
   '''Thu 2014/05/29 09:05:25 UTC'''
   return time.strftime("%a %Y/%m/%d %H:%M:%S UTC ", time.gmtime())
@@ -381,9 +387,10 @@ def time_utc_string():
 def write_string_to_log(s):
   '''write string to log(s):'''
   with open(LOGNAME, 'a') as out_f:
-    list = s.split('\n')
-    for line in list:
+    s_lines = s.split('\n')
+    for line in s_lines:
       print(time_utc_string() + line, file = out_f)
+
 
 def output(s, console = True, log = True):
   if console and VERBOSE >= v_normal:
@@ -2361,7 +2368,7 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
         print('***** ERROR: Unknown B1 value; ' + sargv[-1])
 
     # The last option should be B1, append that here...
-    if strB1 + strB2 == '':
+    if strB1 == '' and strB2 == '':
       die('***** ERROR: Unable to find valid B1/B2 values.')
 
     if set_args: ecm_args += (strB1 + strB2)
