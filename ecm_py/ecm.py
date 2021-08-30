@@ -266,11 +266,6 @@ def sig_exit(x, y):
   die('Signal caught. Terminating...')
 
 
-def get_nbr(s):
-  '''obtain a float or an int from a string'''
-  m = re.match('[+-]?([0-9]*\.)?[0-9]+([eE][+-]?[0-9]+)?', s)
-  return float(s) if m else int(s)
-
 def is_nbr(s):
   try:
     float(s)
@@ -303,26 +298,6 @@ def delete_file(fn):
       pass
 
 
-def grep_l(pat, lines):
-  '''GREP on a list of text lines'''
-  r = []
-  for l in lines:
-    if re.search(pat, l):
-      r.append([re.sub('\r|\n', ' ', l)])
-  return r
-
-
-def grep_f(pat, file_path):
-  '''GREP on a named file'''
-  if not os.path.exists(file_path):
-    raise IOError
-
-  r = []
-  with open(file_path, 'r') as in_file:
-    r.extend(grep_l(pat, in_file))
-  return r
-
-
 def cat_f(app, to):
   '''concatenate file "app" to file "to"'''
   if os.path.exists(app):
@@ -333,50 +308,11 @@ def cat_f(app, to):
         shutil.copyfileobj(in_file, out_file)
 
 
-def gzip_f(fr, to):
-  '''compress file "fr" to file "to"'''
-  if not os.path.exists(fr):
-    raise IOError
-  else:
-    if VERBOSE >= v_verbose:
-      print('compressing {0:s} to {1:s}'.format(fr, to))
-    with open(fr, 'rb') as in_file:
-      out_file = gzip.open(to, 'ab')
-      out_file.writelines(in_file)
-      out_file.close()
-
-
-def chomp(s):
-  '''remove end of line characters from a line'''
-  return s.rstrip()
-
-
-def chomp_comment(s):
-  '''remove comment lines'''
-  return re.sub('#.*', '', s)
-
-
-def remove_ws(s):
-  '''remove all white space in a line'''
-  return re.sub('\s', '', s)
-
-
 def npath(str):
   '''normalize paths so that they all have '/', and no '\' or '\\'...'''
   new_str = str.replace('\\', '/')
   while '//' in new_str: new_str = new_str.replace('//', '/')
   return new_str
-
-
-def date_time_string() :
-  '''
-  produce date/time string for log
-
-  Example: Thu May 29 09:05:25 2014
-  '''
-
-  dt = datetime.datetime.today()
-  return dt.strftime('%a %b %d %H:%M:%S %Y ')
 
 
 def time_utc_string():
@@ -397,23 +333,6 @@ def output(s, console = True, log = True):
     print(s)
   if log:
     write_string_to_log(s)
-
-
-def proc_speed():
-  '''find processor speed'''
-  if os.sys.platform.startswith('win'):
-    if sys.version_info[0] == 2:
-      from _winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
-    else:
-      from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
-    h = OpenKey(HKEY_LOCAL_MACHINE,
-                'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0')
-    mhz = float(QueryValueEx(h, '~MHz')[0])
-  else:
-    tmp = grep_f('cpu MHz\s+:\s+', '/proc/cpuinfo')
-    m = re.search('\s*cpu MHz\s+:\s+([0-9]+)', tmp[0])
-    mhz = float(m.group(1)) if m else 0.0
-  return 1e-3 * mhz
 
 
 def check_binary(exe):
@@ -497,128 +416,6 @@ def run_exe(exe, args, inp = '', in_file = None, out_file = None,
   else:
     return p.wait()
 
-
-def prime_list(n):
-  '''generate a list of primes'''
-  sieve = [False, False] + [True] * (n - 1)
-  for i in range(2, int(n ** 0.5) + 1):
-    if sieve[i]:
-      m = n // i - i
-      sieve[i * i : n + 1 : i] = [False] * (m + 1)
-  return [i for i in range(n + 1) if sieve[i]]
-
-
-def gcd(x, y):
-  '''greatest common divisor'''
-  if x == 0:
-    return y
-  elif y == 0:
-    return x
-  else:
-    return gcd(y % x, x)
-
-def miller_rabin(n, r = 10):
-  '''
-  Miller Rabin 'probable prime' test
-
-  returns False if 'n' is definitely composite
-  returns True if 'n' is prime or probably prime
-
-  'r' is the number of trials performed
-  '''
-
-  t = n - 1
-  s = 0
-  while not t & 1:
-    t >>= 1
-    s += 1
-  for i in range(r):
-    a = random.randint(2, n - 1)
-    x = pow(a, t, n)
-    if x != 1 and x != n - 1:
-      for j in range(s - 1):
-        x = (x * x) % n
-        if x == 1:
-          return False
-        if x == n - 1:
-          break
-      else:
-        return False
-  return True
-
-def probable_prime_p(nn, r):
-  '''
-  determine if n is probably prime - return
-      0 if n is 0, 1 or composite
-      1 if n is probably prime
-      2 if n is definitely prime
-  '''
-
-  n = abs(nn)
-  if n <= 2:
-    return 2 if n == 2 else 0
-
-  # trial division
-  for p in prime_list(1000):
-    if not n % p:
-      return 2 if n == p else 0
-    if p * p > n:
-      return 2
-
-  # Fermat test
-  if pow(random.randint(2, n - 1), n - 1, n) != 1:
-    return 0
-
-  # Miller-Rabin test
-  return 1 if miller_rabin(n, r) else 0
-
-
-def linecount(file_path):
-  '''count the number of lines in a file'''
-  count = 0
-  if not os.path.exists(file_path):
-    die('can\'t open {0:s}'.format(file_path))
-  with open(file_path, 'r') as in_file:
-    for l in in_file:
-      count += 1
-  return count
-
-def get_primes(fact_p):
-  '''Read the log file to see if we've found all the prime divisors of N yet.'''
-
-  with open(LOGNAME, 'r') as in_f:
-    for l in in_f:
-      l = chomp(l)
-      m1 = re.search('r\d+=(\d+)\s+', l)
-      if m1:
-        val = int(m1.group(1))
-        if len(val) > 1 and  len(val) < len(fact_p['ndivfree']):
-          # Is this a prime divisor or composite?
-          m2 = re.search('\(pp(\d+)\)', l)
-          if m2:
-            # If this is a prime we don't already have, add it.
-            found = False
-            for p in fact_p['primes']:
-              if val == p:
-                found = True
-            if not found:
-              fact_p['primes'].append(val)
-          else:
-            fact_p['comps'].append(val)
-
-  # Now, try to figure out if we have all the prime factors:
-  x = itertools.reduce(lambda x,y : x * y, fact_p['primes'], 1)
-  if x == fact_p['ndivfree'] or probab_prime_p(fact_p['ndivfree'] // x, 10):
-    if x != fact_p['ndivfree']:
-      fact_p['primes'].append(fact_p['ndivfree'] // x)
-    for p in fact_p['primes']:
-      cs = '-> p: {0:s} (pp{1:d})'.format(val, len(val))
-      output(cs)
-    return True
-  # Here, we could try to recover other factors by division,
-  # but until we have a primality test available, this would
-  # be pointless since we couldn't really know if we're done.
-  return False
 
 def sendemail(from_addr, to_addr_list, cc_addr_list,
               subject, message,
@@ -795,17 +592,6 @@ def is_valid_input(instr):
   # If we get down here, all the characters must have been valid...
   return True
 
-
-def num_digits_old(n):
-  '''(old) Function to count number of decimal digits of an input number'''
-  n = eval(n.replace('^', '**').replace('/', '//'))
-  if n > 0:
-    digits = int(math.log10(n))+1
-  elif n == 0:
-    digits = 1
-  else:
-    digits = int(math.log10(-n))+2 # +1 if you don't count the '-'
-  return digits
 
 def num_digits(n):
   '''
@@ -1213,6 +999,7 @@ def monitor_ecm_threads():
     del procs[i]
   return ret
 
+
 def update_job_file():
   global ecm_job, ecm_n, ecm_args, prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2
 
@@ -1220,6 +1007,7 @@ def update_job_file():
     out_file.write('{0:s}\n'.format(ecm_n))
     out_file.write('# {0:s}\n'.format(ecm_args))
     out_file.write('# {0:d} {1:.3f} {2:.3f}\n'.format(prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2))
+
 
 def find_work_done():
   global prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2, prev_ecm_s1_completed, time_str
