@@ -1890,129 +1890,127 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
   ecm_args2 = ''
 
   while i < len(sargv)-1:
-    myString = sargv[i]
-    if myString == '-c':
+    arg = sargv[i]
+    next_arg = sargv[i+1] if len(sargv) > i+1 else ""
+
+    if arg == '-c':
       try:
-        if not ecm_c_has_changed: ecm_c = int(sargv[i+1])
+        if not ecm_c_has_changed: ecm_c = int(next_arg)
         if new_curves > 0: ecm_c = new_curves
         if set_args: ecm_args += ' -c ' + str(ecm_c)
         i = i+1
       except:
-        die('-> *** Error: invalid option for -c: {0:s}'.format(sargv[i+1]))
-    elif myString == '-maxmem':
+        die('-> *** Error: invalid option for -c: {0:s}'.format(next_arg))
+    elif arg == '-maxmem':
       try:
-        ecm_maxmem = int(sargv[i+1])
+        ecm_maxmem = int(next_arg)
         if set_args: ecm_args += ' -maxmem ' + str(ecm_maxmem)
         i = i+1
       except:
         die('-> *** Error: invalid option for -maxmem: {0:s}'
-            .format(sargv[i+1]))
-    elif myString == '-threads':
+            .format(next_arg))
+    elif arg == '-threads':
       try:
-        intNumThreads = int(sargv[i+1])
+        intNumThreads = int(next_arg)
         i = i+1
       except:
-        die('-> *** Error: invalid option for -threads: {0:s}'
-            .format(sargv[i+1]))
-    elif myString == '-one':
+        die('-> *** Error: invalid option for -threads: {0:s}'.format(next_arg))
+    elif arg == '-one':
       # The design of this script is to only find one factor per job
       # We put this here for the sake of completeness
       if set_args: ecm_args += ' -one'
       ecm_args1 += ' -one'
-    elif myString == '-x0':
-      if set_args: ecm_args += ' -x0 ' + sargv[i+1]
-      ecm_args1 += ' -x0 ' + sargv[i+1]
+    elif arg == '-x0':
+      if set_args: ecm_args += ' -x0 ' + next_arg
+      ecm_args1 += ' -x0 ' + next_arg
       i = i+1
-    elif myString == '-sigma':
-      if set_args: ecm_args += ' -sigma ' + sargv[i+1]
-      ecm_args1 += ' -sigma ' + sargv[i+1]
+    elif arg == '-sigma':
+      if set_args: ecm_args += ' -sigma ' + next_arg
+      ecm_args1 += ' -sigma ' + next_arg
       i = i+1
-    elif myString == '-A':
-      if set_args: ecm_args += ' -A ' + sargv[i+1]
-      ecm_args1 += ' -A ' + sargv[i+1]
+    elif arg == '-A':
+      if set_args: ecm_args += ' -A ' + next_arg
+      ecm_args1 += ' -A ' + next_arg
       i = i+1
-    elif myString == '-k':
-      if set_args: ecm_args += ' -k ' + sargv[i]
-      ecm_args1 += ' -k ' + sargv[i+1]
+    elif arg == '-k':
+      if set_args: ecm_args += ' -k ' + next_arg
+      ecm_args1 += ' -k ' + next_arg
       try:
-        ecm_k = int(sargv[i+1])
+        ecm_k = int(next_arg)
       except:
-        die('-> *** Error: invalid option for -k: {0:s}'.format(sargv[i+1]))
+        die('-> *** Error: invalid option for -k: {0:s}'.format(next_arg))
       i = i+1
-    elif myString == '-power':
-      if set_args: ecm_args += ' -power ' + sargv[i+1]
-      ecm_args1 += ' -power ' + sargv[i+1]
+    elif arg == '-power':
+      if set_args: ecm_args += ' -power ' + next_arg
+      ecm_args1 += ' -power ' + next_arg
       i = i+1
-    elif myString == '-dickson':
-      if set_args: ecm_args += ' -dickson ' + sargv[i+1]
-      ecm_args1 += ' -dickson ' + sargv[i+1]
+    elif arg == '-dickson':
+      if set_args: ecm_args += ' -dickson ' + next_arg
+      ecm_args1 += ' -dickson ' + next_arg
       i = i+1
-    elif myString == '-base2':
-      if set_args: ecm_args += ' -base2 ' + sargv[i+1]
-      ecm_args1 += ' -base2 ' + sargv[i+1]
+    elif arg == '-base2':
+      if set_args: ecm_args += ' -base2 ' + next_arg
+      ecm_args1 += ' -base2 ' + next_arg
       i = i+1
-    elif myString == '-stage1time':
-      if set_args: ecm_args += ' -stage1time ' + sargv[i+1]
-      ecm_args1 += ' -stage1time ' + sargv[i+1]
+    elif arg == '-stage1time':
+      if set_args: ecm_args += ' -stage1time ' + next_arg
+      ecm_args1 += ' -stage1time ' + next_arg
       i = i+1
-    elif myString == '-i':
-      if set_args: ecm_args += ' -i ' + sargv[i+1]
-      ecm_args1 += ' -i ' + sargv[i+1]
+    elif arg == '-i':
+      if set_args: ecm_args += ' -i ' + next_arg
+      ecm_args1 += ' -i ' + next_arg
       i = i+1
-    elif myString == '-I':
-      if set_args: ecm_args += ' -I ' + sargv[i+1]
-      ecm_args1 += ' -I ' + sargv[i+1]
+    elif arg == '-I':
+      if set_args: ecm_args += ' -I ' + next_arg
+      ecm_args1 += ' -I ' + next_arg
       i = i+1
-    elif myString == '-param':
-      if set_args: ecm_args += ' -param ' + sargv[i+1]
-      ecm_args1 += ' -param ' + sargv[i+1]
+    elif arg == '-param':
+      if set_args: ecm_args += ' -param ' + next_arg
+      ecm_args1 += ' -param ' + next_arg
       i = i+1
-    elif myString == '-t':
-      if set_args: ecm_args += ' -t ' + sargv[i+1]
-      ecm_args1 += ' -t ' + sargv[i+1]
+    elif arg == '-t':
+      if set_args: ecm_args += ' -t ' + next_arg
+      ecm_args1 += ' -t ' + next_arg
       i = i+1
-    elif myString == '-ve':
-      if set_args: ecm_args += ' -ve ' + sargv[i+1]
-      ecm_args1 += ' -ve ' + sargv[i+1]
+    elif arg == '-ve':
+      if set_args: ecm_args += ' -ve ' + next_arg
+      ecm_args1 += ' -ve ' + next_arg
       i = i+1
-    elif myString == '-B2scale':
-      if set_args: ecm_args += ' -B2scale ' + sargv[i+1]
-      ecm_args1 += ' -B2scale ' + sargv[i+1]
+    elif arg == '-B2scale':
+      if set_args: ecm_args += ' -B2scale ' + next_arg
+      ecm_args1 += ' -B2scale ' + next_arg
       i = i+1
-    elif myString == '-go':
-      if set_args: ecm_args += ' -go ' + sargv[i+1]
-      ecm_args1 += ' -go ' + sargv[i+1]
+    elif arg == '-go':
+      if set_args: ecm_args += ' -go ' + next_arg
+      ecm_args1 += ' -go ' + next_arg
       i = i+1
-    elif myString == '-inp':
-      inp_file = sargv[i+1]
+    elif arg == '-inp':
+      inp_file = next_arg
       i = i+1
-    elif myString == '-r':
+    elif arg == '-r':
       intResume = 1
-      resume_file = sargv[i+1]
+      resume_file = next_arg
       if not read_resume_file(resume_file):
         die('-> *** Error: resume file does not exist: {0:s}'.format(resume_file))
       if job_complete:
         die(' ')
       i = i+1
-    elif myString == '-out':
-      output_file = sargv[i+1]
+    elif arg == '-out':
+      output_file = next_arg
       save_to_file = True
       i = i+1
-    elif myString == '-resume':
-      ecm_resume_file = sargv[i+1]
+    elif arg == '-resume':
+      ecm_resume_file = next_arg
       ecm_resume_job = True
       i = i+1
-    elif myString == '-pollfiles':
+    elif arg == '-pollfiles':
       try:
-        poll_file_delay = int(sargv[i+1])
-        if poll_file_delay < 1:
-          die('-> *** Error: invalid option for -pollfiles: {0:s}'
-              .format(sargv[i+1]))
+        poll_file_delay = int(next_arg)
+        assert poll_file_delay >= 1
         i = i+1
       except:
-        die('-> *** Error: invalid option for -pollfiles: {0:s}'
-            .format(sargv[i+1]))
-    elif is_nbr(myString):
+        die('-> *** Error: invalid option for -pollfiles: {0:s}'.format(next_arg))
+    elif is_nbr(arg):
       # This should only match B1 and B2 options at the "end" of the ecm command line...
       # If we encounter a number by itself, do not append it to ecm_args here...
       pass
