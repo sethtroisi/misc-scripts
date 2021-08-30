@@ -19,13 +19,14 @@ import gmpy2
 
 from bs4 import BeautifulSoup
 
-from find_existing import process_results_file
+from find_existing import process_results_file, generate_no_results_for_combosite_factors
 
 
 GHZ_DAYS_PER_DAY = 1400
 DIR = "past_1g/"
 RESULTS_FILE = os.path.join(DIR, "results.txt")
-
+NEW_RESULTS  = os.path.join(DIR, "new_results.txt")
+NEW_PREFIX = "UID: Seth_Tr/1080, "
 
 def work_time(M, tf):
     '''Approx time(seconds) to TF M from 2^(tf-1) to 2^tf'''
@@ -47,8 +48,9 @@ def load_cached_or_refresh(url, filename, max_age=12 * 3600):
 
 
 def load_many():
+    OFFSET = 0
     URL = "https://www.mersenne.ca/manyfactors.php"
-    PARAMS = "?s=n&o=d&exp_min=1000000000&exp_max=9999999967&fac_min=5&fac_max=20&pct_min=0.000000&pct_max=100.000000"
+    PARAMS = "?s=n&o=d&exp_min=1000000000&exp_max=9999999967&fac_min=8&p=" + str(OFFSET)
 
     raw_page = load_cached_or_refresh(URL + PARAMS, os.path.join(DIR, "many_1g.html"))
     print("len(page):", len(raw_page))
@@ -96,49 +98,77 @@ def load_exponent(exponent):
 
 
 if __name__ == "__main__":
-    found_factors, found_factor_results, no_factor_results = process_results_file(RESULTS_FILE)
     tested = defaultdict(set)
-    for M, low, high, _ in found_factor_results:
-        for bit in range(low, high):
-            tested[M].add(bit)
-    for M, values in no_factor_results.items():
-        for low, high in values:
+    if os.path.isfile(RESULTS_FILE):
+        found_factors, found_factor_results, no_factor_results = process_results_file(RESULTS_FILE)
+        for M, low, high, _ in found_factor_results:
             for bit in range(low, high):
                 tested[M].add(bit)
+        for M, values in no_factor_results.items():
+            for low, high, _ in values:
+                for bit in range(low, high):
+                    tested[M].add(bit)
+    else:
+        found_factors = {}
 
     total_tested = sum(len(bits) for bits in tested.values())
     print("Found", total_tested, "ranges")
 
-    lines = 0
-    with open("past_1g/worktodo.txt", "w") as f:
-        for exponent in load_many():
-            # Let's do 1-70 for all of these:
-            factors, bits = load_exponent(exponent)
-            M = int(exponent)
-            factors = sorted(factors)
-            print("\t", M, "\t", len(factors), factors[:3], "...", factors[-2:])
+    parsed = {}
+    for exponent in load_many():
+        M = int(exponent)
+        factors, bits = load_exponent(exponent)
+        parsed[M] = (factors, bits)
 
-            for found in found_factors[M]:
-                if found not in factors and gmpy2.is_prime(found):
-                    print("Found new factor!")
-                    print(M, found)
+        factors = sorted(factors)
 
-            todo = []
-            if any(bit not in tested[M] for bit in range(1,72)):
-                f.write(f"Factor={exponent},1,72\n")
-                todo.append("[1,72)")
-                lines += 1
+        print("\t", M, "\t", len(factors), factors[:3], "...", factors[-2:])
+        for found in found_factors.get(M, tuple()):
+            if found not in factors and gmpy2.is_prime(found):
+                print("Found new factor!")
+                print(M, found)
 
-            for bit in range(72, 80):
-                if bit not in bits and bit not in tested[M]:
-                    if work_time(int(exponent), bit) < 120:
-                        f.write(f"Factor={exponent},{bit},{bit+1}\n")
-                        lines += 1
-                        todo.append(str(bit))
+    if False:
+        # For results lines not in bits
+        with open(NEW_RESULTS, "w") as new_results_file:
+            #for M, low, high, line in found_factor_results:
+            #    for bit in range(low, high):
+            #        tested[M].add(bit)
+            for M, values in no_factor_results.items():
+                for low, high, line in values:
+                    if low not in bits:
+                        new_results_file.write(NEW_PREFIX + line + "\n")
+                        print("\tNew result:", line)
 
-            if todo:
-                print("\t",", ".join(todo))
+        print()
+        print("Consider adding these NF from composite lines")
+        generate_no_results_for_combosite_factors({M: list(f) for M, (f,_) in parsed.items()}, RESULTS_FILE)
 
-            print()
 
-    print("Wrote", lines, "worktodo entries")
+    if True:
+        lines = 0
+        with open(os.path.join(DIR, "worktodo.txt"), "w") as f:
+            for M, (factors, bits) in sorted(parsed.items()):
+                # Let's do 1-70 for all of these:
+                factors = sorted(factors)
+                print("\t", M, "\t", len(factors), factors[:3], "...", factors[-2:])
+
+                todo = []
+                if any(bit not in tested[M] for bit in range(1,72)):
+                    f.write(f"Factor={M},1,72\n")
+                    todo.append("[1,72)")
+                    lines += 1
+
+                for bit in range(72, 80):
+                    if bit not in bits and bit not in tested[M]:
+                        if work_time(M, bit) < 10 * 60:
+                            f.write(f"Factor={M},{bit},{bit+1}\n")
+                            lines += 1
+                            todo.append(str(bit))
+
+                if todo:
+                    print("\t",", ".join(todo))
+
+                print()
+        print("Wrote", lines, "worktodo entries")
+

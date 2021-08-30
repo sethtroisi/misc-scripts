@@ -65,6 +65,7 @@ def process_results_file(filename):
     assert os.path.isfile(filename), filename
     with open(filename) as results_file:
         for result_line in results_file:
+            result_line = result_line.strip()
             key_match = re.search("for M([0-9]*) from 2\^(..) to 2\^(..)", result_line)
 
             # Correctly reported
@@ -72,14 +73,14 @@ def process_results_file(filename):
             if match:
                 assert key_match, result_line
                 e, low, high = map(int, key_match.groups())
-                no_factor_results[e].append((low, high))
+                no_factor_results[e].append((low, high, result_line))
 
             match = re.match("found ([0-9]*) factors?", result_line)
             if match:
                 assert key_match, result_line
                 count = int(match.group(1))
                 e, low, high = map(int, key_match.groups())
-                key = (e, low, high, result_line.strip())
+                key = (e, low, high, result_line)
                 assert found_factor_results.get(key) in (None, count)
                 found_factor_results[key] = count
 
@@ -94,9 +95,9 @@ def process_results_file(filename):
     return factor_results, found_factor_results, no_factor_results
 
 
-def generate_no_results_for_combosite_factors(known_factors):
+def generate_no_results_for_combosite_factors(known_factors, results_filename):
     '''Generate no factor for M... when the only factor is composite'''
-    factor_results, found_factor_results, _ = process_results_file(RESULTS_FILE)
+    factor_results, found_factor_results, _ = process_results_file(results_filename)
 
     i = 0
     for (e, low, high, result_line), count in found_factor_results.items():
@@ -350,7 +351,7 @@ if __name__ == "__main__":
         factors = load()
 
 
-    #generate_no_results_for_combosite_factors(factors)
+    #generate_no_results_for_combosite_factors(factors, RESULTS_FILE)
 
     # Used to verify the db & local results
 
