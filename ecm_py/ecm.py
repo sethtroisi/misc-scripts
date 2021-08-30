@@ -2031,29 +2031,7 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
 
 
   # If we are using the "-resume" feature of gmp-ecm, we will make some assumptions about the job...
-  # 1) This is designed to be a _simple_ way to speed up resuming ecm by running several resume jobs in parallel.
-  #      ie, we will not try to replicate all resume capabilities of gmp-ecm
-  # 2) If we find identical lines in our resume file, we will only resume one of them and skip the others
-  #      - If this happens, we will print out a notice to the user (if VERBOSE >= v_normal) so they know what is going on
-  # 3) We will use the B1 value in the resume file, and not resume with higher values of B1
-  # 4) We will let gmp-ecm determine which B2 value to use, which can be affected by "-maxmem" and "-k"
-  # 5) We will try to split up the resume work evenly between the threads.
-  #     - We will put total/num_threads resume lines into each file, and total%num_threads files will each get one extra line.
-  #      At the end of a job or when restarting a job, we will write any completed resume lines out to a "finished file"
-  #      This "finished file" will be used to help us keep track of work done, in case we are interrupted and need to (re)resume later
-  #      We will query the output files once every poll_file_delay seconds.
-  #    resume_job_<filename>_inp_t00.txt # input resume file for use by gmp-ecm in thread 0
-  #    resume_job_<filename>_inp_t01.txt # input resume file for use by gmp-ecm in thread 1
-  #    ...etc...
-  #    resume_job_<filename>_out_t00.txt # output file for resume job of gmp-ecm in thread 0
-  #    resume_job_<filename>_out_t01.txt # output file for resume job of gmp-ecm in thread 1
-  #    ...etc...
-  #    resume_job_<filename>_finished.txt # file where we write out each resume line that we have finished with gmp-ecm
-  #    where <filename> is based on the resume file name, but with any "." characters replaced by a dash.
-  # 6) Update so we can pass B1 values to gmp-ecm when resuming Prime95 resume files, which don't include B1 info in the resume line...
-  #    * Important note: Pass in the B1 value you used as a range, if you used B1=43e6 in Prime95, then pass in 43e6-43e6 as B1 here.
-  #    * If you only pass in 43e6, then gmp-ecm will run all of B1 again for each resume line.
-  # If we are "-resume"ing, we'll go straight to that function, and not return to the original calling code...
+  # See comment adjacent to run_ecm_resume_jobs for assumptions and notes.
   p95_b1 = ''
   if ecm_resume_job:
     ecm_args = ''

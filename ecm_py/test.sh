@@ -40,3 +40,6 @@ grep "Found prime factor of 34 digits: 1998447222711143545931606352264121" "$LOG
 green=`tput setaf 2`
 reset=`tput sgr0`
 echo -e "\n${green}Tests passed!${reset}"
+
+rm "resume_job_2_499_t35_curves32-txt_finished.txt"
+rm "$LOGNAME"
