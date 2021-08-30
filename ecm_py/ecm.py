@@ -193,7 +193,7 @@ v_verbose = 2
 vv_verbose = 3
 ecm_args = '' # original arguments passed in to ecm
 ecm_args1 = '' # modified arguments for ecm to spread work out
-ecm_args2 = '' # modified arguments for ecm to spread work out
+ecm_args2 = '' # same as ecm_args1 but with a possible different curves count
 intNumThreads = ECM_THREADS # default number of instances of gmp-ecm to run...
 ecm_job = '' # name of the job file we are currently working on...
 ecm_c = 1 # default number of curves to run...
@@ -507,7 +507,7 @@ def start_ecm_threads():
         procs.append(run_exe(ECM, ecm_args1, in_file = ecm_job, out_file = file_name, wait = False))
         i += 1
     elif ecm_c < intNumThreads:
-      remainder = ecm_c%intNumThreads
+      remainder = ecm_c % intNumThreads
       while i < remainder:
         file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
         procs.append(run_exe(ECM, ecm_args2, in_file = ecm_job, out_file = file_name, wait = False))
@@ -1867,10 +1867,12 @@ def run_ecm_resume_job(p95_b1):
   sys.exit(0)
 
 
-# Parse the command line options, we'll change values as necessary
-# set_args should only be true the first time the program is called
-# we don't want to override the default args with the args from a resumed job
 def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, quiet = False):
+  '''
+  Parse the command line options, we'll change values as necessary.
+  "set_args" should only be true the first time the program is called
+  we don't want to override the default args with the args from a resumed job
+  '''
   global ecm_c, intNumThreads, ecm_args, ecm_args1, ecm_args2, ecm_c_has_changed
   global intResume, output_file, number_list, resume_file, save_to_file, poll_file_delay, inp_file
   global ecm_resume_file, ecm_resume_job
@@ -1878,9 +1880,6 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
   ecm_k = 0
   opt_c = ''
 
-  #if set_args and intResume == 0:
-  #  i = 1
-  #else:
   i = 0
   if 'ecm.py' in sargv[0]: sargv = sargv[1:]
 
@@ -1899,8 +1898,7 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
         if set_args: ecm_args += ' -c ' + str(ecm_c)
         i = i+1
       except:
-        die('-> *** Error: invalid option for -c: {0:s}'
-            .format(sargv[i+1]))
+        die('-> *** Error: invalid option for -c: {0:s}'.format(sargv[i+1]))
     elif myString == '-maxmem':
       try:
         ecm_maxmem = int(sargv[i+1])
@@ -1921,26 +1919,21 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
       # We put this here for the sake of completeness
       if set_args: ecm_args += ' -one'
       ecm_args1 += ' -one'
-      ecm_args2 += ' -one'
     elif myString == '-x0':
       if set_args: ecm_args += ' -x0 ' + sargv[i+1]
       ecm_args1 += ' -x0 ' + sargv[i+1]
-      ecm_args2 += ' -x0 ' + sargv[i+1]
       i = i+1
     elif myString == '-sigma':
       if set_args: ecm_args += ' -sigma ' + sargv[i+1]
       ecm_args1 += ' -sigma ' + sargv[i+1]
-      ecm_args2 += ' -sigma ' + sargv[i+1]
       i = i+1
     elif myString == '-A':
       if set_args: ecm_args += ' -A ' + sargv[i+1]
       ecm_args1 += ' -A ' + sargv[i+1]
-      ecm_args2 += ' -A ' + sargv[i+1]
       i = i+1
     elif myString == '-k':
       if set_args: ecm_args += ' -k ' + sargv[i]
       ecm_args1 += ' -k ' + sargv[i+1]
-      ecm_args2 += ' -k ' + sargv[i+1]
       try:
         ecm_k = int(sargv[i+1])
       except:
@@ -1949,57 +1942,46 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
     elif myString == '-power':
       if set_args: ecm_args += ' -power ' + sargv[i+1]
       ecm_args1 += ' -power ' + sargv[i+1]
-      ecm_args2 += ' -power ' + sargv[i+1]
       i = i+1
     elif myString == '-dickson':
       if set_args: ecm_args += ' -dickson ' + sargv[i+1]
       ecm_args1 += ' -dickson ' + sargv[i+1]
-      ecm_args2 += ' -dickson ' + sargv[i+1]
       i = i+1
     elif myString == '-base2':
       if set_args: ecm_args += ' -base2 ' + sargv[i+1]
       ecm_args1 += ' -base2 ' + sargv[i+1]
-      ecm_args2 += ' -base2 ' + sargv[i+1]
       i = i+1
     elif myString == '-stage1time':
       if set_args: ecm_args += ' -stage1time ' + sargv[i+1]
       ecm_args1 += ' -stage1time ' + sargv[i+1]
-      ecm_args2 += ' -stage1time ' + sargv[i+1]
       i = i+1
     elif myString == '-i':
       if set_args: ecm_args += ' -i ' + sargv[i+1]
       ecm_args1 += ' -i ' + sargv[i+1]
-      ecm_args2 += ' -i ' + sargv[i+1]
       i = i+1
     elif myString == '-I':
       if set_args: ecm_args += ' -I ' + sargv[i+1]
       ecm_args1 += ' -I ' + sargv[i+1]
-      ecm_args2 += ' -I ' + sargv[i+1]
       i = i+1
     elif myString == '-param':
       if set_args: ecm_args += ' -param ' + sargv[i+1]
       ecm_args1 += ' -param ' + sargv[i+1]
-      ecm_args2 += ' -param ' + sargv[i+1]
       i = i+1
     elif myString == '-t':
       if set_args: ecm_args += ' -t ' + sargv[i+1]
       ecm_args1 += ' -t ' + sargv[i+1]
-      ecm_args2 += ' -t ' + sargv[i+1]
       i = i+1
     elif myString == '-ve':
       if set_args: ecm_args += ' -ve ' + sargv[i+1]
       ecm_args1 += ' -ve ' + sargv[i+1]
-      ecm_args2 += ' -ve ' + sargv[i+1]
       i = i+1
     elif myString == '-B2scale':
       if set_args: ecm_args += ' -B2scale ' + sargv[i+1]
       ecm_args1 += ' -B2scale ' + sargv[i+1]
-      ecm_args2 += ' -B2scale ' + sargv[i+1]
       i = i+1
     elif myString == '-go':
       if set_args: ecm_args += ' -go ' + sargv[i+1]
       ecm_args1 += ' -go ' + sargv[i+1]
-      ecm_args2 += ' -go ' + sargv[i+1]
       i = i+1
     elif myString == '-inp':
       inp_file = sargv[i+1]
@@ -2037,7 +2019,6 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
     elif i > 0:
       if set_args: ecm_args += ' ' + sargv[i]
       ecm_args1 += ' ' + sargv[i]
-      ecm_args2 += ' ' + sargv[i]
     i = i+1
 
   if ecm_c < 0:
@@ -2117,15 +2098,19 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
     die('-> *** Error: no input numbers found, quitting.')
 
   if intNumThreads >= 1 and set_args == False:
+    if ecm_maxmem > 0:
+      ecm_args1 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
+      ecm_args2 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
+
+  ecm_args2 = ecm_args1
+  if intNumThreads >= 1 and set_args == False:
     if ecm_c == 0:
       ecm_args1 += ' -c 0'
       ecm_args2 += ' -c 0'
     elif ecm_c != 1:
+      # Here ecm_args1 gets ecm_c // threads, and ecm_args2 gets ecm_c // threads + 1
       ecm_args1 += ' -c {0:d}'.format(ecm_c//intNumThreads)
       ecm_args2 += ' -c {0:d}'.format((ecm_c//intNumThreads)+1)
-    if ecm_maxmem > 0:
-      ecm_args1 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
-      ecm_args2 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
 
   if (intResume == 0) or (intResume == 1 and first == False):
     strB1 = ''
