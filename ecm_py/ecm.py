@@ -85,11 +85,15 @@ from queue import Queue, Empty  # python 3.x
 #       With that, we will look in the given location for the ecm binary.  ie:
 #       If ECM_PATH = '/usr/local/bin/', then we will look for the ecm binary in '/usr/local/bin/<ecm-binary>'
 #       If ECM_PATH = 'd:/math/ecm_py/', then we will look for the ecm binary in 'd:/math/ecm_py/<ecm-binary>'
-ECM_PATH = './'
+ECM_PATH = os.environ.get('ECM_PATH', './')
 
 # Default number of ecm threads to launch
 # Can be overidden on the command line with -threads N
 ECM_THREADS = 2
+
+
+# Logfile
+LOGNAME = os.environ.get('LOGNAME', 'ecm_py.log')
 
 
 # If we encounter a composite factor and/or cofactor, should we continue
@@ -234,7 +238,6 @@ tt_stg1_per_file = {}
 tt_stg2_per_file = {}
 e_total = -1.0
 next_email_interval = 60*email_interval_minutes
-LOGNAME = 'ecm_py.log'
 next_log_interval = log_interval_seconds # log progress info once per day...
 inp_file = '' # used with the -inp option...
 ecm_resume_finished_file = '' # will be set to a filename when using the -resume option...
