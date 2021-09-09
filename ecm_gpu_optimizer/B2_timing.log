@@ -1,0 +1,76 @@
+# Fake entry to allow interpolation
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e1 1e2
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=10, B2=100, polynomial x^1, sigma=0:6482715295332717591
+Step 1 took 1ms
+Step 2 took 0ms
+
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e5
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=100000, polynomial x^1, sigma=0:6926799012360034870
+Step 1 took 135ms
+Step 2 took 1ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e6
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=1000000, polynomial x^1, sigma=0:14123651653613677144
+Step 1 took 134ms
+Step 2 took 9ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e7
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=10000000, polynomial x^2, sigma=0:722698956475750421
+Step 1 took 137ms
+Step 2 took 39ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e8
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=100000000, polynomial Dickson(3), sigma=0:13399537928095086495
+Step 1 took 137ms
+Step 2 took 175ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e9
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=1000000000, polynomial Dickson(6), sigma=0:3209174283661423723
+Step 1 took 137ms
+Step 2 took 810ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e5 1e10
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=100000, B2=10000000000, polynomial Dickson(12), sigma=0:16262934542338412875
+Step 1 took 137ms
+Step 2 took 3898ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e7 1e11
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=10000000, B2=100000000000, polynomial Dickson(12), sigma=0:3067179130673100746
+Step 1 took 13775ms
+Step 2 took 14694ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e7 1e12
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=10000000, B2=1000000000000, polynomial Dickson(30), sigma=0:7890549037317506001
+Step 1 took 13761ms
+Step 2 took 106686ms
+
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e7 3e11
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=10000000, B2=300000000000, polynomial Dickson(30), sigma=0:2099517452794480576
+Step 1 took 13793ms
+Step 2 took 45832ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e7 3e10
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=10000000, B2=30000000000, polynomial Dickson(12), sigma=0:15961430216795963735
+Step 1 took 13792ms
+Step 2 took 6813ms
+five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e6 3e9
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^499-1)/20959 (146 digits)
+Using B1=1000000, B2=3000000000, polynomial Dickson(6), sigma=0:16582080844305552061
+Step 1 took 1363ms
+Step 2 took 1545ms
+
