@@ -2064,3 +2064,8 @@ UID: Seth_Tr/1080, no factor for M2622903683 from 2^78 to 2^79 [mfaktc 0.21 barr
 UID: Seth_Tr/1080, no factor for M2622903683 from 2^79 to 2^80 [mfaktc 0.21 barrett87_mul32_gs]
 UID: Seth_Tr/1080, no factor for M2622903683 from 2^80 to 2^81 [mfaktc 0.21 barrett87_mul32_gs]
 UID: Seth_Tr/1080, no factor for M2622903683 from 2^81 to 2^82 [mfaktc 0.21 barrett87_mul32_gs]
+UID: Seth_Tr/1080, no factor for M3278329211 from 2^79 to 2^80 [mfaktc 0.21 barrett87_mul32_gs]
+UID: Seth_Tr/1080, no factor for M3278329211 from 2^80 to 2^81 [mfaktc 0.21 barrett87_mul32_gs]
+UID: Seth_Tr/1080, no factor for M3278329211 from 2^81 to 2^82 [mfaktc 0.21 barrett87_mul32_gs]
+UID: Seth_Tr/1080, no factor for M1030187299 from 2^77 to 2^78 [mfaktc 0.21 barrett87_mul32_gs]
+UID: Seth_Tr/1080, no factor for M1030187299 from 2^78 to 2^79 [mfaktc 0.21 barrett87_mul32_gs]

@@ -53,11 +53,11 @@ def B2_timing_guess(timings):
     return f
 
 def number_of_curves(B1, B2):
-    process = subprocess.run(["ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
-    #assert process.returncode == 8
+    # ECM should finish rho / dickman calculation quickly
+    process = subprocess.run(["timeout", "0.2", "../../gmp-ecm/ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
     output = process.stdout.split(b"\n")
     CURVES_KEY = b'35\t40\t45\t50\t55\t60\t65\t70\t75\t80'
-    assert CURVES_KEY in output, output
+    assert CURVES_KEY in output, (timeout, output)
     digits = map(int, CURVES_KEY.split())
     expected_curves = map(float, output[output.index(CURVES_KEY) + 1].split())
     return {X: C for X, C in zip(digits, expected_curves)}
@@ -86,47 +86,62 @@ def optimize_t(digits, GPU_SPEEDUP, CPU_CORES):
             return err
 
         #t = minimize(test, 3 * B1, bounds=[[2*B1, 2000*B1]], method="trust-constr")
-        t = bisect(test, 2 * B1, 5000*B1)
+        MAX_B1 = 10 ** 14
+        if test(MAX_B1) < 0:
+            return MAX_B1
+
+        t = bisect(test, 2 * B1, MAX_B1)
         return int(t) #int(t.x[0])
 
 
-    # Good, but low, initial guess
-    B1_best = int(math.exp(digits / 4 + 3))
+    # Good, but a little low, initial guess
+    B1_best = int(math.exp(digits / 4 + 4))
     _, _, timing = time_for_tX(B1_best, 100 * B1_best)
 
     # This is way less efficient than binary search but easier to code
     for i in range(100):
         one_pct = B1_best // 100
-        # Try with 60% larger, 5% larger, 4% smaller and 1% smaller B1
-        for B1_test in (one_pct * 160, one_pct * 105, one_pct * 96, one_pct * 99):
+        # Try with 40% larger, 3% larger, 2% smaller and 1% smaller B1
+        for B1_test in (one_pct * 140, one_pct * 103, one_pct * 98, one_pct * 99):
             B2_test = optimize_B2(B1_test)
             curves_test, _, test_time = time_for_tX(B1_test, B2_test)
             if test_time < timing:
-                print ("\tB1={:<8} B2={:<10}  curves={:<6}\ttime(s): {:.1f}".format(
-                    B1_test, B2_test, curves_test, test_time))
+#                print ("\tB1={:<8} B2={:4.0f}*B1={:<4.2e}  curves={:<6}\ttime(s): {:.1f}".format(
+#                    B1_test, B2_test / B1_test, B2_test, curves_test, test_time))
                 B1_best = B1_test
+                B2_best = B2_test
                 timing = test_time
                 break
         else:
             break
 
-
-    B2_best = optimize_B2(B1_best)
     B2_ratio = B2_best / B1_best
-    curves, _, _ = time_for_tX(B1_test, B2_test)
+    curves, _, _ = time_for_tX(B1_best, B2_best)
     B1_time = int(curves * B1_time_func(B1_best) / GPU_SPEEDUP)
     B2_time = int(curves * (B2_time_func(B2_best) - B2_time_func(B1_best)))
-    print ("B1={}, B2={:.1f}*B1   {} curves".format(B1_best, B2_ratio, curves))
-    print ("Step 1 takes: {} seconds".format(B1_time))
-    print ("Step 2 takes: {} seconds".format(B2_time))
-    print ("Running on GPU + {} cores: {} seconds".format(CPU_CORES, max(B1_time, B2_time / CPU_CORES)))
+    if False:
+        print ("B1={}, B2={:.1f}*B1   {} curves".format(B1_best, B2_ratio, curves))
+        print ("Step 1 takes: {} seconds".format(B1_time))
+        print ("Step 2 takes: {} seconds".format(B2_time))
+        print ("Running on GPU + {} cores: {} seconds".format(CPU_CORES, max(B1_time, B2_time / CPU_CORES)))
+    else:
+        print ("| {:>2}/{:<17}| {:<4} | {:11,} | {:15,} | {:9.0f} | {:13} |".format(
+            GPU_SPEEDUP, CPU_CORES, digits, B1_best, B2_best, B2_ratio, curves))
+
     return (B1_best, B2_best)
 
+
 def optimize():
-    #for digits in range(35, 81, 5):
-    DIGITS = 45
-    GPU_SPEEDUP = 40
-    CPU_CORES = 8
-    optimize_t(DIGITS, GPU_SPEEDUP, CPU_CORES)
+#    for digits in range(35, 61, 5):
+#        optimize_t(digits, 1, 1)
+
+    for GPU_SPEEDUP in (20, 30, 40, 50):
+        for CPU_CORES in (1, 4, 8, 12):
+            label = "{} GPU + {} cores".format(
+                ["Slow", "Medium", "Fast", "Extreme"][(GPU_SPEEDUP - 20) // 10], CPU_CORES)
+            print ("| {:19} | {:4} | {:11} | {:15} | {:9} | {:13} |".format(
+                label, *(("",) * 5)))
+            for digits in range(35, 61, 5):
+                optimize_t(digits, GPU_SPEEDUP, CPU_CORES)
 
 optimize()
