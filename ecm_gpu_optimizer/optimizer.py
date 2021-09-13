@@ -54,10 +54,12 @@ def B2_timing_guess(timings):
 
 def number_of_curves(B1, B2):
     # ECM should finish rho / dickman calculation quickly
-    process = subprocess.run(["timeout", "0.2", "../../gmp-ecm/ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
+    process = subprocess.run(["timeout", "0.2", "ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
     output = process.stdout.split(b"\n")
     CURVES_KEY = b'35\t40\t45\t50\t55\t60\t65\t70\t75\t80'
-    assert CURVES_KEY in output, (timeout, output)
+    # This will fail if you haven't applied https://gitlab.inria.fr/zimmerma/ecm/-/merge_requests/13
+    # You may also need to change "ecm" to "../gmp-ecm/ecm" or some other local path
+    assert CURVES_KEY in output, (output, "see comment above about zimmerma/ecm/#13")
     digits = map(int, CURVES_KEY.split())
     expected_curves = map(float, output[output.index(CURVES_KEY) + 1].split())
     return {X: C for X, C in zip(digits, expected_curves)}
