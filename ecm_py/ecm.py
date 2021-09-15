@@ -45,6 +45,7 @@
 
 from __future__ import print_function
 
+import argparse
 import atexit
 import collections
 import datetime
@@ -1870,7 +1871,255 @@ def run_ecm_resume_job(p95_b1):
   sys.exit(0)
 
 
+def get_argparser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", type=int, help="Number of curves")
+    parser.add_argument("-maxmem", type=int, help="Maximum amount of memorys")
+    parser.add_argument("-threads", type=int, help="Number of threads to run")
+
+    parser.add_argument("-inp", help="Input file")
+
+    parser.add_argument("-r", metavar="<file>", help="resume a previously interrupted job in <file>")
+    parser.add_argument("-resume", metavar="<resume_file>", help="where <resume_file> is a resume file that can be accepted by GMP-ECM")
+
+    parser.add_argument("-out", metavar="<out_file>", help="each gmp-ecm will output to a different file"
+                                                      " thread N writes to tN_<out_file>.txt, etc")
+
+    parser.add_argument("-pollfiles", metavar="n", help="Read data from job files every n seconds (default {})".format(poll_file_delay))
+
+    # boolean variable
+    parser.add_argument("-one", action="store_true")
+
+    parser.add_argument("-k", type=int, help="Passthough ECM parameter")
+
+    # ECM passthrough variables (see is_ecm_cmd)
+    # why no -y0? what is -t?
+    for arg in ('-x0', '-param', '-sigma', '-A', '-power', '-dickson', '-base2', '-stage1time',
+            '-i', '-I', '-t', '-ve', '-B2scale', '-go'):
+        parser.add_argument(arg, help="Passthrough ECM parameter")
+
+    return parser
+
+def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = False, quiet = False):
+  '''
+  Parse the command line options, we'll change values as necessary.
+  "set_args" should only be true the first time the program is called
+  we don't want to override the default args with the args from a resumed job
+  '''
+  global ecm_c, intNumThreads, ecm_args, ecm_args1, ecm_args2, ecm_c_has_changed
+  global intResume, output_file, number_list, resume_file, save_to_file, poll_file_delay, inp_file
+  global ecm_resume_file, ecm_resume_job
+  ecm_maxmem = 0
+  ecm_k = 0
+  opt_c = ''
+
+  parser = get_argparser()
+  args, unknown = parser.parse_known_args()
+
+  if set_args and intResume == 0:
+    ecm_args = ''
+
+  ecm_args1 = ''
+  ecm_args2 = ''
+
+  # Handle setting ecm_c
+  if args.c is not None:
+    if not ecm_c_has_changed:
+        ecm_c = args.c
+    if new_curves > 0:
+        ecm_c = new_curves
+    if set_args:
+        ecm_args += ' -c ' + str(ecm_c)
+
+  if args.maxmem is not None:
+    ecm_maxmem = args.maxmem
+    if set_args: ecm_args += ' -maxmem ' + str(ecm_maxmem)
+
+  if args.threads is not None:
+    intNumThreads = int(args.threads)
+
+  if args.one:
+    # The design of this script is to only find one factor per job
+    # We put this here for the sake of completeness
+    if set_args: ecm_args += ' -one'
+    ecm_args1 += ' -one'
+
+  if args.k is not None:
+    if set_args: ecm_args += ' -k ' + str(args.k)
+    ecm_args1 += ' -k ' + str(args.k)
+    ecm_k = int(args.k)
+
+  arg_dict = vars(args)
+  for arg in ('-x0', '-param', '-sigma', '-A', '-power', '-dickson', '-base2', '-stage1time',
+          '-i', '-I', '-t', '-ve', '-B2scale', '-go'):
+      arg = arg[1:]
+      value = arg_dict.get(arg)
+      if value is not None:
+        flag = " -{} {}".format(arg, value)
+        if set_args: ecm_args += flag
+        ecm_args1 += flag
+
+  if args.inp is not None:
+    inp_file = args.inp
+
+  if args.r is not None:
+    intResume = 1
+    resume_file = args.r
+    if not read_resume_file(resume_file):
+      die('-> *** Error: resume file does not exist: {0:s}'.format(resume_file))
+    if job_complete:
+      die(' ')
+
+  if args.out is not None:
+    output_file = args.out
+    save_to_file = True
+
+  if args.resume is not None:
+    ecm_resume_file = args.resume
+    ecm_resume_job = True
+
+  if args.pollfiles is not None:
+    try:
+      poll_file_delay = int(args.pollfiles)
+      assert poll_file_delay >= 1
+    except:
+      die('-> *** Error: invalid option for -pollfiles: {0:s}'.format(args.pollfiles))
+
+  # Final stuff with remaining args
+  for arg in unknown:
+    if is_nbr(arg):
+      # This should only match B1 and B2 options at the "end" of the ecm command line...
+      # If we encounter a number by itself, do not append it to ecm_args here...
+      continue
+    if set_args: ecm_args += ' ' + arg
+    ecm_args1 += ' ' + arg
+
+  if ecm_c < 0:
+    die('-> *** Error: -c parameter less than zero, quitting.')
+  if ecm_maxmem < 0:
+    die('-> *** Error: -maxmem parameter less than zero, quitting.')
+  if intNumThreads < 1:
+    die('-> Less than one thread specified, quitting.')
+
+
+  # If we are using the "-resume" feature of gmp-ecm, we will make some assumptions about the job...
+  # See comment adjacent to run_ecm_resume_jobs for assumptions and notes.
+  p95_b1 = ''
+  if ecm_resume_job:
+    ecm_args = ''
+    if ecm_k > 0:
+      ecm_args += ' -k {0:d}'.format(ecm_k)
+    if ecm_maxmem > 0:
+      ecm_args += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
+    if unknown and (is_nbr(unknown[-1]) or is_nbr_range(unknown[-1])):
+       if len(unknown) == 1 or unknown[-2] not in ['-k', '-maxmem', '-threads', '-pollfiles']:
+          p95_b1 = unknown[-1]
+    if VERBOSE >= v_normal:
+      print('-> Resuming work from resume file: ' + ecm_resume_file)
+      print('-> Spreading the work across ' + str(intNumThreads) + ' thread(s)')
+    run_ecm_resume_job(p95_b1)
+
+
+  # grab numbers to factor and save them for later...
+  if intResume != 1 and not sys.stdin.isatty() and set_args:
+    data = sys.stdin.readlines()
+    if VERBOSE >= v_normal:
+      print('-> Number(s) to factor:')
+    for line in data:
+      line = line.strip().strip('"')
+      if is_valid_input(line):
+        number_list.append(line)
+        if VERBOSE >= v_normal:
+          print('-> {0:s} ({1:d} digits)'.format(line, num_digits(line)))
+      else:
+        print('-> *** Skipping invalid input line: {0:s}'.format(line))
+  elif intResume != 1 and sys.stdin.isatty() and set_args and inp_file != '':
+    print("inp_file = " + inp_file)
+    if VERBOSE >= v_normal:
+      print('-> Number(s) to factor:')
+    with open(inp_file, 'r') as f:
+      for line in f:
+        line = line.strip().strip('"')
+        if is_valid_input(line):
+          number_list.append(line)
+          if VERBOSE >= v_normal:
+            print('-> {0:s} ({1:d} digits)'.format(line, num_digits(line)))
+        else:
+          print('-> *** Skipping invalid input line: {0:s}'.format(line))
+  elif intResume != 1 and sys.stdin.isatty() and inp_file == '':
+    die('-> *** Error: no input numbers found, quitting.')
+
+  if intNumThreads >= 1 and set_args == False:
+    if ecm_maxmem > 0:
+      ecm_args1 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
+      ecm_args2 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
+
+  ecm_args2 = ecm_args1
+  if intNumThreads >= 1 and set_args == False:
+    if ecm_c == 0:
+      ecm_args1 += ' -c 0'
+      ecm_args2 += ' -c 0'
+    elif ecm_c != 1:
+      # Here ecm_args1 gets ecm_c // threads, and ecm_args2 gets ecm_c // threads + 1
+      ecm_args1 += ' -c {0:d}'.format(ecm_c//intNumThreads)
+      ecm_args2 += ' -c {0:d}'.format((ecm_c//intNumThreads)+1)
+
+  if (intResume == 0) or (intResume == 1 and first == False):
+    strB1 = ''
+    strB2 = ''
+    if len(unknown) == 1:
+      # we can only have B1 in this case...
+      #if is_nbr(unknown[1]):
+      strB1 = ' ' + unknown[0]
+      strB2 = ''
+      #else:
+      #  print('***** ERROR: Unknown B1 value: ' + unknown[1])
+    elif len(unknown) >= 2:
+      # Check for both B1 and B2 here...
+      if is_nbr(unknown[-2]) and is_nbr(unknown[-1]):
+        if len(unknown) == 2:
+          strB1 = ' ' + unknown[-2]
+          strB2 = ' ' + unknown[-1]
+        elif is_nbr(unknown[-3]) or not is_ecm_cmd(unknown[-3]):
+          strB1 = ' ' + unknown[-2]
+          strB2 = ' ' + unknown[-1]
+        else:
+          strB1 = ' ' + unknown[-1]
+          strB2 = ''
+      elif is_nbr(unknown[-1]):
+        strB1 = ' ' + unknown[-1]
+        strB2 = ''
+      else:
+        print('***** ERROR: Unknown B1 value; ' + unknown[-1])
+
+    # The last option should be B1, append that here...
+    if strB1 == '' and strB2 == '':
+      die('***** ERROR: Unable to find valid B1/B2 values.')
+
+    if set_args: ecm_args += (strB1 + strB2)
+    ecm_args1 += (strB1 + strB2)
+    ecm_args2 += (strB1 + strB2)
+
+  if intResume == 1:
+    ecm_args = ecm_args1
+
+  if VERBOSE >= v_verbose and not quiet:
+    print('-> Original command line was:')
+    print('-> ' + ecm_args)
+    if intNumThreads == 1:
+      print('-> New command line will be:')
+      print('-> ' + ecm_args1)
+    if intNumThreads > 1:
+      print('-> New command line(s) will be either:')
+      print('-> ' + ecm_args1)
+      print('-> ' + ecm_args2)
+    print(' ')
+
+
 def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, quiet = False):
+  # use new argparse code
+  return parse_ecm_options_argparse(sargv, new_curves, set_args, first, quiet)
+
   '''
   Parse the command line options, we'll change values as necessary.
   "set_args" should only be true the first time the program is called
@@ -1923,18 +2172,7 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
       # We put this here for the sake of completeness
       if set_args: ecm_args += ' -one'
       ecm_args1 += ' -one'
-    elif arg == '-x0':
-      if set_args: ecm_args += ' -x0 ' + next_arg
-      ecm_args1 += ' -x0 ' + next_arg
-      i = i+1
-    elif arg == '-sigma':
-      if set_args: ecm_args += ' -sigma ' + next_arg
-      ecm_args1 += ' -sigma ' + next_arg
-      i = i+1
-    elif arg == '-A':
-      if set_args: ecm_args += ' -A ' + next_arg
-      ecm_args1 += ' -A ' + next_arg
-      i = i+1
+
     elif arg == '-k':
       if set_args: ecm_args += ' -k ' + next_arg
       ecm_args1 += ' -k ' + next_arg
@@ -1943,50 +2181,14 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
       except:
         die('-> *** Error: invalid option for -k: {0:s}'.format(next_arg))
       i = i+1
-    elif arg == '-power':
-      if set_args: ecm_args += ' -power ' + next_arg
-      ecm_args1 += ' -power ' + next_arg
+
+    elif arg in ('-x0', '-sigma', '-A', '-power', '-dickson', '-base2', '-stage1time',
+                 '-i', '-I', '-param', '-t', '-ve', '-B2scale', '-go'):
+      flag = " {} {}".format(arg, next_arg)
+      if set_args: ecm_args += flag
+      ecm_args1 += flag
       i = i+1
-    elif arg == '-dickson':
-      if set_args: ecm_args += ' -dickson ' + next_arg
-      ecm_args1 += ' -dickson ' + next_arg
-      i = i+1
-    elif arg == '-base2':
-      if set_args: ecm_args += ' -base2 ' + next_arg
-      ecm_args1 += ' -base2 ' + next_arg
-      i = i+1
-    elif arg == '-stage1time':
-      if set_args: ecm_args += ' -stage1time ' + next_arg
-      ecm_args1 += ' -stage1time ' + next_arg
-      i = i+1
-    elif arg == '-i':
-      if set_args: ecm_args += ' -i ' + next_arg
-      ecm_args1 += ' -i ' + next_arg
-      i = i+1
-    elif arg == '-I':
-      if set_args: ecm_args += ' -I ' + next_arg
-      ecm_args1 += ' -I ' + next_arg
-      i = i+1
-    elif arg == '-param':
-      if set_args: ecm_args += ' -param ' + next_arg
-      ecm_args1 += ' -param ' + next_arg
-      i = i+1
-    elif arg == '-t':
-      if set_args: ecm_args += ' -t ' + next_arg
-      ecm_args1 += ' -t ' + next_arg
-      i = i+1
-    elif arg == '-ve':
-      if set_args: ecm_args += ' -ve ' + next_arg
-      ecm_args1 += ' -ve ' + next_arg
-      i = i+1
-    elif arg == '-B2scale':
-      if set_args: ecm_args += ' -B2scale ' + next_arg
-      ecm_args1 += ' -B2scale ' + next_arg
-      i = i+1
-    elif arg == '-go':
-      if set_args: ecm_args += ' -go ' + next_arg
-      ecm_args1 += ' -go ' + next_arg
-      i = i+1
+
     elif arg == '-inp':
       inp_file = next_arg
       i = i+1
