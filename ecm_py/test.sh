@@ -85,6 +85,10 @@ fi
 # TODO
 # test accepting multiple numbers
 # test errors for some parameters
+# test find_one_factor_and_stop
+#   with several factors in a row
+#     $ echo "(2^653-1)/78557207" | python ecm.py -pollfiles 1 -threads 4 -c 1000 140000
+#   with multiple numbers as input?
 
 green=`tput setaf 2`
 reset=`tput sgr0`

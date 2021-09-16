@@ -100,7 +100,7 @@ LOGNAME = os.environ.get('LOGNAME', 'ecm_py.log')
 # If we encounter a composite factor and/or cofactor, should we continue
 # doing the rest of the requested curves, or stop when we find one factor
 # 0 to keep factoring composites, 1 to stop work after finding a factor
-find_one_factor_and_stop = 1
+find_one_factor_and_stop = 0
 
 
 # This controls how often (in seconds) python reads in job files from the hard drive
@@ -255,19 +255,20 @@ job_start = 0
 
 # Utillity Routines
 
-def abbreviate(s, length = 42):
-  '''return a number, abbreviated if the number is long and we're quiet'''
-  return s if (VERBOSE >= v_verbose or len(s) <= length) else s[:18] + "..." + s[-18:]
-
-
 def die(x, rv = -1):
   '''print an error message and exit'''
   output(x)
   sys.exit(rv)
 
+
 def sig_exit(x, y):
   print('\n')
   die('Signal caught. Terminating...')
+
+
+def abbreviate(s, length = 42):
+  '''return a number, abbreviated if the number is long and we're quiet'''
+  return s if (VERBOSE >= v_verbose or len(s) <= length) else s[:18] + "..." + s[-18:]
 
 
 def is_nbr(s):
@@ -285,6 +286,7 @@ def is_nbr_range(s):
     return True
   except (ValueError, IndexError):
     return False
+
 
 def is_ecm_cmd(s):
   '''check for command to gmp-ecm or ecm.py that require numeric arguments...'''
@@ -310,13 +312,6 @@ def cat_f(app, to):
     with open(to, 'ab') as out_file:
       with open(app, 'rb') as in_file:
         shutil.copyfileobj(in_file, out_file)
-
-
-def npath(str):
-  '''normalize paths so that they all have '/', and no '\' or '\\'...'''
-  new_str = str.replace('\\', '/')
-  while '//' in new_str: new_str = new_str.replace('//', '/')
-  return new_str
 
 
 def time_utc_string():
@@ -479,6 +474,7 @@ def terminate_ecm_threads():
     del procs[:]
     #print('-> ecm terminated')
 
+
 def start_ecm_threads():
   global procs, ecm_c, intNumThreads, ecm_job, actual_num_threads
 
@@ -500,80 +496,39 @@ def start_ecm_threads():
         .format(num, '' if (num == 1) else 's'))
   write_string_to_log('-> Starting {0:d} instance{1:s} of GMP-ECM...'.format(num, '' if (num == 1) else 's'))
 
-  i = 0
-  if intNumThreads == 1:
+  assert intNumThreads >= 1
+
+  count, remainder = divmod(ecm_c, intNumThreads)
+  for i in range(intNumThreads):
     file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
-    procs.append(run_exe(ECM, ecm_args1, in_file = ecm_job, out_file = file_name, wait = False))
-  else:
-    if ecm_c == 0:
-      while i < intNumThreads:
-        file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
+    if ecm_c == 0 or i >= remainder:
         procs.append(run_exe(ECM, ecm_args1, in_file = ecm_job, out_file = file_name, wait = False))
-        i += 1
-    elif ecm_c < intNumThreads:
-      remainder = ecm_c % intNumThreads
-      while i < remainder:
-        file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
-        procs.append(run_exe(ECM, ecm_args2, in_file = ecm_job, out_file = file_name, wait = False))
-        i += 1
     else:
-      remainder = ecm_c%intNumThreads
-      while i < remainder:
-        file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
         procs.append(run_exe(ECM, ecm_args2, in_file = ecm_job, out_file = file_name, wait = False))
-        i += 1
-      while i < intNumThreads:
-        file_name = ecm_job_prefix + '_t' + str(i).zfill(2) + '.txt'
-        procs.append(run_exe(ECM, ecm_args1, in_file = ecm_job, out_file = file_name, wait = False))
-        i += 1
 
   print(' ')
   signal.signal(signal.SIGINT, old_handler)
 
-def compare_ecm_args(test_args):
-  global ecm_args
+def get_ecm_type_and_count(args):
+  parts = args.split(' ')
 
-  # To see if two job command lines are the same
-  # Make sure they are for the same job type
-  # Make sure they are for the same number of curves
-  # Make sure they are for the same B1
-  data1 = ecm_args.split(' ')
-  data2 = test_args.split(' ')
-  type1 = 'ecm'
-  type2 = 'ecm'
-  count1 = 0
-  count2 = 0
+  ecm_type = 'ecm'
+  count = 0
+  # TODO(Seth): This is suboptimal, but inherited, logic
+  B1 = parts[-1]
 
-  i = 0
-  while i < len(data1):
-    if data1[i] == '-pm1':
-      type1 = 'pm1'
-    elif data1[i] == '-pp1':
-      type1 = 'pp1'
-    elif data1[i] == '-c':
-      count1 = int(data1[i+1])
-      i += 1
-    i += 1
+  for i, part in enumerate(parts):
+    if part in ('-pm1', '-pp1'):
+      ecm_type = part
+    elif part == '-c':
+      assert len(parts) > i, (i, parts)
+      count = parts[i+1]
 
-  i = 0
-  while i < len(data2):
-    if data2[i] == '-pm1':
-      type2 = 'pm1'
-    elif data2[i] == '-pp1':
-      type2 = 'pp1'
-    elif data2[i] == '-c':
-      count2 = int(data2[i+1])
-      i += 1
-    i += 1
+  return (ecm_type, count, B1)
 
-  if type1 != type2:
-    return False
-  if count1 != count2:
-    return False
-  if data1[-1] != data2[-1]:
-    return False
-
-  return True
+def compare_ecm_args(args1, args2):
+  """Check if ecm type (ecm, pm1, pp1), curve count (-c X) and B1 (last arg) match"""
+  return get_ecm_type_and_count(args1) == get_ecm_type_and_count(args2)
 
 
 def is_valid_input(instr):
@@ -581,7 +536,7 @@ def is_valid_input(instr):
   Perform some very basic input checking to make sure we don't
   evaluate python code that might do bad things to a users system.
   '''
-  mystr = str(instr)
+  mystr = str(instr).strip()
 
   if len(mystr) == 0:
     return False
@@ -589,12 +544,7 @@ def is_valid_input(instr):
   if mystr[0] == '#':
     return False
 
-  for i in range(len(mystr)):
-    if mystr[i] not in ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','x',
-                        ' ','+','-','*','/','^','%','!','#','.','(',')','{','}','[',']','"']:
-      return False
-  # If we get down here, all the characters must have been valid...
-  return True
+  return all(char in string.hexdigits or char in ('x +-*/^%!#.(){}[]"') for char in mystr)
 
 
 def num_digits(n):
@@ -616,6 +566,139 @@ def num_digits(n):
   return -1
 
 
+def parse_ecm_timing_line(line):
+  """Parse ecm output line to GMP-ECM info, Step1 timing, Step2 timing, Using, or Found factor"""
+
+  if line.startswith(('Step 1 took', 'Step 2 took')):
+    # Ignore the rare negative time reported by ecm...
+    time = max(0, float(line.split(' took ')[1][:-2])) / 1000
+    return (int(line[5]), time)
+
+  return None
+
+
+def parse_job_file(job_filename):
+  """
+  Parse a job file (traditional jobXXXX_tTT.txt) to:
+    (using line, version info, time_str)
+    [(using B1,B2,sigma, Found factor + factor), ...]
+    (number of Step 1 complete, sum Step 1 time)
+    (number of Step 2 complete, sum Step 2 time)
+  """
+  # TODO(seth): deduplicate this with get_out_fin, find_factor_info
+  # TODO(seth): deduplicate this with find_work_done
+
+  # These will be the last matching using, version, timing
+  using_info = None
+  version_info = None
+  time_info = None
+
+  # List of tuple of (using, found lines)
+  factors_found = []
+  step1_complete = 0
+  step1_timing = 0.0
+  step2_complete = 0
+  step2_timing = 0.0
+
+  with open(job_filename, 'r') as in_file:
+    # the number of curves completed = the number of "Step 2" lines in the file
+    for line in in_file:
+      line = line.strip()
+
+      if line.startswith('Using'):
+        using_info = line # if a factor was found, this will contain its B1, B2, and sigma...
+      elif line.startswith('GMP-ECM'):
+        version_info = line
+
+      elif line.startswith('APR primality'):
+        # Appears between Factor found and factor.
+        continue
+
+      elif 'Factor found' in last_line:
+        # TODO(seth): Old code was worried about a line starting with "Run"
+        # between "Found found" and factor line. No idea what that was avoiding.
+        assert not line.startswith('Run'), ("PLEASE REPORT TO THE FORUM: " + line)
+        factors_found.append((using_info, last_line + '\n' + line))
+
+      else:
+        parsed = parse_ecm_timing_line(line)
+        if parsed:
+          if parsed[0] == 1:
+            step1_complete += 1
+            step1_timing += parsed[1]
+            time_info = line
+          elif parsed[0] == 2:
+            step2_complete += 1
+            step2_timing += parsed[1]
+            time_info += "\n" + line
+
+      last_line = line
+
+  return (
+      (using_info, version_info, time_info),
+      factors_found,
+      (step1_complete, step1_timing),
+      (step2_complete, step2_timing)
+  )
+
+
+def handle_enqueue_composite_factors(factors_found, job_filename):
+  """
+  Find any new composites in factors_found / job_filename
+
+  Potentially add them to remaining_composites
+  """
+  global factor_found, factor_value, factor_data, remaining_composites
+
+  # TODO(seth): Consider what to do when multiple factors are found
+  if len(factors_found) > 1:
+    output('Multiple factors found simultaneously!!!')
+    for _, factor_lines in factors_found:
+      output("->  " + factor_lines.replace("\n", ", "))
+    output('')
+
+  # TODO(seth): deduplicate with find_work_done
+  factor_in_this_file = False
+  for using_data, factor_lines in factors_found:
+    factor_lines = factor_lines.strip()
+    if not factor_in_this_file and not factor_found:
+        factor_found = True
+        factor_in_this_file = True
+
+        factor_data = using_data
+        factor_value = factor_lines
+
+        # If either of the factor or cofactor were reported to be composite, and
+        # we have find_one_factor_and_stop=0, then we'll add the composite number(s)
+        # to our list and continue with the remaining number of curves on the number(s)
+
+# ********** Factor found in step 1: 214497496343260938348887
+# Found prime factor of 24 digits: 214497496343260938348887
+# Composite cofactor ((637#+1)/601751640263)/214497496343260938348887 has 227 digits
+
+# ********** Factor found in step 1: 34174462117410724171159
+# Found composite factor of 23 digits: 34174462117410724171159
+# Prime cofactor ((2^1223-1))/34174462117410724171159 has 346 digits
+        if find_one_factor_and_stop == 0 and 'composite factor' in factor_lines.lower():
+          composite = factor_lines.split(' ')[-1]
+          remaining_composites += '~' + composite
+
+  # Kinda awful taste, but go looking for any composite cofactors in the file
+  if find_one_factor_and_stop == 0:
+    with open(job_filename, 'r') as in_file:
+      # the number of curves completed = the number of "Step 2" lines in the file
+      for line in in_file:
+        line = line.strip()
+        if 'composite cofactor' in line.lower():
+          composite = line.split(' ')[2]
+          if ("~" + composite) not in remaining_composites:
+            remaining_composites += '~' + composite
+
+            # FIXME: N/101 and N/1001 can both be queued (by seperate threads) consider how to fix.
+            # TODO(seth): Should try to find the smallest cofactor in the file
+            # Only do this once (so similiar cofactors don't queue many times)
+            break
+
 
 def read_resume_file(res_file):
   global prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2, prev_ecm_s1_completed, ecm_job, number_list
@@ -634,6 +717,7 @@ def read_resume_file(res_file):
     data = in_file.readline().strip().split('#')[1] # line 2 should be the command line
     data_args = data.strip()
     data = in_file.readline().split(' ') # line 3 should be the curves previously completed, tt_stg1, tt_stg2...
+    # the number of curves completed = the number of "Step 2" lines in the file
     prev_ecm_c_completed = int(data[1])
     prev_ecm_s1_completed = prev_ecm_c_completed
     prev_tt_stg1 = float(data[2])
@@ -641,29 +725,23 @@ def read_resume_file(res_file):
 
   job_file_prefix = ecm_job.split('.')[0]
   for f in glob.iglob(job_file_prefix + '_t*'):
-    with open(f, 'r') as in_file:
-      # the number of curves completed = the number of "Step 2" lines in the file
-      for line in in_file:
-        line = line.strip()
-        if line.startswith('Step 1'):
-          this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-          if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-            prev_tt_stg1 += this_time
-          prev_ecm_s1_completed += 1
-        elif line.startswith('Step 2'):
-          this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-          if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-            prev_tt_stg2 += this_time
-          prev_ecm_c_completed += 1
-        elif line.startswith('Using'):
-          factor_data = line # if a factor was found, this will contain its B1, B2, and sigma...
-        elif line.find('Factor found') >= 0:
-          factor_found = True
-          factor_value = line
-        elif factor_found and not line.startswith('Run'):
-          factor_value += '\n' + line
-      if factor_found:
-        return True
+    info, factors_found, (step1_complete, step1_timing), (step2_complete, step2_timing) = parse_job_file(f)
+
+    if info[0]:
+      factor_data = info[0]
+
+    prev_ecm_s1_completed += step1_complete
+    prev_tt_stg1 += step1_timing
+    prev_ecm_c_completed += step2_complete
+    prev_tt_stg2 += step2_timing
+
+    if factors_found:
+      assert len(factors_found) == 1, ("Found multiple factors!!!", factors_found)
+      factor_found = True
+      # NOTE(seth): Slightly new behavior if more than one factors is found
+      factor_data = "\n".join(using for using, found in factors_found)
+      factor_value = "\n".join(found for using, found in factors_found)
+      return True
 
     delete_file(f)
 
@@ -897,71 +975,51 @@ def gather_work_done(job_file):
     # using file sizes to reduce the number of times we read in the whole file for processing
     if file_sizes[f] != os.path.getsize(f) or first_getsizes:
       file_sizes[f] = os.path.getsize(f) #update the file size...
+
+      # the number of curves completed = the number of "Step 2" lines in the file (or +1 if a factor was found in Step 1)
       ecm_c_completed_per_file[f] = 0
       ecm_s1_completed_per_file[f] = 0
       tt_stg1_per_file[f] = 0.0
       tt_stg2_per_file[f] = 0.0
-      with open(f, 'r') as in_file:
-        first_file_with_factor = False
-        # the number of curves completed = the number of "Step 2" lines in the file (or +1 if a factor was found in Step 1)
-        for line in in_file:
-          line = line.strip()
-          if need_version_info and line.startswith('GMP-ECM'):
-            version_info = line
-            need_version_info = False
-            output('{0:s}'.format(version_info))
-          elif line.startswith('Step 1'):
-            this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-            if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-              tt_stg1_per_file[f] += this_time
-            ecm_s1_completed_per_file[f] += 1
-            time_str = line
-          elif line.startswith('Step 2'):
-            this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-            if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-              tt_stg2_per_file[f] += this_time
-            ecm_c_completed_per_file[f] += 1
-            time_str += '\n' + line
-          elif line.startswith('Using'):
-            if not factor_found:
-              factor_data = line # if a factor was found, this will contain its B1, B2, and sigma...
-            if need_using_line:
-              ud = line.split(',')
-              if len(ud) < 3: continue
-              using_line = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, '' if (actual_num_threads == 1) else 's')
-              output(using_line)
 
+      info, factors_found, (step1_complete, step1_timing), (step2_complete, step2_timing) = parse_job_file(f)
+
+      if info[0]:
+        factor_data = info[0]
+        if need_using_line:
+          ud = info[0].split(',')
+          if len(ud) < 3: continue
+          using_line = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, '' if (actual_num_threads == 1) else 's')
+          output(using_line)
+      if need_version_info and info[1]:
+        version_info = info[1]
+        need_version_info = False
+        output('{0:s}'.format(version_info))
 #____________________________________________________________________________
 # Curves Complete |   Average seconds/curve   |    Runtime    |      ETA
 #-----------------|---------------------------|---------------|--------------
 #  2114 of   6000 | Stg1  2983s | Stg2 693.5s |  22d 12:27:08 |  41d 08:37:51
+        output('____________________________________________________________________________')
+        output(' Curves Complete |   Average seconds/curve   |    Runtime    |      ETA')
+        output('-----------------|---------------------------|---------------|--------------')
+        need_using_line = False
+      if info[2]:
+        time_str = info[2]
 
-              output('____________________________________________________________________________')
-              output(' Curves Complete |   Average seconds/curve   |    Runtime    |      ETA')
-              output('-----------------|---------------------------|---------------|--------------')
-              need_using_line = False
-          elif not first_file_with_factor and not factor_found and line.find('Factor found') >= 0:
-            factor_found = True
-            first_file_with_factor = True
-            factor_value = line
-            if ecm_s1_completed_per_file[f] != ecm_c_completed_per_file[f]:
-              # output(' *** Step 1 count != Step 2 count, but a factor was found.  Incrementing ecm_c_completed.')
-              ecm_c_completed_per_file[f] += 1
-          elif first_file_with_factor and not line.startswith('Run'):
-            # If either of the factor or cofactor were reported to be composite, and
-            # we have find_one_factor_and_stop=0, then we'll add the composite number(s)
-            # to our list and continue with the remaining number of curves on the number(s)
-# ********** Factor found in step 1: 214497496343260938348887
-# Found prime factor of 24 digits: 214497496343260938348887
-# Composite cofactor ((637#+1)/601751640263)/214497496343260938348887 has 227 digits
-            if find_one_factor_and_stop == 0 and 'composite factor' in line.lower():
-              remaining_composites += '~' + line.split(' ')[-1]
-            if find_one_factor_and_stop == 0 and 'composite cofactor' in line.lower():
-              remaining_composites += '~' + line.split(' ')[2]
-            factor_value += '\n' + line
-            terminate_ecm_threads()
-        #if factor_found:
-        #  return
+      ecm_s1_completed_per_file[f] += step1_complete
+      tt_stg1_per_file[f] += step1_timing
+
+      ecm_c_completed_per_file[f] += step2_complete
+      tt_stg2_per_file[f] += step2_timing
+
+      if ecm_s1_completed_per_file[f] != ecm_c_completed_per_file[f]:
+        # output(' *** Step 1 count != Step 2 count, but a factor was found.  Incrementing ecm_c_completed.')
+        ecm_c_completed_per_file[f] += len(factors_found)
+
+      handle_enqueue_composite_factors(factors_found, f)
+
+    if factor_found:
+      terminate_ecm_threads()
 
   first_getsizes = False
 
@@ -1013,6 +1071,13 @@ def update_job_file():
     out_file.write('# {0:d} {1:.3f} {2:.3f}\n'.format(prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2))
 
 
+# TODO(seth): Can this be combined with read_resume_file
+# 95% the same
+#       if save_to_file
+#           cat_f
+#
+#       update_job_file() vs something different
+# slightly different handling of found factors (read_resume_file quits if it finds a factor)
 def find_work_done():
   global prev_ecm_c_completed, prev_tt_stg1, prev_tt_stg2, prev_ecm_s1_completed, time_str
   global factor_found, factor_value, factor_data, ecm_job, ecm_c, job_complete
@@ -1032,47 +1097,16 @@ def find_work_done():
 
   job_file_prefix = ecm_job.split('.')[0]
   for f in glob.iglob(job_file_prefix + '_t*'):
-    with open(f, 'r') as in_file:
-      first_file_with_factor = False
-      # the number of curves completed = the number of "Step 2" lines in the file
-      for line in in_file:
-        line = line.strip()
-        if line.startswith('Step 1'):
-          this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-          if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-            prev_tt_stg1 += this_time
-          prev_ecm_s1_completed += 1
-          time_str = line
-        elif line.startswith('Step 2'):
-          this_time = (float(line.split(' took ')[1][:-2])/1000.0)
-          if this_time >= 0: # make sure we don't average in the rare negative time reported by ecm...
-            prev_tt_stg2 += this_time
-          prev_ecm_c_completed += 1
-          time_str += '\n' + line
-        elif line.startswith('Using'):
-          if not factor_found:
-            factor_data = line # if a factor was found, this will contain its B1, B2, and sigma...
-        elif not first_file_with_factor and not factor_found and line.find('Factor found') >= 0:
-          factor_found = True
-          first_file_with_factor = True
-          factor_value = line
-          if prev_ecm_s1_completed != prev_ecm_c_completed:
-            prev_ecm_c_completed += 1
-        elif first_file_with_factor and not line.startswith('Run'):
-          # If either of the factor or cofactor were reported to be composite, and
-          # we have find_one_factor_and_stop=0, then we'll add the composite number(s)
-          # to our list and continue with the remaining number of curves on the number(s)
-# ********** Factor found in step 1: 214497496343260938348887
-# Found prime factor of 24 digits: 214497496343260938348887
-# Composite cofactor ((637#+1)/601751640263)/214497496343260938348887 has 227 digits
-          if find_one_factor_and_stop == 0 and 'composite factor' in line.lower():
-            remaining_composites += '~' + line.split(' ')[-1]
-          if find_one_factor_and_stop == 0 and 'composite cofactor' in line.lower():
-            remaining_composites += '~' + line.split(' ')[2]
-          factor_value += '\n' + line
-      # comment out the following two lines so that we can make sure to count all curves run in all files...
-      #if factor_found:
-      #  return
+    info, factors_found, (step1_complete, step1_timing), (step2_complete, step2_timing) = parse_job_file(f)
+    if info[0]:
+      factor_data = info[0]
+
+    prev_ecm_s1_completed += step1_complete
+    prev_tt_stg1 += step1_timing
+    prev_ecm_c_completed += step2_complete
+    prev_tt_stg2 += step2_timing
+
+    handle_enqueue_composite_factors(factors_found, f)
 
     if save_to_file:
       cat_f(f, output_file)
@@ -1097,14 +1131,14 @@ def find_work_done():
 # commented out command line arguments on line 2 (commented with the # symbol)
 # int(number of curves previously completed) float(total time in stg1) float(total time in stg2)
 def find_job_file():
-  global ecm_n, ecm_job
+  global ecm_n, ecm_job, ecm_args
 
   for f in glob.iglob('job*'):
     with open(f, 'r') as in_file:
       input1 = in_file.readline().strip()
       if input1 == ecm_n:
         input2 = in_file.readline().strip()
-        if compare_ecm_args(input2):
+        if compare_ecm_args(ecm_args, input2):
           output('-> Found previous job file {0:s}, will resume work...'.format(f))
           ecm_job = f
           return True
@@ -1304,6 +1338,8 @@ def gather_resume_work_done():
       retc = threadList[i][1]
     else:
       retc = threadList[i][1].poll()
+
+    # TODO(seth): Dedup with parse_job_file
 
     if retc == None:
       # use file sizes to reduce the number of times we read in the whole file for processing
@@ -2359,7 +2395,7 @@ else:
 
 write_string_to_log('->#############################################################################')
 write_string_to_log('-> Running ecm.py, version {0:s} ({1:s}) on computer {2:s}'.format(str_ver, str_date, socket.gethostname()))
-write_string_to_log('-> Command line: ' + npath(sys.executable) + ' ' + ' '.join(sys.argv))
+write_string_to_log('-> Command line: ' + os.path.normpath(sys.executable) + ' ' + ' '.join(sys.argv))
 
 if len(sys.argv) < 2:
   print('USAGE: python.exe ecm.py [gmp-ecm options] [ecm.py options] B1 [B2] < <in_file>')
@@ -2552,6 +2588,7 @@ for ecm_n in number_list:
       new_curves = 0
   else:
 # ################################################
+    print("factor_data:", factor_data)
     ud = factor_data.split(',')
     b1b2_info = '{0:s},{1:s},{2:s}, {3:d} thread{4:s}'.format(ud[0],ud[1],ud[2],actual_num_threads, '' if (actual_num_threads == 1) else 's')
     zd = '{0:.0f}'.format(math.floor(t_total/86400.0)).rjust(3) + 'd '
