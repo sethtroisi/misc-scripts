@@ -1880,12 +1880,14 @@ def get_argparser():
     parser.add_argument("-inp", help="Input file")
 
     parser.add_argument("-r", metavar="<file>", help="resume a previously interrupted job in <file>")
-    parser.add_argument("-resume", metavar="<resume_file>", help="where <resume_file> is a resume file that can be accepted by GMP-ECM")
+    parser.add_argument("-resume", metavar="<resume_file>",
+            help="where <resume_file> is a resume file that can be accepted by GMP-ECM")
 
-    parser.add_argument("-out", metavar="<out_file>", help="each gmp-ecm will output to a different file"
-                                                      " thread N writes to tN_<out_file>.txt, etc")
+    parser.add_argument("-out", metavar="<out_file>",
+            help="each gmp-ecm will output to a different file, thread N writes to tN_<out_file>.txt, etc")
 
-    parser.add_argument("-pollfiles", metavar="n", help="Read data from job files every n seconds (default {})".format(poll_file_delay))
+    parser.add_argument("-pollfiles", metavar="n", type=int,
+            help="Read data from job files every n seconds (default {})".format(poll_file_delay))
 
     # boolean variable
     parser.add_argument("-one", action="store_true")
@@ -1914,6 +1916,7 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
   opt_c = ''
 
   parser = get_argparser()
+  # TODO: what unknown args can be expect (other than B1, B2)?
   args, unknown = parser.parse_known_args()
 
   if set_args and intResume == 0:
@@ -1979,11 +1982,7 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
     ecm_resume_job = True
 
   if args.pollfiles is not None:
-    try:
-      poll_file_delay = int(args.pollfiles)
-      assert poll_file_delay >= 1
-    except:
-      die('-> *** Error: invalid option for -pollfiles: {0:s}'.format(args.pollfiles))
+    poll_file_delay = args.pollfiles
 
   # Final stuff with remaining args
   for arg in unknown:
@@ -1994,6 +1993,8 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
     if set_args: ecm_args += ' ' + arg
     ecm_args1 += ' ' + arg
 
+  if poll_file_delay not in range(1, 86400+1):
+    die('-> *** Error: invalid option for -pollfiles: {}'.format(args.pollfiles))
   if ecm_c < 0:
     die('-> *** Error: -c parameter less than zero, quitting.')
   if ecm_maxmem < 0:
@@ -2012,8 +2013,7 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
     if ecm_maxmem > 0:
       ecm_args += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
     if unknown and (is_nbr(unknown[-1]) or is_nbr_range(unknown[-1])):
-       if len(unknown) == 1 or unknown[-2] not in ['-k', '-maxmem', '-threads', '-pollfiles']:
-          p95_b1 = unknown[-1]
+      p95_b1 = unknown[-1]
     if VERBOSE >= v_normal:
       print('-> Resuming work from resume file: ' + ecm_resume_file)
       print('-> Spreading the work across ' + str(intNumThreads) + ' thread(s)')
@@ -2052,7 +2052,6 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
   if intNumThreads >= 1 and set_args == False:
     if ecm_maxmem > 0:
       ecm_args1 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
-      ecm_args2 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
 
   ecm_args2 = ecm_args1
   if intNumThreads >= 1 and set_args == False:
@@ -2065,30 +2064,28 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
       ecm_args2 += ' -c {0:d}'.format((ecm_c//intNumThreads)+1)
 
   if (intResume == 0) or (intResume == 1 and first == False):
+    # two trailing numbers: B1 B2
+    # Don't get fooled by ["-param", "123" "<B1>"]
+
     strB1 = ''
     strB2 = ''
     if len(unknown) == 1:
       # we can only have B1 in this case...
-      #if is_nbr(unknown[1]):
-      strB1 = ' ' + unknown[0]
-      strB2 = ''
-      #else:
-      #  print('***** ERROR: Unknown B1 value: ' + unknown[1])
+      if is_nbr(unknown[0]):
+        strB1 = ' ' + unknown[0]
+      else:
+        print('***** ERROR: Unknown B1 value: ' + unknown[1])
     elif len(unknown) >= 2:
       # Check for both B1 and B2 here...
       if is_nbr(unknown[-2]) and is_nbr(unknown[-1]):
-        if len(unknown) == 2:
-          strB1 = ' ' + unknown[-2]
-          strB2 = ' ' + unknown[-1]
-        elif is_nbr(unknown[-3]) or not is_ecm_cmd(unknown[-3]):
-          strB1 = ' ' + unknown[-2]
-          strB2 = ' ' + unknown[-1]
-        else:
+        if len(unknown) >= 3 and is_ecm_cmd(unknown[-3]):
+          # Got get tricked by ["-param" "value" "B1"]
           strB1 = ' ' + unknown[-1]
-          strB2 = ''
+        else:
+          strB1 = ' ' + unknown[-2]
+          strB2 = ' ' + unknown[-1]
       elif is_nbr(unknown[-1]):
         strB1 = ' ' + unknown[-1]
-        strB2 = ''
       else:
         print('***** ERROR: Unknown B1 value; ' + unknown[-1])
 
@@ -2116,15 +2113,12 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
     print(' ')
 
 
+# This can be removed when parse_ecm_options_argparse has been put through the gauntlet
+# Leaving it for now as a comparison point with parse_ecm_options_argparse
 def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, quiet = False):
   # use new argparse code
   return parse_ecm_options_argparse(sargv, new_curves, set_args, first, quiet)
 
-  '''
-  Parse the command line options, we'll change values as necessary.
-  "set_args" should only be true the first time the program is called
-  we don't want to override the default args with the args from a resumed job
-  '''
   global ecm_c, intNumThreads, ecm_args, ecm_args1, ecm_args2, ecm_c_has_changed
   global intResume, output_file, number_list, resume_file, save_to_file, poll_file_delay, inp_file
   global ecm_resume_file, ecm_resume_job
@@ -2281,7 +2275,6 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
   if intNumThreads >= 1 and set_args == False:
     if ecm_maxmem > 0:
       ecm_args1 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
-      ecm_args2 += ' -maxmem {0:d}'.format(ecm_maxmem//intNumThreads)
 
   ecm_args2 = ecm_args1
   if intNumThreads >= 1 and set_args == False:

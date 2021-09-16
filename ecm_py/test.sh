@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
-set -ue
+set -eu
+
 
 die() { echo "$*"; exit 1; }
 
@@ -52,7 +53,7 @@ grep "Found prime factor of 34 digits: 1998447222711143545931606352264121" "$LOG
 # TODO: p95 resume with minB1-maxB1
 
 printf "\n-----\n"
-printf "Testing -c | -c 10000, -c 0 with and without factor (11 seconds)"
+printf "Testing -c | -c 10000, -c 0 with and without factor (11 seconds)\n\n"
 
 # Found factor after ~30 curves (should stop despite very large curve count)
 echo "2^733-1" | timeout 10 python ecm.py -pollfiles 2 -threads 2 -c 100000 1000 3000 || die "didn't find factor(c=10000)!"
@@ -69,15 +70,24 @@ fi
 # ecm.py messes with the cursor and isn't happy about timeout
 printf "\n\n"
 
+printf "\n-----\n"
+printf "Testing ECM on multiple numbers (11 seconds)\n\n"
+
+# All have a single 10-15 digit factors
+printf "2^379-1\n2^421-1\n(2^443-1)/887\n(2^577-1)/3463\n" | python ecm.py -pollfiles 1 -c 0 5000
+COUNT=`grep --count "Found prime factor" "$LOGNAME"`
+echo "Found $COUNT/4 factors"
+if [ $COUNT -ne 4 ]; then
+  die "Didn't find factors for all 4 numbers"
+fi
 
 # TODO
 # test accepting multiple numbers
 # test errors for some parameters
 
-
 green=`tput setaf 2`
 reset=`tput sgr0`
 printf "\n${green}Tests passed!${reset}\n"
 
-rm "resume_job_2_499_t35_curves32-txt_finished.txt"
-rm "$LOGNAME"
+rm -f "resume_job_2_499_t35_curves32-txt_finished.txt"
+rm -f "$LOGNAME"
