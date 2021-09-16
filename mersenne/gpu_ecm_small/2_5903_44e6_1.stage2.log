@@ -1,0 +1,28 @@
+-> ___________________________________________________________________
+-> | Running ecm.py, a Python driver for distributing GMP-ECM work   |
+-> | on a single machine.  It is copyright, 2011-2019, David Cleaver |
+-> | and is a conversion of factmsieve.py that is Copyright, 2010,   |
+-> | Brian Gladman. Version 0.45 30st Aug 2021 (Python 3)            |
+-> |_________________________________________________________________|
+
+-> Resuming work from resume file: ../../gmp-ecm/2_5903_44e6.txt
+-> Spreading the work across 8 thread(s)
+->=============================================================================
+-> Working on the number(s) in the resume file: ../../gmp-ecm/2_5903_44e6.txt
+-> Using up to 8 instances of GMP-ECM...
+-> Found 448 unique resume lines to work on.
+-> Will start working on the 448 resume lines.
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t00.txt 44000000 > resume_job_2_5903_44e6-txt_out_t00.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t01.txt 44000000 > resume_job_2_5903_44e6-txt_out_t01.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t02.txt 44000000 > resume_job_2_5903_44e6-txt_out_t02.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t03.txt 44000000 > resume_job_2_5903_44e6-txt_out_t03.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t04.txt 44000000 > resume_job_2_5903_44e6-txt_out_t04.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t05.txt 44000000 > resume_job_2_5903_44e6-txt_out_t05.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t06.txt 44000000 > resume_job_2_5903_44e6-txt_out_t06.txt  (56 resume lines)
+-> ecm -resume resume_job_2_5903_44e6-txt_inp_t07.txt 44000000 > resume_job_2_5903_44e6-txt_out_t07.txt  (56 resume lines)
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Using B1=44000000-44000000, B2=251421670516, polynomial Dickson(12), 8 threads
+____________________________________________________________________________
+ Curves Complete |   Average seconds/curve   |    Runtime    |      ETA
+-----------------|---------------------------|---------------|--------------
+   448 of    448 | Stg1 0.000s | Stg2 397.0s |   0d 06:19:40 |   0d 00:01:48
