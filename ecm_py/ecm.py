@@ -1916,8 +1916,9 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
   opt_c = ''
 
   parser = get_argparser()
-  # TODO: what unknown args can be expect (other than B1, B2)?
-  args, unknown = parser.parse_known_args()
+  # TODO: Seth, what unknown args can be expect (other than B1, B2)?
+  args, unknown = parser.parse_known_args(sargv)
+  if 'ecm.py' in unknown[0]: unknown.pop(0)
 
   if set_args and intResume == 0:
     ecm_args = ''
@@ -2021,11 +2022,20 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
 
 
   # grab numbers to factor and save them for later...
-  if intResume != 1 and not sys.stdin.isatty() and set_args:
-    data = sys.stdin.readlines()
-    if VERBOSE >= v_normal:
+  if intResume != 1:
+    input_lines = []
+    if not sys.stdin.isatty() and set_args:
+      input_lines = sys.stdin.readlines()
+    elif sys.stdin.isatty() and set_args and inp_file != '':
+      print("inp_file = " + inp_file)
+      with open(inp_file, 'r') as f:
+        input_lines = f.readlines()
+    elif sys.stdin.isatty() and inp_file == '':
+      die('-> *** Error: no input numbers found, quitting.')
+
+    if input_lines and VERBOSE >= v_normal:
       print('-> Number(s) to factor:')
-    for line in data:
+    for line in input_lines:
       line = line.strip().strip('"')
       if is_valid_input(line):
         number_list.append(line)
@@ -2033,21 +2043,6 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
           print('-> {0:s} ({1:d} digits)'.format(line, num_digits(line)))
       else:
         print('-> *** Skipping invalid input line: {0:s}'.format(line))
-  elif intResume != 1 and sys.stdin.isatty() and set_args and inp_file != '':
-    print("inp_file = " + inp_file)
-    if VERBOSE >= v_normal:
-      print('-> Number(s) to factor:')
-    with open(inp_file, 'r') as f:
-      for line in f:
-        line = line.strip().strip('"')
-        if is_valid_input(line):
-          number_list.append(line)
-          if VERBOSE >= v_normal:
-            print('-> {0:s} ({1:d} digits)'.format(line, num_digits(line)))
-        else:
-          print('-> *** Skipping invalid input line: {0:s}'.format(line))
-  elif intResume != 1 and sys.stdin.isatty() and inp_file == '':
-    die('-> *** Error: no input numbers found, quitting.')
 
   if intNumThreads >= 1 and set_args == False:
     if ecm_maxmem > 0:
@@ -2106,7 +2101,7 @@ def parse_ecm_options_argparse(sargv, new_curves = 0, set_args = False, first = 
     if intNumThreads == 1:
       print('-> New command line will be:')
       print('-> ' + ecm_args1)
-    if intNumThreads > 1:
+    elif intNumThreads > 1:
       print('-> New command line(s) will be either:')
       print('-> ' + ecm_args1)
       print('-> ' + ecm_args2)
@@ -2140,6 +2135,10 @@ def parse_ecm_options(sargv, new_curves = 0, set_args = False, first = False, qu
     next_arg = sargv[i+1] if len(sargv) > i+1 else ""
 
     if arg == '-c':
+      # XXX: Seth, can someone describe this logic.
+      # ecm_c from -c
+      #   UNLESS we've already subtracted in read_resume_file, find_work_done
+      # XXX: Seth, descibe conditions when new_curves get passed > 0
       try:
         if not ecm_c_has_changed: ecm_c = int(next_arg)
         if new_curves > 0: ecm_c = new_curves
@@ -2428,10 +2427,10 @@ for ecm_n in number_list:
 
   # check to see if this ecm_n is a job we should continue...
   if ':' in ecm_n:
+    # Searh "find_one_factor_and_stop", happens when we found one factor but are continuning (and have a count of curves)
     continue_composite = 1
     tmp_info = ecm_n.split(':')
     ecm_n = tmp_info[0]
-    # since we tacked this "-c" option to the end, it should override any earlier value of "-c"
 
   my_str1 = '->============================================================================='
   my_str2 = '-> Working on number: {0:s} ({1:d} digits)'.format(abbreviate(ecm_n), num_digits(ecm_n))
@@ -2442,6 +2441,7 @@ for ecm_n in number_list:
     print(my_str2)
 
   if continue_composite == 1:
+    # XXX: Seth: I believe the point is just to update -c?
     parse_ecm_options(ecm_args.split(), new_curves = int(tmp_info[1]), quiet = True)
     create_job_file()
     intResume = 1

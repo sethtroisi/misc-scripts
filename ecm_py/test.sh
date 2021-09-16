@@ -63,8 +63,8 @@ grep "Found prime factor of 12 digits: 694653525743" "$LOGNAME" || die "P12 fact
 echo "2^733-1" | timeout 10 python ecm.py -pollfiles 2 -threads 2 -c 0 1000 3000 || die "didn't find factor (c=0)!"
 grep "Found prime factor of 12 digits: 694653525743" "$LOGNAME" || die "P12 factor not found (with many curves)"
 
-echo "2^127-1" | timeout 11 python ecm.py -pollfiles 1 -c 0 5000 500000
-if [ $? -ne 124 ]; then
+echo "2^127-1" | timeout 11 python ecm.py -pollfiles 1 -c 0 5000 500000 || STATUS=$?; echo
+if [ $STATUS -ne 124 ]; then
   die "Found a factor???"
 fi
 # ecm.py messes with the cursor and isn't happy about timeout
@@ -74,6 +74,7 @@ printf "\n-----\n"
 printf "Testing ECM on multiple numbers (11 seconds)\n\n"
 
 # All have a single 10-15 digit factors
+rm "$LOGNAME"
 printf "2^379-1\n2^421-1\n(2^443-1)/887\n(2^577-1)/3463\n" | python ecm.py -pollfiles 1 -c 0 5000
 COUNT=`grep --count "Found prime factor" "$LOGNAME"`
 echo "Found $COUNT/4 factors"
