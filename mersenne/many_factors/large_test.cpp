@@ -10,6 +10,36 @@ using std::vector;
  * p has [32, 33.8] bits
  * m is  [50, 64] bits (and should be prime)
  */
+uint64_t powMod(uint64_t b_pre, uint64_t b, uint64_t p, uint64_t m)
+{
+
+    // Initialize answer
+    uint64_t res = b_pre;
+
+    // Check till the number becomes zero
+    while (p)
+    {
+        // If p is odd, multiply b with result
+        if (p & 1 == 1) {
+            __uint128_t temp = res;
+            temp *= b;
+            res = temp % m;
+        }
+
+        p >>= 1;
+
+        // Change b to b^2
+        __uint128_t temp = b;
+        temp *= b;
+        b = temp % m;
+    }
+    return res;
+}
+
+/**
+ * p has [32, 33.8] bits
+ * m is  [50, 64] bits (and should be prime)
+ */
 uint64_t powMod(uint64_t b, uint64_t p, uint64_t m)
 {
 
@@ -39,7 +69,9 @@ uint64_t powMod(uint64_t b, uint64_t p, uint64_t m)
 int main(int argc, char** argv) {
     assert(argc == 2);
     uint64_t M = atol(argv[1]);
+    uint64_t two_M = 2 * M;
     printf("Testing M%lu\n", M);
+    assert( M < (1LL << 40) );
 
     uint64_t BITS = 60;
     uint64_t INTERVALS = 20;
@@ -50,6 +82,49 @@ int main(int argc, char** argv) {
         k /= 2 * M;
         max_k = k + 1;
     }
+
+    /**
+     * Avoid squaring and mod step when result < smallest P (2*M)
+     * e.g. first squaring 2*2 % p always equals 4
+     * 2nd squaring 4*4 % p always equals 16
+     *
+     * Another way of saying is break computation into two parts
+     * 2^M
+     *  = 2^(M&15) * 2^( (M>>4) << 4)
+     *  = 2^(M&15) * (2^4)^(M>>4)
+     */
+
+    /**
+     * b ^ e mod m
+     * where e is M and m is p (to be extra confusing)
+     */
+    /** Number of bits already handled in e = M */
+    uint64_t shift = 0;
+    uint64_t b_pre = 1;
+
+    // This condition keeps b_new <= two_M
+    while (shift < 5 && (two_M >> (2 << shift))) {
+        /** 2^((shift+1) lowest bits of M) */
+        // (shift + 1) lowest bits of M
+        uint64_t power = M & ((2 << shift) - 1);
+        if (power >= 64)
+            break;
+
+        // 2^(low bits)
+        if ( (1ul << power) > two_M ) {
+            break;
+        }
+        shift++;
+        b_pre = 1ul << power;
+    }
+    uint64_t M_partial = M >> shift;
+    uint64_t b_new = 1ul << (1ul << shift);
+    assert(b_pre <= two_M);
+    assert(b_new <= two_M);
+    printf("Handling %ld/%d bits of M with b_pre = %lu, b_new = %lu\n",
+            shift, (int) log2(M) + 1, b_pre, b_new);
+    printf("%lu, %lu\n", 1ul << shift, two_M >> (1ul << shift) );
+
 
     uint64_t t = 1;
     uint64_t inc = 2 * M;
@@ -106,8 +181,12 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < I; i++, t += inc) {
             if (sieve[i] == 0) {
                 tested += 1;
-                if (powMod(2, M, t) == 1)
+                // two part powermod
+                if (powMod(b_pre, b_new, M_partial, t) == 1)
                     printf("\tFactor %lu\n", t);
+
+                //if (powMod(2, M, t) == 1)
+                //    printf("\tFactor %lu\n", t);
             }
         }
         k += I;
