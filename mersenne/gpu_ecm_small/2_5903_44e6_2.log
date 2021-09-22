@@ -1,0 +1,66 @@
+$ echo "(2^5903-1)/5739843952029781891776076257968005017555159188445857307935629699893975115559509148055330481835272461192500743279" | ./ecm -cgbn -v -gpucurves 448 -savea 2_5903_44e6.txt 44e6 0
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Tuned for x86_64/k8/params.h
+Running on five
+Input number is (2^5903-1)/5739843952029781891776076257968005017555159188445857307935629699893975115559509148055330481835272461192500743279 (1666 digits)
+Using special division for factor of 2^5903-1
+Computing batch product (of 63477241 bits) of primes up to B1=44000000 took 1133ms
+GPU: will use device -1: GeForce GTX 1080 Ti, compute capability 6.1, 28 MPs.
+GPU: maxSharedPerBlock = 49152 maxThreadsPerBlock = 1024 maxRegsPerBlock = 65536
+GPU: Selection and initialization of the device took 12ms
+Using B1=44000000, B2=0, sigma=3:2700112407-3:2700112854 (448 curves)
+dF=0, k=0, d=94485244538544, d2=0, i0=0
+Expected number of curves to find a factor of n digits (assuming one exists):
+35	40	45	50	55	60	65	70	75	80
+612	3590	23538	170115	1341699	1.1e+07	1.1e+08	1.1e+09	8.2e+09	Inf
+GPU: Using device code targeted for architecture compile_61
+GPU: Ptx version is 61
+GPU: maxThreadsPerBlock = 768
+GPU: numRegsPerThread = 80 sharedMemPerBlock = 0 bytes
+Copying 1559040 bits of data to GPU
+CGBN<5568, 32> running kernel<28 block x 512 threads> input number is 5532 bits
+Computing 100 bits/call, 0/63477240 (0.0%)
+Computing 110 bits/call, 100/63477240 (0.0%)
+Computing 121 bits/call, 210/63477240 (0.0%)
+Computing 233 bits/call, 1584/63477240 (0.0%)
+Computing 233 bits/call, 3914/63477240 (0.0%), ETA 23757 + 1 = 23758 seconds (~53031 ms/curves)
+Computing 233 bits/call, 22554/63477240 (0.0%), ETA 23430 + 8 = 23439 seconds (~52319 ms/curves)
+Computing 233 bits/call, 45854/63477240 (0.1%), ETA 23394 + 17 = 23411 seconds (~52256 ms/curves)
+Computing 233 bits/call, 69154/63477240 (0.1%), ETA 23382 + 26 = 23407 seconds (~52248 ms/curves)
+Computing 233 bits/call, 92454/63477240 (0.1%), ETA 23375 + 34 = 23409 seconds (~52252 ms/curves)
+Computing 233 bits/call, 232254/63477240 (0.4%), ETA 23360 + 86 = 23446 seconds (~52334 ms/curves)
+Computing 256 bits/call, 486414/63477240 (0.8%), ETA 23286 + 180 = 23466 seconds (~52379 ms/curves)
+Computing 256 bits/call, 742414/63477240 (1.2%), ETA 23199 + 275 = 23473 seconds (~52396 ms/curves)
+Computing 256 bits/call, 998414/63477240 (1.6%), ETA 23108 + 369 = 23477 seconds (~52404 ms/curves)
+Computing 256 bits/call, 2534414/63477240 (4.0%), ETA 22548 + 938 = 23486 seconds (~52423 ms/curves)
+Computing 253 bits/call, 5077357/63477240 (8.0%), ETA 21632 + 1881 = 23513 seconds (~52484 ms/curves)
+Computing 243 bits/call, 7528201/63477240 (11.9%), ETA 20734 + 2790 = 23524 seconds (~52509 ms/curves)
+Computing 258 bits/call, 9950135/63477240 (15.7%), ETA 19840 + 3688 = 23528 seconds (~52519 ms/curves)
+Computing 251 bits/call, 12473941/63477240 (19.7%), ETA 18906 + 4624 = 23530 seconds (~52522 ms/curves)
+Computing 237 bits/call, 14882800/63477240 (23.4%), ETA 18016 + 5518 = 23533 seconds (~52530 ms/curves)
+Computing 254 bits/call, 17407579/63477240 (27.4%), ETA 17079 + 6453 = 23532 seconds (~52527 ms/curves)
+Computing 250 bits/call, 19913575/63477240 (31.4%), ETA 16150 + 7383 = 23533 seconds (~52529 ms/curves)
+Computing 244 bits/call, 22377300/63477240 (35.3%), ETA 15238 + 8296 = 23534 seconds (~52531 ms/curves)
+Computing 257 bits/call, 24773503/63477240 (39.0%), ETA 14350 + 9185 = 23534 seconds (~52532 ms/curves)
+Computing 250 bits/call, 27244577/63477240 (42.9%), ETA 13434 + 10101 = 23535 seconds (~52533 ms/curves)
+Computing 240 bits/call, 29621663/63477240 (46.7%), ETA 12552 + 10983 = 23535 seconds (~52533 ms/curves)
+Computing 257 bits/call, 32132714/63477240 (50.6%), ETA 11621 + 11913 = 23534 seconds (~52531 ms/curves)
+Computing 247 bits/call, 34610589/63477240 (54.5%), ETA 10702 + 12832 = 23534 seconds (~52531 ms/curves)
+Computing 247 bits/call, 37080589/63477240 (58.4%), ETA 9786 + 13747 = 23533 seconds (~52528 ms/curves)
+Computing 254 bits/call, 39513627/63477240 (62.2%), ETA 8884 + 14649 = 23532 seconds (~52528 ms/curves)
+Computing 250 bits/call, 42025329/63477240 (66.2%), ETA 7953 + 15580 = 23532 seconds (~52528 ms/curves)
+Computing 247 bits/call, 44503068/63477240 (70.1%), ETA 7034 + 16498 = 23532 seconds (~52527 ms/curves)
+Computing 244 bits/call, 46965513/63477240 (74.0%), ETA 6121 + 17411 = 23532 seconds (~52526 ms/curves)
+Computing 240 bits/call, 49375421/63477240 (77.8%), ETA 5228 + 18305 = 23533 seconds (~52528 ms/curves)
+Computing 260 bits/call, 51810090/63477240 (81.6%), ETA 4325 + 19207 = 23533 seconds (~52528 ms/curves)
+Computing 225 bits/call, 54274854/63477240 (85.5%), ETA 3412 + 20121 = 23532 seconds (~52528 ms/curves)
+Computing 244 bits/call, 56717813/63477240 (89.4%), ETA 2506 + 21027 = 23533 seconds (~52528 ms/curves)
+Computing 240 bits/call, 59146019/63477240 (93.2%), ETA 1606 + 21927 = 23533 seconds (~52530 ms/curves)
+Computing 240 bits/call, 61546019/63477240 (97.0%), ETA 716 + 22817 = 23533 seconds (~52529 ms/curves)
+Copying results back to CPU ...
+Computing 448 Step 1 took 25932ms of CPU time / 23533374ms of GPU time
+Throughput: 0.019 curves per second (on average 52529.85ms per Step 1)
+Expected time to find a factor of n digits:
+35	40	45	50	55	60	65	70	75	80
+8.93h	2.18d	14.31d	103.43d	2.23y	19.09y	176.45y	1767y	13697y	Inf
+Peak memory usage: 9278MB
