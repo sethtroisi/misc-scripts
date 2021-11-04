@@ -1,99 +1,115 @@
 # Fake entry to allow interpolation
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm 1e1 1e2
-GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
 Using B1=10, B2=100, polynomial x^1, sigma=0:6482715295332717591
 Step 1 took 1ms
 Step 2 took 0ms
 
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e6 3e9
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=1000000, B2=3000000000, polynomial Dickson(6), sigma=3:3970937059
-Step 1 took 1082ms
-Step 2 took 1450ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e6 3e10
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=10000, polynomial x^1, sigma=3:3352090767
+Step 1 took 0ms
+Step 2 took 0ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=1000000, B2=30000000000, polynomial Dickson(12), sigma=3:688712845
-Step 1 took 1089ms
-Step 2 took 5886ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e6 3e11
-GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=1000000, B2=300000000000, polynomial Dickson(30), sigma=3:390751429
-Step 1 took 1076ms
-Step 2 took 30395ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e6 3e12
-GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=1000000, B2=3000000000000, polynomial Dickson(30), sigma=3:153173319
-Step 1 took 1075ms
-Step 2 took 100071ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 3e13
-GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=30000000000000, polynomial Dickson(30), sigma=3:3825291774
-Step 1 took 11ms
-Step 2 took 363262ms
-
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e5
-GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=100000, polynomial x^1, sigma=3:1361716680
-Step 1 took 12ms
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=30000, polynomial x^1, sigma=3:464157221
+Step 1 took 3ms
 Step 2 took 2ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e6
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=1000000, polynomial x^1, sigma=3:1102837037
-Step 1 took 10ms
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=100000, polynomial x^1, sigma=3:1867778429
+Step 1 took 3ms
+Step 2 took 4ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=300000, polynomial x^1, sigma=3:4172238813
+Step 1 took 3ms
 Step 2 took 9ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e7
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=10000000, polynomial x^2, sigma=3:754006961
-Step 1 took 10ms
-Step 2 took 30ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e8
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=1000000, polynomial x^1, sigma=3:2412258331
+Step 1 took 2ms
+Step 2 took 18ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=100000000, polynomial Dickson(3), sigma=3:4274837757
-Step 1 took 12ms
-Step 2 took 182ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e9
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=3000000, polynomial x^1, sigma=3:1435593342
+Step 1 took 0ms
+Step 2 took 32ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=1000000000, polynomial Dickson(6), sigma=3:4108179986
-Step 1 took 9ms
-Step 2 took 767ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e10
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=10000000, polynomial x^2, sigma=3:2327095938
+Step 1 took 3ms
+Step 2 took 70ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=10000000000, polynomial Dickson(12), sigma=3:444921364
-Step 1 took 11ms
-Step 2 took 3305ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e11
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=30000000, polynomial x^2, sigma=3:1987634518
+Step 1 took 2ms
+Step 2 took 126ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=100000000000, polynomial Dickson(12), sigma=3:1914977888
-Step 1 took 11ms
-Step 2 took 12754ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e12
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=100000000, polynomial Dickson(3), sigma=3:4255516210
+Step 1 took 2ms
+Step 2 took 304ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=1000000000000, polynomial Dickson(30), sigma=3:1630680137
-Step 1 took 11ms
-Step 2 took 64366ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e13
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=300000000, polynomial Dickson(3), sigma=3:202311757
+Step 1 took 0ms
+Step 2 took 541ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=10000000000000, polynomial Dickson(30), sigma=3:3838580578
-Step 1 took 10ms
-Step 2 took 209809ms
-five:~/Projects/gmp-ecm$ echo "(2^499-1)/20959" | ./ecm -param 3 1e4 1e14
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=1000000000, polynomial Dickson(6), sigma=3:83503865
+Step 1 took 2ms
+Step 2 took 1311ms
 GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
-Input number is (2^499-1)/20959 (146 digits)
-Using B1=10000, B2=100000000000000, polynomial Dickson(30), sigma=3:3672242028
-Step 1 took 11ms
-Step 2 took 597208ms
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=3000000000, polynomial Dickson(6), sigma=3:3161428322
+Step 1 took 0ms
+Step 2 took 2493ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=10000000000, polynomial Dickson(12), sigma=3:1940573609
+Step 1 took 2ms
+Step 2 took 5520ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=30000000000, polynomial Dickson(12), sigma=3:2546257427
+Step 1 took 2ms
+Step 2 took 9795ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=100000000000, polynomial Dickson(12), sigma=3:1843023383
+Step 1 took 2ms
+Step 2 took 21263ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=300000000000, polynomial Dickson(30), sigma=3:1123588869
+Step 1 took 0ms
+Step 2 took 49608ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=1000000000000, polynomial Dickson(30), sigma=3:3224414367
+Step 1 took 2ms
+Step 2 took 104900ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=3000000000000, polynomial Dickson(30), sigma=3:2861564312
+Step 1 took 0ms
+Step 2 took 162743ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=10000000000000, polynomial Dickson(30), sigma=3:2096893585
+Step 1 took 2ms
+Step 2 took 349835ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=30000000000000, polynomial Dickson(30), sigma=3:1445475985
+Step 1 took 2ms
+Step 2 took 607874ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=100000000000000, polynomial Dickson(30), sigma=3:3647020616
+Step 1 took 0ms
+Step 2 took 1003627ms
+GMP-ECM 7.0.5-dev [configured with GMP 6.2.99, --enable-asm-redc, --enable-gpu, --enable-assert] [ECM]
+Input number is (2^1217-1)/1045741327/6116773272167843384976777858063213917010557325918356879/22053390021902056444354293154701006674049109757797668799 (248 digits)
+Using B1=1000, B2=300000000000000, polynomial Dickson(30), sigma=3:594810782
+Step 1 took 2ms
+Step 2 took 2084592ms

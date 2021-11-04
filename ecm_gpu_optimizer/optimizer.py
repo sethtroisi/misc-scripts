@@ -3,7 +3,7 @@ import re
 import subprocess
 
 from scipy import interpolate
-from scipy.optimize import minimize, bisect
+from scipy.optimize import bisect, curve_fit
 
 def load_B1_timing():
     """Load CPU Step 1 timing"""
@@ -39,26 +39,50 @@ def B2_timing_guess(timings):
     """Take an educated guess at B2 timing based on interpolation between values"""
 
     x, y = tuple(zip(*timings))
+    assert x == tuple(sorted(x))
+    # Handle in-domain estimates
     f = interpolate.interp1d(x, y)
+
+    # Handles out-of-domain estimates
+    def powerlaw(x, c, e): return c * x ** e
+
+    OUT_START = len(x)-5
+    power_params = curve_fit(powerlaw, x[OUT_START:], y[OUT_START:])[0]
+    g = lambda x: powerlaw(x, *power_params)
+
+    def h(b2):
+        return f(b2) if b2 < max(x) else g(b2)
+
     '''
+    print(f"X from {x[1]:.1e} to {x[-1]:.1e}")
+    print(f"Y from {y[1]} to {y[-1]}")
+
     import matplotlib.pyplot as plt
     import numpy as np
-    new_x = np.linspace(min(x), max(x), num=100, endpoint=False)
-    plt.plot(x, y)
-    plt.plot(new_x, f(new_x))
+    new_x = np.logspace(np.log10(x[0]), np.log10(x[-1]), num=200, endpoint=False)
+    ext_x = np.logspace(np.log10(x[OUT_START]), np.log10(max(x))+2, num=200)
+
+    plt.plot(x, y, 'x', label="measured")
+    plt.plot(new_x, f(new_x), label="interpolation")
+    plt.plot(ext_x, g(ext_x), label="estimate (out)")
+    plt.xlim(new_x[0], ext_x[-1])
     plt.xscale("log")
     plt.yscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('B2_timing.png')
     plt.show()
-    '''
-    return f
+    # '''
+
+    return h
 
 def number_of_curves(B1, B2):
     # ECM should finish rho / dickman calculation quickly
-    process = subprocess.run(["timeout", "0.2", "ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
+    process = subprocess.run(["timeout", "0.01", "../../gmp-ecm/ecm", "-v", "-param", "3", str(B1), str(B2)], input=b"2^31-1", capture_output=True)
     output = process.stdout.split(b"\n")
     CURVES_KEY = b'35\t40\t45\t50\t55\t60\t65\t70\t75\t80'
     # This will fail if you haven't applied https://gitlab.inria.fr/zimmerma/ecm/-/merge_requests/13
-    # You may also need to change "ecm" to "../gmp-ecm/ecm" or some other local path
+    # You may also need to change "ecm" to "../../gmp-ecm/ecm" or some other local path
     assert CURVES_KEY in output, (output, "see comment above about zimmerma/ecm/#13")
     digits = map(int, CURVES_KEY.split())
     expected_curves = map(float, output[output.index(CURVES_KEY) + 1].split())
@@ -88,12 +112,12 @@ def optimize_t(digits, GPU_SPEEDUP, CPU_CORES):
             return err
 
         #t = minimize(test, 3 * B1, bounds=[[2*B1, 2000*B1]], method="trust-constr")
-        MAX_B1 = 10 ** 14
+        MAX_B1 = 10 ** 20
         if test(MAX_B1) < 0:
             return MAX_B1
 
         t = bisect(test, 2 * B1, MAX_B1)
-        return int(t) #int(t.x[0])
+        return int(t)
 
 
     # Good, but a little low, initial guess
@@ -127,23 +151,27 @@ def optimize_t(digits, GPU_SPEEDUP, CPU_CORES):
         print ("Step 2 takes: {} seconds".format(B2_time))
         print ("Running on GPU + {} cores: {} seconds".format(CPU_CORES, max(B1_time, B2_time / CPU_CORES)))
     else:
-        print ("| {:>2}/{:<17}| {:<4} | {:11,} | {:15,} | {:9.0f} | {:13} |".format(
+        print ("| {:>2}/{:<20}| {:<4} | {:13,} | {:19,} | {:9.0f} | {:13} |".format(
             GPU_SPEEDUP, CPU_CORES, digits, B1_best, B2_best, B2_ratio, curves))
 
     return (B1_best, B2_best)
 
 
 def optimize():
-#    for digits in range(35, 61, 5):
-#        optimize_t(digits, 1, 1)
+    print("|   GPU speedup/CPU cores|digits|     optimal B1|           optimal B2|B2/B1 ratio|expected curves|")
+    print("|------------------------|------|---------------|---------------------|-----------|---------------|")
+    for digits in range(40, 71, 5):
+        optimize_t(digits, 1, 1)
 
-    for GPU_SPEEDUP in (20, 30, 40, 50):
+    for GPU_SPEEDUP in (20, 30, 50):
         for CPU_CORES in (1, 4, 8, 12):
-            label = "{} GPU + {} cores".format(
-                ["Slow", "Medium", "Fast", "Extreme"][(GPU_SPEEDUP - 20) // 10], CPU_CORES)
-            print ("| {:19} | {:4} | {:11} | {:15} | {:9} | {:13} |".format(
+            names = {10:"Slow", 20:"Medium", 30:"Fast", 50:"Extreme"}
+            name = names.get(GPU_SPEEDUP, str(GPU_SPEEDUP) + 'x')
+            label = "{} GPU + {} cores".format(name, CPU_CORES)
+
+            print ("| {:22} | {:4} | {:13} | {:19} | {:9} | {:13} |".format(
                 label, *(("",) * 5)))
-            for digits in range(35, 61, 5):
+            for digits in range(40, 71, 5):
                 optimize_t(digits, GPU_SPEEDUP, CPU_CORES)
 
 optimize()
