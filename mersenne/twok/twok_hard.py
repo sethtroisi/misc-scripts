@@ -81,7 +81,7 @@ print()
 print(f"Ranges with large remaining work: {len(unfactored_per)}")
 print(f"Those ranges need {sum(unfactored_per.values())} factors")
 worst = unfactored_per.most_common(1)[0]
-print(f"Most needed {worst[1] - rem_threshold} for {worst[0]-size}")
+print(f"Most needed {worst[1]} for {worst[0]-size}")
 print()
 
 ##### Get TF work done on remaining ranges
@@ -111,12 +111,12 @@ def tf_work(M, tf):
 
 
 @lru_cache(maxsize=100000)
-def pm1_stats(e, cleared, B1, B2, inc=1):
+def pm1_stats(e, cleared, B1, B2, e_prob, inc=1):
     B1 *= inc
     B2 *= inc
     prob = pm1.prob_pm1(e, cleared, B1, B2)[1]
     work = pm1.credit(e, B1, B2)
-    return (prob, work, B1, B2)
+    return (prob / (1 - e_prob), work, B1, B2)
 
 def pm1_strategy(end, min_tf, needed):
     '''Approx GHz-Days needed to find <needed> factors using P-1'''
@@ -143,7 +143,7 @@ def pm1_strategy(end, min_tf, needed):
         # B1/B2 already complete to this level
         B1, B2 = EXISTING_B1_B2[end]
         prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
-        print(f"\tExisting P-1 for interval all > {prob:.1%} (B1={B1}, B2={B2})")
+        print(f"\tExisting P-1 for interval greater than B1={B1}, B2={B2} => {prob:.1%}")
     else:
         for B1_exp in range(40, 120):
             # Steps of 30%
@@ -164,7 +164,7 @@ def pm1_strategy(end, min_tf, needed):
 
     for exp in range(1, 20):
         mult = math.exp(exp / 8)
-        prob, work, *_, = test = pm1_stats(first_e, 2 ** min_tf, B1, B2, inc=mult)
+        prob, work, *_, = test = pm1_stats(first_e, 2 ** min_tf, B1, B2, 0, inc=mult)
         rate = (prob - e_prob) / work
         #print(f"\t{mult:.1f}x\t => {e_prob:.1%} -> {prob:.1%} For {rate:.2f} GHz-Days ({work:.3f})")
         if rate < best_rate:
@@ -175,12 +175,12 @@ def pm1_strategy(end, min_tf, needed):
 
 
     prob, work, B1, B2 = best
-    print(f"\tP-1 optimized at {prob:.2%} for {work:.2f} GHz-Days = {1/best_rate:.1f} GHz-Days/Factor (B1={B1:.0f} B2={B2:0.7})")
+    #print(f"\tP-1 optimized at {prob:.2%} for {work:.2f} GHz-Days = {1/best_rate:.1f} GHz-Days/Factor (B1={B1:.0f} B2={B2:0.7})")
 
     gain = prob - e_prob
     expected = gain * len(exponents)
     cost = len(exponents) * work
-    print(f"\t{len(exponents)} x +{gain:.2%} = +{expected:.1f} factors for {cost:.1f} GHz-Days")
+    #print(f"\t{len(exponents)} x +{gain:.2%} = +{expected:.1f} factors for {cost:.1f} GHz-Days")
 
     # If optimal (best yield for CPU time)
     if expected > needed:
@@ -199,8 +199,8 @@ def pm1_strategy(end, min_tf, needed):
     # priority queue of (yield derivative, prob, work, B1, B2, count exponents)
     queue = []
     for (B1, B2), count in pm1_limits.items():
-        prob_1, work_1, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2)
-        prob_2, work_2, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2, inc=1.05)
+        prob_1, work_1, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob)
+        prob_2, work_2, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob, inc=1.05)
         marginal_yield = (prob_2 - prob_1) / (work_2 - work_1)
         assert marginal_yield > 0
         heapq.heappush(queue, (-marginal_yield, prob_1, work_1, B1, B2, count))
@@ -214,7 +214,7 @@ def pm1_strategy(end, min_tf, needed):
         _, old_prob, old_work, _, _, count = queue[0]
 
         # Increase bounds slightly
-        prob, work, B1, B2 = pm1_stats(first_e, 2 ** min_tf, B1, B2, inc=1.2)
+        prob, work, B1, B2 = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob, inc=1.2)
 
         # Remove new expected probability
         remaining -= (prob - old_prob) * count
@@ -225,6 +225,8 @@ def pm1_strategy(end, min_tf, needed):
         new = (-marginal, prob, work, B1, B2, count)
 
         heapq.heapreplace(queue, new)
+
+    print(f"\tLast P-1 {count} x {prob:.1%} @ B1={int(B1)} B2={int(B2)}")
 
     avgB1 = int(sum(s[3] * s[-1] for s in queue) / len(exponents))
     avgB2 = int(sum(s[4] * s[-1] for s in queue) / len(exponents))
@@ -241,26 +243,29 @@ def work_to_clear(end):
 
     print()
     while rem > 1e-4:
-        # Finish with PM1
-        cpu_work, pm1s, B1, B2 = pm1_strategy(end, min(limits), rem)
+        bit = min(limits)
+
+        # Find rem factors with P-1
+        cpu_work, pm1s, B1, B2 = pm1_strategy(end, bit, rem)
         ratio = gpu_work / max(cpu_work, 0.1)
-        g_rate = gpu_work / max(total_needed - rem, 0.1)
+        g_factors = total_needed - rem
+        g_rate = gpu_work / max(g_factors, 0.1)
         c_rate = cpu_work / max(rem, 0.1)
         rate_str = f"GHz-Days/factor  GPU: {g_rate:.1f}  CPU: {c_rate:.1f} | {ratio:.1f}x GPU/CPU"
-        work_str = f"{tfs} TF + {pm1s} P-1 @ B1={B1} B2={B2}"
-        print(f"\t{gpu_work:.0f} GPU + {cpu_work:.1f} CPU | {rate_str} | {work_str}")
+        work_str = f"Factors/Tests {g_factors:.1f}/{tfs} TF + {rem:.1f}/{pm1s} P-1 @ B1={B1} B2={B2}"
+        print(f"\t{gpu_work:.0f} GPU({bit}) + {cpu_work:.1f} CPU | {rate_str} | {work_str}")
         print()
 
         # Better to spend CPU than 150x GPU
-        if ratio > 150:
-            break
+        #if ratio > 150:
+        #    break
 
         # Move the lowest bit level to the next level
         # expect to find a little less than ~(1 / bit) factors
         bit = min(limits)
         count = limits[bit]
         success = 1 / (bit + 5)  # adjust for some P-1 already done
-        to_tf = min(count, rem / success)
+        to_tf = min(count, int(math.ceil(rem / success)))
         rem -= to_tf * success
         # TODO could look at actualy primes but meh, average is good enough
         gpu_work += to_tf * tf_work(end - size/2, bit)
@@ -272,7 +277,7 @@ def work_to_clear(end):
             limits[bit] -= to_tf
         limits[bit+1] += to_tf
 
-    print(f"\t{gpu_work:.0f} GPU + 0 CPU | {tfs} TF")
+    print(f"\t{gpu_work:.0f} GPU({to_tf} x {bit + 1}) + 0 CPU | {total_needed}/{tfs} TF")
     print()
 
     return gpu_work
@@ -283,8 +288,9 @@ def work_to_clear(end):
 # For each interval determine work to clear using only TF
 most_work = 0
 for end, rem in unfactored_per.most_common():
+    fancy_tf_limits = " + ".join(f"{count} x {bits}" for bits, count in tf_limits[end].most_common())
     print()
-    print(f"[{end-size},{end}] {rem} => {tf_limits[end].items()}")
+    print(f"[{end-size},{end}] {rem} needed, current TF {fancy_tf_limits}")
     work = work_to_clear(end)
     if work >= most_work:
         most_work = work
