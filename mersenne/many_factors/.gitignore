@@ -1,5 +1,8 @@
+*.ckp
+
 past_1g/*.html
 past_1g/*.ckp
+past_1g/*.txt*
 past_1g/mfaktc.exe
 past_1g/mfaktc.ini
 past_1g/submission.txt
