@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 BASE_FOLDER = os.path.expanduser("~/Downloads/GIMPS/")
 #RESULTS_FILE = os.path.join(BASE_FOLDER, "results/megaresults.txt")
-RESULTS_FILES = ["past_1g/results.txt", "results.txt"]
+RESULTS_FILES = ["past_1g/results.combined.txt", "results.txt"]
 
 FACTOR_FILES = glob.glob('/media/five/Sojourner/GIMPS/mersenneca_known_factors_3G*.txt')
 
@@ -23,11 +23,12 @@ MANY_THRESHOLD = 6
 MIN_EXP = 2 ** 20 + 100
 
 # TJAOI has checked everything less than 2^68, we start at [68,69],
-MIN_TF = 64 + 1
+# FOR large values we search from some value to this
+MIN_TF = 69
 # A large number
 MAX_TF = 100
 
-MAX_TIME = 20 * 60
+MAX_TIME = 80               # For 6 factor TF => 1 factor / hour
 GHZ_DAYS_PER_DAY = 1400     # Based on 1080ti with mfaktc
 
 
@@ -117,9 +118,9 @@ def generate_worktodo_ordered(factors, tf_data):
 
     # Divide cost when we find this many primes
     value = {
-        8:6,
-        9:30,
-        10:60,
+        8:15,
+        9:70,
+        10:280,
         11:300,
     }
 
@@ -164,7 +165,10 @@ def generate_worktodo_ordered(factors, tf_data):
                 print ("\t{:>5}th entry, {:10},{} | ({} factors) ~{}, total {}"
                     .format(i, e, bits, prime_count[e],
                             format_time(cost), format_time(sum_cost)))
-            todo.write(f"Factor={e},{bits-1},{bits}\n")
+            if bits > MIN_TF:
+                todo.write(f"Factor={e},{bits-1},{bits}\n")
+            else:
+                todo.write(f"Factor={e},{67},{bits}\n")
 
 
 def generate_doublecheck(factors):
