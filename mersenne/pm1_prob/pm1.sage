@@ -10,6 +10,9 @@
 # Preda's code makes use of a table and linear interpolation to compute rho
 # in sage we have direct access to dickman_rho
 
+from fft import fft_timing_data, fft_size_data
+
+
 def prob_stage1(alpha):
     '''
     Probability of finding factor in first stage
@@ -84,9 +87,38 @@ def n_primes_between(B1, B2):
     return prime_pi(B2) - prime_pi(B1)
 
 
+def get_FFT_size(exponent):
+    '''Find appropriate length for FFT'''
+    for max_exp, size in fft_size_data:
+        if max_exp > exponent:
+            return size
+    assert False, exponent
+
+def get_FFT_timing(exponent):
+    '''Find FFT timing
+
+    Uses a minimized version of James data
+    See: https://www.mersenneforum.org/showpost.php?p=593701&postcount=707
+    '''
+    fftlen = get_FFT_size(exponent)
+    best = fft_timing_data[0][1]
+    for size, timing in fft_timing_data:
+        if size >= fftlen:
+            best = timing
+        else:
+            break
+    return best
+
+
 def credit(exponent, B1, B2):
+    '''GIMPS CPU Credit (GHz-Days) for a P-1 assignment
+
+    See: https://mersenneforum.org/showpost.php?p=152280&postcount=204
+    and https://www.mersenneforum.org/showthread.php?t=10937
+    '''
+    timing = get_FFT_timing(exponent)
     credit = 1.45 * B1 + 0.079 * (B2 - B1)
-    return 0.002561 * credit / 86400
+    return float(timing * credit / 86400)
 
 
 def test():

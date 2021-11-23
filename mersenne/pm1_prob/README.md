@@ -10,4 +10,8 @@ For python you need to `preparse` the sage file with
 ```
 sage --preparse pm1.sage
 mv -f pm1.sage.py pm1.py
+
+# And for credit() also do
+sage --preparse fft.sage
+mv -f fft.sage.py fft.py
 ```
