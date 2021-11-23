@@ -13,7 +13,7 @@ import pm1
 # Ranges above 100M are supposed to be handled by default
 # and TF is very easy there so likely will have no very
 # hard ranges
-STOP = 20 * 10 ** 6
+STOP = 30 * 10 ** 6
 
 factor_fn = "mersenneca_known_factors_0G.txt"
 tf_limits_fn = "tf_limits_0g"
@@ -21,6 +21,7 @@ tf_limits_fn = "tf_limits_0g"
 # the OG project is looking at ranges of .1M = 100,000
 size = 100000
 rem_threshold = 2 * (size // 100) - 1
+extra_threshold = 40
 
 # [0, size], [size, 2*size], [2*size, 3*size]
 # don't have to work about overlap with ] and [ because size is composite
@@ -72,7 +73,7 @@ unfactored_per = Counter()
 for end in range(size, STOP+1, size):
     c = counts[end // size - 1]
     rem = c[0] - c[1]
-    if rem > (rem_threshold + 10):
+    if rem >= (rem_threshold + extra_threshold):
         print(f"[{end-size:8},{end:8}] {c[1]} / {c[0]} => {rem}")
         unfactored_per[end] = rem - rem_threshold
 
@@ -130,16 +131,29 @@ def pm1_strategy(end, min_tf, needed):
     exponents = sorted(unfactored[end // size - 1])
     first_e = min(exponents)
 
+    # TODO load this from a file
+    # B1/B2 have been complete for all exponents to this level in this range
+    EXISTING_B1_B2 = {
+        17100000: (100000, 2025000),
+        15600000: (160000, 2880000),
+        8700000: (100000, 1825000),
+    }
 
-    for B1_exp in range(40, 120):
-        # Steps of 30%
-        B1 = math.exp(B1_exp / 4)
-        B2 = 20 * B1
+    if end in EXISTING_B1_B2:
+        # B1/B2 already complete to this level
+        B1, B2 = EXISTING_B1_B2[end]
         prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
-        if prob > 0.02:
-            break
+        print(f"\tExisting P-1 for interval all > {prob:.1%} (B1={B1}, B2={B2})")
+    else:
+        for B1_exp in range(40, 120):
+            # Steps of 30%
+            B1 = math.exp(B1_exp / 4)
+            B2 = 20 * B1
+            prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
+            if prob > 0.02:
+                break
 
-    print(f"\tFor M{first_e:,} {prob:.1%} P-1:  B1={B1:.0f}  B2={B2:.0f}")
+        print(f"\tFor M{first_e:,} {prob:.1%} P-1:  B1={B1:.0f}  B2={B2:.0f}")
 
     # Prob / Work is u shaped (increases as B1 > B1_existing, decreases at some point)
     existing = (B1, B2)
@@ -171,7 +185,7 @@ def pm1_strategy(end, min_tf, needed):
     # If optimal (best yield for CPU time)
     if expected > needed:
         # This assumes we have enough exponents that len(exponents)
-        count = needed / gain
+        count = int(math.ceil(needed / gain))
         return count * work, count, B1, B2
 
     # If we had a bag of B1/B2 limits this would be harder
@@ -236,6 +250,10 @@ def work_to_clear(end):
         work_str = f"{tfs} TF + {pm1s} P-1 @ B1={B1} B2={B2}"
         print(f"\t{gpu_work:.0f} GPU + {cpu_work:.1f} CPU | {rate_str} | {work_str}")
         print()
+
+        # Better to spend CPU than 150x GPU
+        if ratio > 150:
+            break
 
         # Move the lowest bit level to the next level
         # expect to find a little less than ~(1 / bit) factors
