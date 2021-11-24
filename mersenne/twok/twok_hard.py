@@ -10,6 +10,9 @@ from functools import lru_cache
 import primesieve
 import pm1
 
+# Roughly (GPU TF GHz-day / CPU P-1 GHz-day)
+GPU_WORK_MULT = 50
+
 # Ranges above 100M are supposed to be handled by default
 # and TF is very easy there so likely will have no very
 # hard ranges
@@ -25,12 +28,12 @@ extra_threshold = 40
 
 # [0, size], [size, 2*size], [2*size, 3*size]
 # don't have to work about overlap with ] and [ because size is composite
-counts = [[0, 0] for _ in range(size, STOP+1, size)]
+counts = [[0, 0] for _ in range(0, STOP, size)]
 
 # I want this to contain all primes without factors
 # Ideally we'd do something in two passes, or one combined pass
 # to avoid adding then removing all primes but that's hard to write.
-unfactored = [set() for _ in range(size, STOP+1, size)]
+unfactored = [set() for _ in range(0, STOP, size)]
 
 for prime in primesieve.primes(0, STOP):
     counts[prime // size][0] += 1
@@ -70,18 +73,18 @@ for m in MP:
 #####
 
 unfactored_per = Counter()
-for end in range(size, STOP+1, size):
-    c = counts[end // size - 1]
+for start in range(0, STOP, size):
+    c = counts[start // size]
     rem = c[0] - c[1]
     if rem >= (rem_threshold + extra_threshold):
-        print(f"[{end-size:8},{end:8}] {c[1]} / {c[0]} => {rem}")
-        unfactored_per[end] = rem - rem_threshold
+        print(f"{start:8}  factored {c[1]} / {c[0]} => {rem} unfactored")
+        unfactored_per[start] = rem - rem_threshold
 
 print()
 print(f"Ranges with large remaining work: {len(unfactored_per)}")
 print(f"Those ranges need {sum(unfactored_per.values())} factors")
 worst = unfactored_per.most_common(1)[0]
-print(f"Most needed {worst[1]} for {worst[0]-size}")
+print(f"Most needed {worst[1]} for {worst[0]}")
 print()
 
 ##### Get TF work done on remaining ranges
@@ -95,12 +98,12 @@ with open(tf_limits_fn) as f:
             break
 
         interval = (m // size)
-        top = interval * size + size
-        if top in unfactored_per:
+        bottom = interval * size
+        if bottom in unfactored_per:
             if m in unfactored[interval]:
                 limit = int(raw[1])
 #                assert raw[1] + "\n" == raw[2], raw
-                tf_limits[top][limit] += 1
+                tf_limits[bottom][limit] += 1
 
 
 ##### Work calculation
@@ -118,7 +121,7 @@ def pm1_stats(e, cleared, B1, B2, e_prob, inc=1):
     work = pm1.credit(e, B1, B2)
     return (prob / (1 - e_prob), work, B1, B2)
 
-def pm1_strategy(end, min_tf, needed):
+def pm1_strategy(start, min_tf, needed):
     '''Approx GHz-Days needed to find <needed> factors using P-1'''
 
     # Doesn't account for TF removing some factors
@@ -128,22 +131,23 @@ def pm1_strategy(end, min_tf, needed):
     # Assume P-1 to 2% has been done (with B1 = 20 * B2)
     # This is generally very optimistic (High P-1 has probably been done)
 
-    exponents = sorted(unfactored[end // size - 1])
+    exponents = sorted(unfactored[start // size])
     first_e = min(exponents)
 
     # TODO load this from a file
     # B1/B2 have been complete for all exponents to this level in this range
     EXISTING_B1_B2 = {
-        17100000: (100000, 2025000),
-        15600000: (160000, 2880000),
-        8700000: (100000, 1825000),
+         8600000: (100000, 1825000),
+        10700000: (130000, 2665000),
+        15500000: (180000, 2700000),
+        17000000: (100000, 2025000),
     }
 
-    if end in EXISTING_B1_B2:
+    if start in EXISTING_B1_B2:
         # B1/B2 already complete to this level
-        B1, B2 = EXISTING_B1_B2[end]
+        B1, B2 = EXISTING_B1_B2[start]
         prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
-        print(f"\tExisting P-1 for interval greater than B1={B1}, B2={B2} => {prob:.1%}")
+        #print(f"\tExisting P-1 for interval greater than B1={B1}, B2={B2} => {prob:.1%}")
     else:
         for B1_exp in range(40, 120):
             # Steps of 30%
@@ -152,8 +156,7 @@ def pm1_strategy(end, min_tf, needed):
             prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
             if prob > 0.02:
                 break
-
-        print(f"\tFor M{first_e:,} {prob:.1%} P-1:  B1={B1:.0f}  B2={B2:.0f}")
+        #print(f"\tFor M{first_e:,} {prob:.1%} P-1:  B1={B1:.0f}  B2={B2:.0f}")
 
     # Prob / Work is u shaped (increases as B1 > B1_existing, decreases at some point)
     existing = (B1, B2)
@@ -226,7 +229,7 @@ def pm1_strategy(end, min_tf, needed):
 
         heapq.heapreplace(queue, new)
 
-    print(f"\tLast P-1 {count} x {prob:.1%} @ B1={int(B1)} B2={int(B2)}")
+    #print(f"\tLast P-1 {count} x {prob:.1%} @ B1={int(B1)} B2={int(B2)}")
 
     avgB1 = int(sum(s[3] * s[-1] for s in queue) / len(exponents))
     avgB2 = int(sum(s[4] * s[-1] for s in queue) / len(exponents))
@@ -234,41 +237,47 @@ def pm1_strategy(end, min_tf, needed):
     return sum_work, len(exponents), avgB1, avgB2
 
 
-def work_to_clear(end):
-    total_needed = rem = unfactored_per[end]
-    limits = Counter(tf_limits[end])
+def work_to_clear(start):
+    total_needed = rem = unfactored_per[start]
+    limits = Counter(tf_limits[start])
     # GPU only strategy
     gpu_work = 0
     tfs = 0
 
-    print()
+    best_combined = 10 ** 1000
+
+    output = ["\n"]
     while rem > 1e-4:
         bit = min(limits)
 
         # Find rem factors with P-1
-        cpu_work, pm1s, B1, B2 = pm1_strategy(end, bit, rem)
+        cpu_work, pm1s, B1, B2 = pm1_strategy(start, bit, rem)
         ratio = gpu_work / max(cpu_work, 0.1)
         g_factors = total_needed - rem
         g_rate = gpu_work / max(g_factors, 0.1)
         c_rate = cpu_work / max(rem, 0.1)
         rate_str = f"GHz-Days/factor  GPU: {g_rate:.1f}  CPU: {c_rate:.1f} | {ratio:.1f}x GPU/CPU"
-        work_str = f"Factors/Tests {g_factors:.1f}/{tfs} TF + {rem:.1f}/{pm1s} P-1 @ B1={B1} B2={B2}"
-        print(f"\t{gpu_work:.0f} GPU({bit}) + {cpu_work:.1f} CPU | {rate_str} | {work_str}")
-        print()
+        work_str = f"factors/tests {g_factors:.1f}/{tfs} TF + {rem:.1f}/{pm1s} P-1 @ B1={B1} B2={B2}"
+        output.append(f"\t{gpu_work:.0f} GPU({bit}) + {cpu_work:.1f} CPU | {rate_str}")
+        output.append(f"\t{work_str}\n")
+
+        combined = gpu_work / GPU_WORK_MULT + cpu_work
+        if combined < best_combined:
+            best_combined = combined
 
         # Better to spend CPU than 150x GPU
-        #if ratio > 150:
-        #    break
+        if ratio > 150:
+            break
 
         # Move the lowest bit level to the next level
         # expect to find a little less than ~(1 / bit) factors
         bit = min(limits)
-        count = limits[bit]
+        count = limits[bit] - int(g_factors)
         success = 1 / (bit + 5)  # adjust for some P-1 already done
         to_tf = min(count, int(math.ceil(rem / success)))
         rem -= to_tf * success
         # TODO could look at actualy primes but meh, average is good enough
-        gpu_work += to_tf * tf_work(end - size/2, bit)
+        gpu_work += to_tf * tf_work(start + size/2, bit)
         tfs += to_tf
         if to_tf == count:
             # zero and remove key
@@ -277,21 +286,28 @@ def work_to_clear(end):
             limits[bit] -= to_tf
         limits[bit+1] += to_tf
 
-    print(f"\t{gpu_work:.0f} GPU({to_tf} x {bit + 1}) + 0 CPU | {total_needed}/{tfs} TF")
-    print()
+    if gpu_work / 50 < best_combined:
+        best_combined = gpu_work / 50
 
-    return gpu_work
+    output.append(f"\t{gpu_work:.0f} GPU({to_tf} x {bit + 1}) + 0 CPU | {total_needed}/{tfs} TF\n")
+
+    return best_combined, output
 
 
 
 
 # For each interval determine work to clear using only TF
 most_work = 0
-for end, rem in unfactored_per.most_common():
-    fancy_tf_limits = " + ".join(f"{count} x {bits}" for bits, count in tf_limits[end].most_common())
+for start, rem in unfactored_per.most_common():
+    tf_str = " + ".join(f"{c} x {b}" for b, c in tf_limits[start].most_common())
     print()
-    print(f"[{end-size},{end}] {rem} needed, current TF {fancy_tf_limits}")
-    work = work_to_clear(end)
+    work, output = work_to_clear(start)
+    print(f"{start:8}  {rem} needed, current TF {tf_str} | Combined Work: {work:.0f} GHz-Days")
+    if work >= 0.5 * most_work:
+        print("\n".join(output))
+
     if work >= most_work:
         most_work = work
+        print(f"\tTakes ~ {work:.0f} GHz-Days Combined work (GPU/{GPU_WORK_MULT} + CPU)!")
+        print("\n\n")
 
