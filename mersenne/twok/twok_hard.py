@@ -11,20 +11,28 @@ import primesieve
 import pm1
 
 # Roughly (GPU TF GHz-day / CPU P-1 GHz-day)
-GPU_WORK_MULT = 50
+GPU_MULT = 50
+
+# Roughly optimal B2/B1 ratio
+B2_RATIO = 100
 
 # Ranges above 100M are supposed to be handled by default
 # and TF is very easy there so likely will have no very
 # hard ranges
-STOP = 30 * 10 ** 6
+STOP = 10 * 10 ** 6
 
-factor_fn = "mersenneca_known_factors_0G.txt"
-tf_limits_fn = "tf_limits_0g"
+# sed '6000000q' mersenneca_known_factors_0G.txt > mersenneca_known_factors_100M.txt
+# (cat mersenneca_known_factors_100M.txt mersenneca_known_factors_0G_30day.txt) | sort -u -n -t',' -k1,1 | sponge mersenneca_known_factors_100M.txt
+# wc mersenneca_known_factors_100M.txt
+
+#factor_fn = "mersenneca_known_factors_0G.txt"
+factor_fn = "mersenneca_known_factors_100M.txt"
+tf_limits_fn = "mersenneca_tf_pm1_bounds_0G.txt"
 
 # the OG project is looking at ranges of .1M = 100,000
 size = 100000
 rem_threshold = 2 * (size // 100) - 1
-extra_threshold = 40
+extra_threshold = 0 # 40
 
 # [0, size], [size, 2*size], [2*size, 3*size]
 # don't have to work about overlap with ] and [ because size is composite
@@ -90,9 +98,13 @@ print()
 ##### Get TF work done on remaining ranges
 
 tf_limits = {interval: Counter() for interval in unfactored_per}
+pm1_limits = {interval: Counter() for interval in unfactored_per}
+
 with open(tf_limits_fn) as f:
+    headers = f.readline()
+    assert "exponent\tfactored\ttfnf\tb1\tb2\tpm1_prob\n" == headers, list(headers)
     for line in f:
-        raw = line.split(",")
+        raw = line.split()
         m = int(raw[0])
         if m > STOP:
             break
@@ -101,10 +113,16 @@ with open(tf_limits_fn) as f:
         bottom = interval * size
         if bottom in unfactored_per:
             if m in unfactored[interval]:
-                limit = int(raw[1])
-#                assert raw[1] + "\n" == raw[2], raw
-                tf_limits[bottom][limit] += 1
+                if raw[1] == "1":
+                    # actually is factored
+                    unfactored[interval].remove(m)
+                    counts[m // size][1] += 1
+                    continue
 
+                tf = int(raw[2])
+                pm1_bounds = (int(raw[3]), int(raw[4]))
+                tf_limits[bottom][tf] += 1
+                pm1_limits[bottom][pm1_bounds] += 1
 
 ##### Work calculation
 
@@ -117,127 +135,142 @@ def tf_work(M, tf):
 def pm1_stats(e, cleared, B1, B2, e_prob, inc=1):
     B1 *= inc
     B2 *= inc
+
     prob = pm1.prob_pm1(e, cleared, B1, B2)[1]
     work = pm1.credit(e, B1, B2)
-    return (prob / (1 - e_prob), work, B1, B2)
+    return (prob - e_prob) / (1 - e_prob), work, B1, B2
 
-def pm1_strategy(start, min_tf, needed):
+
+def format_bounds(count, cur_B1, cur_B2, new_B1, new_B2):
+    cur = f"B1={cur_B1/1e1:5.0f}, B2={cur_B2/1e3:3.0f}K"
+    new = f"B1={new_B1/1e1:5.0f}, B2={new_B2/1e3:3.0f}K"
+    return f"\t\t{count:3}x  {cur}  =>  {new}"
+
+
+def pm1_strategy(start, cleared, needed):
     '''Approx GHz-Days needed to find <needed> factors using P-1'''
+
+    debug = (start == 6900000)
 
     # Doesn't account for TF removing some factors
     # Doesn't account for new TF limit
-    # Doesn't account for existing B1/B2 limits (or what TF each exp has)
-
-    # Assume P-1 to 2% has been done (with B1 = 20 * B2)
-    # This is generally very optimistic (High P-1 has probably been done)
+    # Doesn't account for what TF each exp has
+    # Doesn't estimate optimal B2/B1 (or compute work correctly for new 30.8 prime95)
 
     exponents = sorted(unfactored[start // size])
     first_e = min(exponents)
 
-    # TODO load this from a file
-    # B1/B2 have been complete for all exponents to this level in this range
-    EXISTING_B1_B2 = {
-         8600000: (100000, 1825000),
-        10700000: (130000, 2665000),
-        15500000: (180000, 2700000),
-        17000000: (100000, 2025000),
-    }
-
-    if start in EXISTING_B1_B2:
-        # B1/B2 already complete to this level
-        B1, B2 = EXISTING_B1_B2[start]
-        prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
-        #print(f"\tExisting P-1 for interval greater than B1={B1}, B2={B2} => {prob:.1%}")
+    if start in pm1_limits:
+        # average B1/B2 already complete to this level
+        B1, B2 = list(map(lambda e: sum(e) / n, zip(*pm1_limits[start].elements())))
+        prob = pm1.prob_pm1(first_e, cleared, B1, B2)[1]
+        if debug:
+            print(f"\tExisting P-1 for interval, avg B1={B1/1e3:5.0f}K, B2={B2/1e6:3.0f}M => {prob:.1%}")
     else:
-        for B1_exp in range(40, 120):
-            # Steps of 30%
-            B1 = math.exp(B1_exp / 4)
-            B2 = 20 * B1
-            prob = pm1.prob_pm1(first_e, 2 ** min_tf, B1, B2)[1]
-            if prob > 0.02:
-                break
-        #print(f"\tFor M{first_e:,} {prob:.1%} P-1:  B1={B1:.0f}  B2={B2:.0f}")
+        assert False, f"No P-1 Bounds for {start}"
 
-    # Prob / Work is u shaped (increases as B1 > B1_existing, decreases at some point)
-    existing = (B1, B2)
-    e_prob = prob
-
-    best = (0, 1, B1, B2)
-    best_rate = 0
-
-    for exp in range(1, 20):
-        mult = math.exp(exp / 8)
-        prob, work, *_, = test = pm1_stats(first_e, 2 ** min_tf, B1, B2, 0, inc=mult)
-        rate = (prob - e_prob) / work
-        #print(f"\t{mult:.1f}x\t => {e_prob:.1%} -> {prob:.1%} For {rate:.2f} GHz-Days ({work:.3f})")
-        if rate < best_rate:
-            break
-
-        best = test
-        best_rate = rate
-
-
-    prob, work, B1, B2 = best
-    #print(f"\tP-1 optimized at {prob:.2%} for {work:.2f} GHz-Days = {1/best_rate:.1f} GHz-Days/Factor (B1={B1:.0f} B2={B2:0.7})")
-
-    gain = prob - e_prob
-    expected = gain * len(exponents)
-    cost = len(exponents) * work
-    #print(f"\t{len(exponents)} x +{gain:.2%} = +{expected:.1f} factors for {cost:.1f} GHz-Days")
-
-    # If optimal (best yield for CPU time)
-    if expected > needed:
-        # This assumes we have enough exponents that len(exponents)
-        count = int(math.ceil(needed / gain))
-        return count * work, count, B1, B2
-
-    # If we had a bag of B1/B2 limits this would be harder
-    # But the simple solution is to add them to a pqueue (heapq)
+    # Simple solution is to add them to a pqueue (heapq)
     # 1. Take the item with the highest marginal yield (derivative of rate=prob/credit)
     # 2. Increase B1/B2 slightly, add back to pqueue
 
-    # TODO also keep tf cleared per group
-    pm1_limits = Counter({(B1, B2): len(exponents)})
+    # TODO include tf per group. This increases prob estimates, but takes more time
+    local_pm1_limits = Counter()
+    extra = [0, 0, 0]  # count, sum(B1), sum(B2)
+    for (B1, B2), count in pm1_limits[start].items():
+        if count > 50:
+            local_pm1_limits[(B1, B2)] += count
+        else:
+            extra[0] += count
+            extra[1] += B1
+            extra[2] += B2
 
-    # priority queue of (yield derivative, prob, work, B1, B2, count exponents)
+    if extra[0] > 0:
+        avg_B1 = int(extra[1] / extra[0] // 10000) * 10000
+        avg_B2 = int(extra[2] / extra[0] // 10000) * 10000
+        local_pm1_limits[(avg_B1, avg_B2)] = extra[0]
+
+    # priority queue of
+    #   (yield derivative,
+    #    incremental probability,
+    #    incremental work,
+    #    probability at new bounds,
+    #    work at new bounds,
+    #    B1 of new work,
+    #    B2 of new work,
+    #    probability of initial bounds,
+    #    count of exponents at these bounds)
     queue = []
-    for (B1, B2), count in pm1_limits.items():
-        prob_1, work_1, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob)
-        prob_2, work_2, *_ = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob, inc=1.05)
-        marginal_yield = (prob_2 - prob_1) / (work_2 - work_1)
-        assert marginal_yield > 0
-        heapq.heappush(queue, (-marginal_yield, prob_1, work_1, B1, B2, count))
 
+    for (B1, B2), count in local_pm1_limits.items():
+        # Prob / Work is u shaped (increases as B1 > B1_existing, decreases at some point)
+        e_prob = pm1.prob_pm1(first_e, cleared, B1, B2)[1]
+        best = (0, 1, B1, B2)
+        best_rate = 0
+
+        for exp in range(1, 20):
+            mult = math.exp(exp / 8)
+            prob, work, *_, = test = pm1_stats(first_e, cleared, B1, B2_RATIO * B1, e_prob, inc=mult)
+            if prob < 0:
+                continue
+
+            rate = prob / work
+            if rate < best_rate:
+                break
+            best = test
+            best_rate = rate
+
+        prob, work, opt_B1, opt_B2 = best
+        if debug:
+            print(f"\tP-1 optimized at {prob:.2%} for {work:.2f} GHz-Days = {1/best_rate:.1f} GHz-Days/Factor")
+            print(format_bounds(count, B1, B2, opt_B1, opt_B2))
+
+        # First "derivative" is a little weird as efficency increases over a small window
+        # (as you have to do a lot of work to get to existing B1). so the derivative
+        # is instead taken over the whole "optimal" P-1.
+        marginal_yield = prob / work
+
+        # Add to priority queue with yield derivative
+        assert marginal_yield > 0
+        heapq.heappush(queue, (-marginal_yield, prob, work, prob, work, opt_B1, opt_B2, e_prob, count))
+
+    if debug:
+        print("\t----")
 
     # How much incremental probability via increasing limits
-    remaining = needed - expected
-    sum_work = cost
+    remaining = needed
+    sum_work = 0
 
+    # To help with the degenerate case where not all exponents are tested items
+    # in the queue aren't part of the solution set. Only items when they are popped.
     while remaining > 0:
-        _, old_prob, old_work, _, _, count = queue[0]
+        # The best work we can do is to include up to these bounds.
+        _, inc_prob, inc_work, prob, work, B1, B2, e_prob, count = queue[0]
 
-        # Increase bounds slightly
-        prob, work, B1, B2 = pm1_stats(first_e, 2 ** min_tf, B1, B2, e_prob, inc=1.2)
+        # Increase bounds
+        inc = 1.2 if (remaining / count / prob) < 2 else 1.8
+        new_prob, new_work, new_B1, new_B2 = pm1_stats(first_e, cleared, B1, B2, e_prob, inc=inc)
 
-        # Remove new expected probability
-        remaining -= (prob - old_prob) * count
-        sum_work += (work - old_work) * count
+        # Remove new incremental probability
+        remaining -= inc_prob * count
+        # Add new incremental work
+        sum_work += inc_work * count
 
-        # Compute new stats
-        marginal = (prob - old_prob) / (work - old_work)
-        new = (-marginal, prob, work, B1, B2, count)
-
+        # Compute new derivatives
+        new_inc_prob = new_prob - prob
+        new_inc_work = new_work - work
+        marginal = new_inc_prob / new_inc_work
+        new = (-marginal, new_inc_prob, new_inc_work, new_prob, new_work, new_B1, new_B2, e_prob, count)
         heapq.heapreplace(queue, new)
 
-    #print(f"\tLast P-1 {count} x {prob:.1%} @ B1={int(B1)} B2={int(B2)}")
+        if debug:
+            print(format_bounds(count, B1, B2, new_B1, new_B2))
 
-    avgB1 = int(sum(s[3] * s[-1] for s in queue) / len(exponents))
-    avgB2 = int(sum(s[4] * s[-1] for s in queue) / len(exponents))
+    if debug:
+        print(f"\tLast P-1 {count} x {prob:.1%} @ B1={B1/1e3:5.0f}K B2={B2/1e6:5.0f}M")
+    return sum_work, len(exponents), int(B1), int(B2)
 
-    return sum_work, len(exponents), avgB1, avgB2
 
-
-def work_to_clear(start):
+def work_to_clear(start, threshold):
     total_needed = rem = unfactored_per[start]
     limits = Counter(tf_limits[start])
     # GPU only strategy
@@ -250,18 +283,23 @@ def work_to_clear(start):
     while rem > 1e-4:
         bit = min(limits)
 
+        # Never going to print, never going to improve best_combined
+        if best_combined < threshold and best_combined < gpu_work / GPU_MULT:
+            break
+
         # Find rem factors with P-1
-        cpu_work, pm1s, B1, B2 = pm1_strategy(start, bit, rem)
+        cpu_work, pm1s, B1, B2 = pm1_strategy(start, 2 ** bit, rem)
         ratio = gpu_work / max(cpu_work, 0.1)
         g_factors = total_needed - rem
         g_rate = gpu_work / max(g_factors, 0.1)
         c_rate = cpu_work / max(rem, 0.1)
         rate_str = f"GHz-Days/factor  GPU: {g_rate:.1f}  CPU: {c_rate:.1f} | {ratio:.1f}x GPU/CPU"
-        work_str = f"factors/tests {g_factors:.1f}/{tfs} TF + {rem:.1f}/{pm1s} P-1 @ B1={B1} B2={B2}"
+        tf_work_str  = f"factors/tests {g_factors:.1f}/{tfs} TF"
+        pm1_work_str = f"{rem:.1f}/{pm1s} P-1 @ B1={B1/1e3:5.0f}K B2={B2/1e6:5.0f}M"
         output.append(f"\t{gpu_work:.0f} GPU({bit}) + {cpu_work:.1f} CPU | {rate_str}")
-        output.append(f"\t{work_str}\n")
+        output.append(f"\t{tf_work_str} {pm1_work_str}\n")
 
-        combined = gpu_work / GPU_WORK_MULT + cpu_work
+        combined = gpu_work / GPU_MULT + cpu_work
         if combined < best_combined:
             best_combined = combined
 
@@ -272,24 +310,28 @@ def work_to_clear(start):
         # Move the lowest bit level to the next level
         # expect to find a little less than ~(1 / bit) factors
         bit = min(limits)
-        count = limits[bit] - int(g_factors)
+        count = limits[bit]
         success = 1 / (bit + 5)  # adjust for some P-1 already done
         to_tf = min(count, int(math.ceil(rem / success)))
-        rem -= to_tf * success
-        # TODO could look at actualy primes but meh, average is good enough
+        expected = to_tf * success
+
+        rem -= expected
         gpu_work += to_tf * tf_work(start + size/2, bit)
         tfs += to_tf
+
         if to_tf == count:
             # zero and remove key
             assert limits.pop(bit) == to_tf
         else:
             limits[bit] -= to_tf
-        limits[bit+1] += to_tf
+
+        limits[bit+1] += to_tf - int(expected)
 
     if gpu_work / 50 < best_combined:
         best_combined = gpu_work / 50
 
-    output.append(f"\t{gpu_work:.0f} GPU({to_tf} x {bit + 1}) + 0 CPU | {total_needed}/{tfs} TF\n")
+    if rem < 1e-4:
+        output.append(f"\t{gpu_work:.0f} GPU({to_tf} x {bit + 1}) + 0 CPU | {total_needed}/{tfs} TF\n")
 
     return best_combined, output
 
@@ -297,17 +339,29 @@ def work_to_clear(start):
 
 
 # For each interval determine work to clear using only TF
+total = 0
 most_work = 0
 for start, rem in unfactored_per.most_common():
+    if start != 6900000:
+        continue
+
+    n = sum(tf_limits[start].values())
     tf_str = " + ".join(f"{c} x {b}" for b, c in tf_limits[start].most_common())
+    avg_pm1 = list(map(lambda e: sum(e) / n, zip(*pm1_limits[start].elements())))
+    pm1_str = f"avg B1={avg_pm1[0]/1e3:.0f}K B2={avg_pm1[1]/1e6:.0f}M"
     print()
-    work, output = work_to_clear(start)
-    print(f"{start:8}  {rem} needed, current TF {tf_str} | Combined Work: {work:.0f} GHz-Days")
+    work, output = work_to_clear(start, 0.5 * most_work)
+    total += work
+    print(f"{start:8}  {rem} needed | P-1 {pm1_str:20}  TF {tf_str}")
+    print(f"\tCombined Work: {work:.0f} GHz-Days")
     if work >= 0.5 * most_work:
         print("\n".join(output))
 
-    if work >= most_work:
+    if work > most_work:
         most_work = work
-        print(f"\tTakes ~ {work:.0f} GHz-Days Combined work (GPU/{GPU_WORK_MULT} + CPU)!")
+        print(f"\tTakes ~ {work:.0f} GHz-Days Combined work (GPU/{GPU_MULT} + CPU)!")
         print("\n\n")
+
+
+print(f"Total Combined (CPU + GPU/{GPU_MULT}) Work  {total:.0f} GHz-Days = {total/365.25:.0f} GHz-Years")
 

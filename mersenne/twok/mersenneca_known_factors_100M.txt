@@ -1,0 +1,1 @@
+/home/five/Downloads/GIMPS/mersenneca_known_factors_100M.txt
