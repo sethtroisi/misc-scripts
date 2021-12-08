@@ -1,0 +1,19 @@
+PM1, Stopping in stage 2 ~20%
+[Main thread Dec 7 17:06] Mersenne number primality test program version 30.7
+[Main thread Dec 7 17:06] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 17:06] Starting worker.
+[Work thread Dec 7 17:06] Worker starting
+[Work thread Dec 7 17:06] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 17:06] 
+[Work thread Dec 7 17:06] P-1 on M150107 with B1=100000, B2=40000000
+[Work thread Dec 7 17:06] Using FMA3 FFT length 8K, Pass1=128, Pass2=64, clm=2
+[Work thread Dec 7 17:06] M150107 stage 1 complete. 288844 transforms. Total time: 2.559 sec.
+[Work thread Dec 7 17:06] Conversion of stage 1 result complete. 5 transforms, 1 modular inverse. Time: 0.006 sec.
+[Work thread Dec 7 17:06] D: 2772, relative primes: 3960, stage 2 primes: 2424062, pair%=99.55
+[Work thread Dec 7 17:06] Using 255MB of memory.
+[Work thread Dec 7 17:06] Stage 2 init complete. 8025 transforms. Time: 5.086 sec.
+[Work thread Dec 7 17:06] M150107 stage 2 is 42.85% complete. Time: 10.118 sec.
+[Main thread Dec 7 17:06] Stopping all worker windows.
+[Work thread Dec 7 17:06] Worker stopped.
+[Main thread Dec 7 17:06] Execution halted.
+[Main thread Dec 7 17:06] Choose Test/Continue to restart.

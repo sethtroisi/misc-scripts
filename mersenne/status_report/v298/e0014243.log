@@ -1,0 +1,33 @@
+ECM, likely in stage2, curve > 1
+[Main thread Dec 7 16:43] Mersenne number primality test program version 29.8
+[Main thread Dec 7 16:43] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:43] Starting worker.
+[Work thread Dec 7 16:43] Worker starting
+[Work thread Dec 7 16:43] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:43] Using FMA3 FFT length 768
+[Work thread Dec 7 16:43] ECM on M14243: curve #1 with s=2990543295338014, B1=50000, B2=3000000
+[Work thread Dec 7 16:43] M14243 curve 1 stage 1 at prime 38903 [77.80%]. Time: 0.763 sec.
+[Work thread Dec 7 16:43] Stage 1 complete. 1286025 transforms, 1 modular inverses. Time: 0.219 sec.
+[Work thread Dec 7 16:43] Using 12MB of memory in stage 2.
+[Work thread Dec 7 16:43] Stage 2 init complete. 18313 transforms, 1 modular inverses. Time: 0.017 sec.
+[Work thread Dec 7 16:43] Stage 2 complete. 362707 transforms, 1 modular inverses. Time: 0.298 sec.
+[Work thread Dec 7 16:43] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 16:43] ECM on M14243: curve #2 with s=5066578499144253, B1=50000, B2=3000000
+[Work thread Dec 7 16:43] M14243 curve 2 stage 1 at prime 38891 [77.78%]. Time: 0.760 sec.
+[Work thread Dec 7 16:43] Stage 1 complete. 1286025 transforms, 1 modular inverses. Time: 0.217 sec.
+[Work thread Dec 7 16:43] Using 12MB of memory in stage 2.
+[Work thread Dec 7 16:43] Stage 2 init complete. 18313 transforms, 1 modular inverses. Time: 0.015 sec.
+[Work thread Dec 7 16:43] Stage 2 complete. 362707 transforms, 1 modular inverses. Time: 0.296 sec.
+[Work thread Dec 7 16:43] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 16:43] ECM on M14243: curve #3 with s=956528864300160, B1=50000, B2=3000000
+[Work thread Dec 7 16:43] M14243 curve 3 stage 1 at prime 38891 [77.78%]. Time: 0.761 sec.
+[Work thread Dec 7 16:43] Stage 1 complete. 1286025 transforms, 1 modular inverses. Time: 0.217 sec.
+[Work thread Dec 7 16:43] Using 12MB of memory in stage 2.
+[Work thread Dec 7 16:43] Stage 2 init complete. 18313 transforms, 1 modular inverses. Time: 0.015 sec.
+[Work thread Dec 7 16:43] Stage 2 complete. 362707 transforms, 1 modular inverses. Time: 0.296 sec.
+[Work thread Dec 7 16:43] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 16:43] ECM on M14243: curve #4 with s=3479410049453075, B1=50000, B2=3000000
+[Main thread Dec 7 16:43] Stopping all worker threads.
+[Work thread Dec 7 16:43] Worker stopped.
+[Main thread Dec 7 16:43] Execution halted.
+[Main thread Dec 7 16:43] Choose Test/Continue to restart.

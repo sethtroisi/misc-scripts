@@ -1,0 +1,15 @@
+PRP, Seventeen or Bust prime stopped at ~8%
+[Main thread Dec 7 17:06] Mersenne number primality test program version 30.7
+[Main thread Dec 7 17:06] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 17:06] Starting worker.
+[Work thread Dec 7 17:06] Worker starting
+[Work thread Dec 7 17:06] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 17:06] Starting Gerbicz error-checking PRP test of 46157*2^698207+1 using all-complex FMA3 FFT length 60K, Pass1=768, Pass2=80, clm=2
+[Work thread Dec 7 17:06] Preallocating disk space for the proof interim residues file p46157_698207.residues
+[Work thread Dec 7 17:06] PRP proof using power=6 and 64-bit hash size.
+[Work thread Dec 7 17:06] Proof requires 0.0GB of temporary disk space and uploading a 1MB proof file.
+[Main thread Dec 7 17:07] Stopping all worker windows.
+[Work thread Dec 7 17:07] Stopping PRP test of 46157*2^698207+1 at iteration 58985 [8.44%]
+[Work thread Dec 7 17:07] Worker stopped.
+[Main thread Dec 7 17:07] Execution halted.
+[Main thread Dec 7 17:07] Choose Test/Continue to restart.

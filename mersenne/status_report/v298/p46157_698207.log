@@ -1,0 +1,12 @@
+PRP, Seventeen or Bust prime stopped at ~8%
+[Main thread Dec 7 16:44] Mersenne number primality test program version 29.8
+[Main thread Dec 7 16:44] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:44] Starting worker.
+[Work thread Dec 7 16:44] Worker starting
+[Work thread Dec 7 16:44] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:44] Starting Gerbicz error-checking PRP test of 46157*2^698207+1 using all-complex FMA3 FFT length 60K, Pass1=768, Pass2=80, clm=2
+[Main thread Dec 7 16:45] Stopping all worker threads.
+[Work thread Dec 7 16:45] Stopping PRP test of 46157*2^698207+1 at iteration 63061 [9.03%]
+[Work thread Dec 7 16:45] Worker stopped.
+[Main thread Dec 7 16:45] Execution halted.
+[Main thread Dec 7 16:45] Choose Test/Continue to restart.

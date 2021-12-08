@@ -1,0 +1,12 @@
+PRP, Near Repunit prime stopped at ~30%
+[Main thread Dec 7 16:48] Mersenne number primality test program version 30.3
+[Main thread Dec 7 16:48] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:48] Starting worker.
+[Work thread Dec 7 16:48] Worker starting
+[Work thread Dec 7 16:48] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:48] Starting PRP test of 6*10^71299+7 using all-complex FMA3 FFT length 16K, Pass1=256, Pass2=64, clm=2
+[Main thread Dec 7 16:48] Stopping all worker windows.
+[Work thread Dec 7 16:48] Stopping PRP test of 6*10^71299+7 at iteration 72770 [30.72%]
+[Work thread Dec 7 16:48] Worker stopped.
+[Main thread Dec 7 16:48] Execution halted.
+[Main thread Dec 7 16:48] Choose Test/Continue to restart.

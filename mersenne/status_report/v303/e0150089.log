@@ -1,0 +1,16 @@
+ECM, stopped at ~40% stage2
+[Main thread Dec 7 16:47] Mersenne number primality test program version 30.3
+[Main thread Dec 7 16:47] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:47] Starting worker.
+[Work thread Dec 7 16:47] Worker starting
+[Work thread Dec 7 16:47] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:47] Using FMA3 FFT length 8K, Pass1=128, Pass2=64, clm=2
+[Work thread Dec 7 16:47] ECM on M150089: curve #1 with s=3071845373921040, B1=50000, B2=30000000
+[Work thread Dec 7 16:47] M150089 curve 1 stage 1 at prime 38903 [77.80%]. Time: 9.708 sec.
+[Work thread Dec 7 16:47] Stage 1 complete. 1286025 transforms, 1 modular inverses. Time: 2.783 sec.
+[Work thread Dec 7 16:47] Using 254MB of memory in stage 2.
+[Work thread Dec 7 16:47] Stage 2 init complete. 53701 transforms, 1 modular inverses. Time: 0.584 sec.
+[Main thread Dec 7 16:47] Stopping all worker windows.
+[Work thread Dec 7 16:47] Worker stopped.
+[Main thread Dec 7 16:47] Execution halted.
+[Main thread Dec 7 16:47] Choose Test/Continue to restart.

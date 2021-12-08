@@ -1,0 +1,17 @@
+WorkerThreads=1
+CoresPerTest=1
+OldCpuSpeed=4216
+NewCpuSpeedCount=0
+NewCpuSpeed=0
+RollingAverage=1000
+RollingAverageIsFromV27=1
+ComputerGUID=b6976d84547f3508a42b02e4ed5a49b5
+WorkerDiskSpace=6
+ProofResiduesDir=
+ProofArchiveDir=
+Memory=307 during 7:30-23:30 else 307
+MaxEmergencyMemory=1024
+CertDailyCPULimit=10
+Pid=0
+RollingHash=0
+RollingCompleteTime=0

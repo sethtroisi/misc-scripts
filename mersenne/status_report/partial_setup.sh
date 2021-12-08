@@ -82,7 +82,7 @@ partial_setup 8  "Pminus1=N/A,1,2,2237,-1,200000000,0"      m0002237 "PM1, Stopp
 # Take us to close to the threshold
 partial_setup 100 "Pminus1=N/A,1,2,2267,-1,3000000000,0"      m0002267 "PM1, Stopping in stage 1 ~20%"
 # Take us over the threshold (with a new save file)
-partial_setup 40 "Pminus1=N/A,1,2,2267,-1,3000000000,0"      m0002267 "PM1, Stopping in stage 1 ~20%"
+#partial_setup 40 "Pminus1=N/A,1,2,2267,-1,3000000000,0"      m0002267 "PM1, Stopping in stage 1 ~20%"
 
 partial_setup 2  "Pminus1=N/A,1,2,13009,-1,100000,100000"     m0013009 "PM1, B1 only, 1e5 finished"
 partial_setup 2  "Pminus1=N/A,1,2,13217,-1,100000,1000000"  m0013217 "PM1, B1=1e5, B2=1e6 finished"
@@ -94,5 +94,9 @@ partial_setup 10 "PRP=46157,2,698207,1" p46157_698207  "PRP, Seventeen or Bust p
 partial_setup 3  "PRP=6,10,71299,7"     p6_71299_7     "PRP, Near Repunit prime stopped at ~30%"
 
 ls | grep -v '\.txt$'
+
+# Truncate the large files
+truncate -s 2048 p0700001 p46157_698207 m0150107
+
 cd ..
 ./prime95_status.py "$2" --json "$2.json"

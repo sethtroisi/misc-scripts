@@ -1,0 +1,38 @@
+PM1, B1=1e5, B2=1e6 finished
+[Main thread Dec 7 19:34] Mersenne number primality test program version 30.8
+[Main thread Dec 7 19:34] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 19:34] Starting worker.
+[Work thread Dec 7 19:34] Worker starting
+[Work thread Dec 7 19:34] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 19:34] 
+[Work thread Dec 7 19:34] P-1 on M13217 with B1=100000, B2=1000000
+[Work thread Dec 7 19:34] Using FMA3 FFT length 640
+[Work thread Dec 7 19:34] M13217 stage 1 complete. 288828 transforms. Total time: 0.173 sec.
+[Work thread Dec 7 19:34] Inversion of stage 1 result complete. 5 transforms, 1 modular inverse. Time: 0.000 sec.
+[Work thread Dec 7 19:34] Switching to FMA3 FFT length 768
+[Work thread Dec 7 19:34] Using 367MB of memory.  D: 90090, 8640x51856 polynomial multiplication.
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 2, EB: 2.92098, SM: 3.5192
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 4
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 8
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 16
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 32
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 64
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 128
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 256
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 512
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 1024
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 2048
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 4096
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 8192
+[Work thread Dec 7 19:34] Round off: 0, poly_size: 16384
+[Work thread Dec 7 19:34] Stage 2 init complete. 313940 transforms. Time: 0.986 sec.
+[Work thread Dec 7 19:34] Round off: 0
+[Work thread Dec 7 19:34] M13217 stage 2 complete. 354370 transforms. Total time: 0.614 sec.
+[Work thread Dec 7 19:34] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 19:34] M13217 completed P-1, B1=100000, B2=3115132020, Wi8: B9CFAB9E
+[Work thread Dec 7 19:34] No work to do at the present time.  Waiting.
+[Main thread Dec 7 19:34] Stopping all worker windows.
+[Work thread Dec 7 19:34] Resuming.
+[Work thread Dec 7 19:34] Worker stopped.
+[Main thread Dec 7 19:34] Execution halted.
+[Main thread Dec 7 19:34] Choose Test/Continue to restart.

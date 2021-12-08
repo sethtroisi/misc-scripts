@@ -1,0 +1,12 @@
+PRP, stopped at ~3%
+[Main thread Dec 7 16:44] Mersenne number primality test program version 29.8
+[Main thread Dec 7 16:44] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:44] Starting worker.
+[Work thread Dec 7 16:44] Worker starting
+[Work thread Dec 7 16:44] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:44] Starting Gerbicz error-checking PRP test of M700001 using FMA3 FFT length 35K, Pass1=448, Pass2=80, clm=2
+[Main thread Dec 7 16:44] Stopping all worker threads.
+[Work thread Dec 7 16:44] Stopping PRP test of M700001 at iteration 23167 [3.30%]
+[Work thread Dec 7 16:44] Worker stopped.
+[Main thread Dec 7 16:44] Execution halted.
+[Main thread Dec 7 16:44] Choose Test/Continue to restart.

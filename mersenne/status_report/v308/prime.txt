@@ -1,0 +1,17 @@
+OutputIterations=5000000
+V24OptionsConverted=1
+WorkPreference=0
+V30OptionsConverted=1
+WGUID_version=2
+StressTester=0
+UsePrimenet=0
+DialUp=0
+V5UserID=ANONYMOUS
+
+[PrimeNet]
+Debug=0
+ProxyHost=
+UploadRateLimit=0.25
+UploadStartTime=00:00
+UploadEndTime=24:00
+DownloadDailyLimit=40

@@ -1,0 +1,41 @@
+ECM, likely in stage2, curve > 1
+[Main thread Dec 7 17:05] Mersenne number primality test program version 30.7
+[Main thread Dec 7 17:05] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 17:05] Starting worker.
+[Work thread Dec 7 17:05] Worker starting
+[Work thread Dec 7 17:05] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 17:05] 
+[Work thread Dec 7 17:05] Using FMA3 FFT length 768
+[Work thread Dec 7 17:05] 3.380 bits-per-word below FFT limit (more than 0.509 allows extra optimizations)
+[Work thread Dec 7 17:05] ECM on M14243: curve #1 with s=206897267312349, B1=50000, B2=3000000
+[Work thread Dec 7 17:05] M14243 curve 1 stage 1 at prime 39317 [78.63%]. Time: 0.741 sec.
+[Work thread Dec 7 17:05] Stage 1 complete. 1271272 transforms, 1 modular inverses. Total time: 0.941 sec.
+[Work thread Dec 7 17:05] D: 1848, relative primes: 1200, stage 2 primes: 211683, pair%=83.66
+[Work thread Dec 7 17:05] Stage 2 uses 16MB of memory, 2 FFTs per prime pair, 3-mult modinv pooling, pool size 326.
+[Work thread Dec 7 17:05] Stage 2 init complete. 33709 transforms, 2 modular inverses. Time: 0.164 sec.
+[Work thread Dec 7 17:05] Stage 2 complete. 264321 transforms, 3 modular inverses. Total time: 0.192 sec.
+[Work thread Dec 7 17:05] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 17:05] 
+[Work thread Dec 7 17:05] ECM on M14243: curve #2 with s=7887595947177514, B1=50000, B2=3000000
+[Work thread Dec 7 17:05] M14243 curve 2 stage 1 at prime 39313 [78.62%]. Time: 0.745 sec.
+[Work thread Dec 7 17:05] Stage 1 complete. 1271272 transforms, 1 modular inverses. Total time: 0.945 sec.
+[Work thread Dec 7 17:05] D: 1848, relative primes: 1200, stage 2 primes: 211683, pair%=83.66
+[Work thread Dec 7 17:05] Stage 2 uses 16MB of memory, 2 FFTs per prime pair, 3-mult modinv pooling, pool size 326.
+[Work thread Dec 7 17:05] Stage 2 init complete. 33709 transforms, 2 modular inverses. Time: 0.157 sec.
+[Work thread Dec 7 17:05] Stage 2 complete. 264321 transforms, 3 modular inverses. Total time: 0.193 sec.
+[Work thread Dec 7 17:05] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 17:05] 
+[Work thread Dec 7 17:05] ECM on M14243: curve #3 with s=8335655294283631, B1=50000, B2=3000000
+[Work thread Dec 7 17:05] M14243 curve 3 stage 1 at prime 39313 [78.62%]. Time: 0.739 sec.
+[Work thread Dec 7 17:05] Stage 1 complete. 1271272 transforms, 1 modular inverses. Total time: 0.939 sec.
+[Work thread Dec 7 17:05] D: 1848, relative primes: 1200, stage 2 primes: 211683, pair%=83.66
+[Work thread Dec 7 17:05] Stage 2 uses 16MB of memory, 2 FFTs per prime pair, 3-mult modinv pooling, pool size 326.
+[Work thread Dec 7 17:05] Stage 2 init complete. 33709 transforms, 2 modular inverses. Time: 0.155 sec.
+[Work thread Dec 7 17:05] Stage 2 complete. 264321 transforms, 3 modular inverses. Total time: 0.194 sec.
+[Work thread Dec 7 17:05] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 17:05] 
+[Work thread Dec 7 17:05] ECM on M14243: curve #4 with s=3367067242071534, B1=50000, B2=3000000
+[Main thread Dec 7 17:05] Stopping all worker windows.
+[Work thread Dec 7 17:05] Worker stopped.
+[Main thread Dec 7 17:05] Execution halted.
+[Main thread Dec 7 17:05] Choose Test/Continue to restart.

@@ -1,0 +1,23 @@
+PM1, B1=1e5, B2=1e6 finished
+[Main thread Dec 7 17:06] Mersenne number primality test program version 30.7
+[Main thread Dec 7 17:06] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 17:06] Starting worker.
+[Work thread Dec 7 17:06] Worker starting
+[Work thread Dec 7 17:06] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 17:06] 
+[Work thread Dec 7 17:06] P-1 on M13217 with B1=100000, B2=1000000
+[Work thread Dec 7 17:06] Using FMA3 FFT length 640
+[Work thread Dec 7 17:06] M13217 stage 1 complete. 288828 transforms. Total time: 0.175 sec.
+[Work thread Dec 7 17:06] Conversion of stage 1 result complete. 5 transforms, 1 modular inverse. Time: 0.000 sec.
+[Work thread Dec 7 17:06] D: 630, relative primes: 936, stage 2 primes: 68918, pair%=94.71
+[Work thread Dec 7 17:06] Using 6MB of memory.
+[Work thread Dec 7 17:06] Stage 2 init complete. 1908 transforms. Time: 0.046 sec.
+[Work thread Dec 7 17:06] M13217 stage 2 complete. 75702 transforms. Total time: 0.044 sec.
+[Work thread Dec 7 17:06] Stage 2 GCD complete. Time: 0.000 sec.
+[Work thread Dec 7 17:06] M13217 completed P-1, B1=100000, B2=1000000, Wi8: 0071C86A
+[Work thread Dec 7 17:06] No work to do at the present time.  Waiting.
+[Main thread Dec 7 17:06] Stopping all worker windows.
+[Work thread Dec 7 17:06] Resuming.
+[Work thread Dec 7 17:06] Worker stopped.
+[Main thread Dec 7 17:06] Execution halted.
+[Main thread Dec 7 17:06] Choose Test/Continue to restart.

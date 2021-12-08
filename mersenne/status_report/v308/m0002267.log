@@ -1,0 +1,33 @@
+PM1, Stopping in stage 1 ~20%
+[Main thread Dec 7 19:33] Mersenne number primality test program version 30.8
+[Main thread Dec 7 19:33] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 19:33] Starting worker.
+[Work thread Dec 7 19:33] Worker starting
+[Work thread Dec 7 19:33] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 19:33] 
+[Work thread Dec 7 19:33] P-1 on M2267 with B1=3000000000, B2=300000000000
+[Work thread Dec 7 19:33] Using FMA3 FFT length 128
+[Work thread Dec 7 19:33] M2267 stage 1 is 6.56% complete.
+[Work thread Dec 7 19:33] M2267 stage 1 is 6.68% complete. Time: 1.609 sec.
+[Work thread Dec 7 19:33] M2267 stage 1 is 6.79% complete. Time: 1.607 sec.
+[Work thread Dec 7 19:33] M2267 stage 1 is 6.91% complete. Time: 1.609 sec.
+[Work thread Dec 7 19:33] M2267 stage 1 is 7.02% complete. Time: 1.611 sec.
+[Work thread Dec 7 19:33] M2267 stage 1 is 7.14% complete. Time: 1.607 sec.
+[Work thread Dec 7 19:33] M2267 stage 1 is 7.26% complete. Time: 1.608 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.37% complete. Time: 1.614 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.49% complete. Time: 1.608 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.60% complete. Time: 1.607 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.72% complete. Time: 1.610 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.83% complete. Time: 1.605 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 7.95% complete. Time: 1.600 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.06% complete. Time: 1.604 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.18% complete. Time: 1.613 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.30% complete. Time: 1.610 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.41% complete. Time: 1.613 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.53% complete. Time: 1.613 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.64% complete. Time: 1.611 sec.
+[Work thread Dec 7 19:34] M2267 stage 1 is 8.76% complete. Time: 1.611 sec.
+[Main thread Dec 7 19:34] Stopping all worker windows.
+[Work thread Dec 7 19:34] Worker stopped.
+[Main thread Dec 7 19:34] Execution halted.
+[Main thread Dec 7 19:34] Choose Test/Continue to restart.

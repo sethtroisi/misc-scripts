@@ -1,0 +1,15 @@
+PRP, stopped at ~3%
+[Main thread Dec 7 17:06] Mersenne number primality test program version 30.7
+[Main thread Dec 7 17:06] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 17:06] Starting worker.
+[Work thread Dec 7 17:06] Worker starting
+[Work thread Dec 7 17:06] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 17:06] Starting Gerbicz error-checking PRP test of M700001 using FMA3 FFT length 35K, Pass1=448, Pass2=80, clm=2
+[Work thread Dec 7 17:06] Preallocating disk space for the proof interim residues file p0700001.residues
+[Work thread Dec 7 17:06] PRP proof using power=6 and 64-bit hash size.
+[Work thread Dec 7 17:06] Proof requires 0.0GB of temporary disk space and uploading a 1MB proof file.
+[Main thread Dec 7 17:06] Stopping all worker windows.
+[Work thread Dec 7 17:06] Stopping PRP test of M700001 at iteration 20870 [2.98%]
+[Work thread Dec 7 17:06] Worker stopped.
+[Main thread Dec 7 17:06] Execution halted.
+[Main thread Dec 7 17:06] Choose Test/Continue to restart.

@@ -1,0 +1,22 @@
+PM1, Stopping in small primes ~2%
+[Main thread Dec 7 16:44] Mersenne number primality test program version 29.8
+[Main thread Dec 7 16:44] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 16:44] Starting worker.
+[Work thread Dec 7 16:44] Worker starting
+[Work thread Dec 7 16:44] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 16:44] P-1 on M2237 with B1=200000000, B2=20000000000
+[Work thread Dec 7 16:44] Using FMA3 FFT length 128
+[Work thread Dec 7 16:44] M2237 stage 1 is 0.17% complete. Time: 0.152 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 0.34% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 0.51% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 0.69% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 0.86% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 1.03% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 1.21% complete. Time: 0.152 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 1.38% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 1.55% complete. Time: 0.151 sec.
+[Work thread Dec 7 16:44] M2237 stage 1 is 1.73% complete. Time: 0.151 sec.
+[Main thread Dec 7 16:44] Stopping all worker threads.
+[Work thread Dec 7 16:44] Worker stopped.
+[Main thread Dec 7 16:44] Execution halted.
+[Main thread Dec 7 16:44] Choose Test/Continue to restart.
