@@ -80,14 +80,13 @@ partial_setup 19 "ECM2=1,2,150089,-1,50000,30000000,5"      e0150089 "ECM, stopp
 
 partial_setup 8  "Pminus1=N/A,1,2,2237,-1,200000000,0"      m0002237 "PM1, Stopping in small primes ~2%"
 # Take us to close to the threshold
-partial_setup 100 "Pminus1=N/A,1,2,2267,-1,3000000000,0"      m0002267 "PM1, Stopping in stage 1 ~20%"
+partial_setup 100 "Pminus1=N/A,1,2,2267,-1,3000000000,0"    m0002267 "PM1, Stopping in stage 1 ~20%"
 # Take us over the threshold (with a new save file)
 #partial_setup 40 "Pminus1=N/A,1,2,2267,-1,3000000000,0"      m0002267 "PM1, Stopping in stage 1 ~20%"
 
-partial_setup 2  "Pminus1=N/A,1,2,13009,-1,100000,100000"     m0013009 "PM1, B1 only, 1e5 finished"
-partial_setup 2  "Pminus1=N/A,1,2,13217,-1,100000,1000000"  m0013217 "PM1, B1=1e5, B2=1e6 finished"
-# Large M makes it easier to stop in stage 2
-partial_setup 20  "Pminus1=N/A,1,2,150107,-1,100000,4000000000" m0150107 "PM1, Stopping in stage 2 ~20%"
+partial_setup 2  "Pminus1=N/A,1,2,13009,-1,100000,100000"      m0013009 "PM1, B1 only, 1e5 finished"
+partial_setup 2  "Pminus1=N/A,1,2,13217,-1,100000,1000000"     m0013217 "PM1, B1=1e5, B2=1e6 finished"
+partial_setup 12 "Pminus1=N/A,1,2,150107,-1,100000,800000000"  m0150107 "PM1, Stopping in stage 2 ~20%"
 
 partial_setup 2  "PRP=1,2,700001,-1"    p0700001       "PRP, stopped at ~3%"
 partial_setup 10 "PRP=46157,2,698207,1" p46157_698207  "PRP, Seventeen or Bust prime stopped at ~8%"

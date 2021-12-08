@@ -1,28 +1,28 @@
 PM1, Stopping in stage 2 ~20%
-[Main thread Dec 7 19:34] Mersenne number primality test program version 30.8
-[Main thread Dec 7 19:34] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
-[Main thread Dec 7 19:34] Starting worker.
-[Work thread Dec 7 19:34] Worker starting
-[Work thread Dec 7 19:34] Setting affinity to run worker on CPU core #2
-[Work thread Dec 7 19:34] 
-[Work thread Dec 7 19:34] P-1 on M150107 with B1=100000, B2=4000000000
-[Work thread Dec 7 19:34] Using FMA3 FFT length 8K, Pass1=128, Pass2=64, clm=2
-[Work thread Dec 7 19:34] M150107 stage 1 complete. 288844 transforms. Total time: 2.583 sec.
-[Work thread Dec 7 19:34] Inversion of stage 1 result complete. 5 transforms, 1 modular inverse. Time: 0.006 sec.
-[Work thread Dec 7 19:34] Using 307MB of memory.  D: 8190, 864x3944 polynomial multiplication.
-[Work thread Dec 7 19:34] Round off: 0.005899024169, poly_size: 2, EB: 6.11401, SM: 0
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 4
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 8
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 16
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 32
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 64
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 128
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 256
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 512
-[Work thread Dec 7 19:34] Round off: 0, poly_size: 1024
-[Work thread Dec 7 19:34] Stage 2 init complete. 24666 transforms. Time: 0.661 sec.
-[Work thread Dec 7 19:34] Round off: 0
-[Main thread Dec 7 19:34] Stopping all worker windows.
-[Work thread Dec 7 19:34] Worker stopped.
-[Main thread Dec 7 19:34] Execution halted.
-[Main thread Dec 7 19:34] Choose Test/Continue to restart.
+[Main thread Dec 7 22:29] Mersenne number primality test program version 30.8
+[Main thread Dec 7 22:29] Optimizing for CPU architecture: AMD Zen, L2 cache size: 12x512 KB, L3 cache size: 4x16 MB
+[Main thread Dec 7 22:29] Starting worker.
+[Work thread Dec 7 22:29] Worker starting
+[Work thread Dec 7 22:29] Setting affinity to run worker on CPU core #2
+[Work thread Dec 7 22:29] 
+[Work thread Dec 7 22:29] P-1 on M150107 with B1=100000, B2=800000000
+[Work thread Dec 7 22:29] Using FMA3 FFT length 8K, Pass1=128, Pass2=64, clm=2
+[Work thread Dec 7 22:29] M150107 stage 1 complete. 288844 transforms. Total time: 2.607 sec.
+[Work thread Dec 7 22:29] Inversion of stage 1 result complete. 5 transforms, 1 modular inverse. Time: 0.006 sec.
+[Work thread Dec 7 22:29] Using 307MB of memory.  D: 8190, 864x3944 polynomial multiplication.
+[Work thread Dec 7 22:29] Round off: 0.005899024169, poly_size: 2, EB: 6.11401, SM: 0
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 4
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 8
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 16
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 32
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 64
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 128
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 256
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 512
+[Work thread Dec 7 22:29] Round off: 0, poly_size: 1024
+[Work thread Dec 7 22:29] Stage 2 init complete. 24660 transforms. Time: 0.697 sec.
+[Work thread Dec 7 22:29] Round off: 0
+[Main thread Dec 7 22:30] Stopping all worker windows.
+[Work thread Dec 7 22:30] Worker stopped.
+[Main thread Dec 7 22:30] Execution halted.
+[Main thread Dec 7 22:30] Choose Test/Continue to restart.

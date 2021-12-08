@@ -299,7 +299,6 @@ def parse_work_unit_from_file(filename):
                     wu["B_done"] = read_uint64(f)
                     wu["C_done"] = read_uint64(f)
                     wu["interim_C"] = read_uint64(f)
-                    wu["pct_guess"] = wu["interim_C"] / wu["C_done"]
 
                     wu["B1_guess"] = wu["B_done"]
                     wu["B2_guess"] = wu["C_done"]
@@ -444,7 +443,8 @@ def one_line_status(fn, wu, name_pad):
                     wu["pct_complete"], wu["B1_guess"])
         elif stage == "B2":
             # Stage 2
-            buf += "P-1 | B1={:.0f} complete, Stage 2".format(wu["B2_guess"])
+
+            buf += "P-1 | B1={:.0f}, Stage 2".format(wu["B1_guess"])
             if wu["pct_complete"] == 0.99:
                 buf += " (99%, computing GCD)"
             else:
