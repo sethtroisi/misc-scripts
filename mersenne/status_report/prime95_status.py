@@ -533,8 +533,16 @@ def one_line_status(fn, wu, name_pad=15):
                     pct, wu["B1_progress"])
         elif done == "B1":
             # Stage 2
-            buf += "P-1 | B1={}, B2={} Stage 2 ({:.1%})".format(
-                    wu["B1_progress"], wu["B2_progress"], pct)
+            B1 = wu["B1_progress"]
+            B2 = wu.get("B2_progress")
+            base = f"P-1 | B1={B1}"
+            buf += base
+            if B2 and B2 > B1:
+                buf += f", B2={B2}"
+
+            if pct != 0 and pct != 1:
+                buf += f"Stage 2 ({pct:.1%})"
+
         elif done == "B2":
             # Stage 2
             buf += "P-1 | B1={}, B2={} in GCD ({:.1%})".format(
