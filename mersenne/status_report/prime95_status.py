@@ -397,7 +397,7 @@ def parse_work_unit_from_file(filename):
 
                     wu["done"] = "B1"
                     wu["B1_progress"] = wu["B1_bound"] = raw["B_done"]
-                    wu["B1_progress"] = raw["C_done"]
+                    wu["B2_progress"] = raw["C_done"]
                     wu["B2_bound"] = raw["interim_C"]
 
                 elif state == 4:  # PM1_STATE_GCD
@@ -497,7 +497,18 @@ def parse_work_unit_from_file(filename):
 
 def one_line_status(fn, wu, name_pad=15):
     buf = ""
-    # TODO should I print {k} * {b} ^ {n} - {c} ?
+
+    if True:
+        k,b,n,c = [wu['raw'][k] for k in 'kbnc']
+        buf = "{} ^ {}".format(b, n)
+        if k != 1:
+            buf = f"{k} * {buf}"
+        if c > 0:
+            buf += f" + {c}"
+        else:
+            buf += f" - {-c}"
+
+        buf = buf.ljust(16) + " | "
 
     work = wu.get("work_type")
     pct = wu["raw"].get("pct_complete")
@@ -522,13 +533,12 @@ def one_line_status(fn, wu, name_pad=15):
                     pct, wu["B1_progress"])
         elif done == "B1":
             # Stage 2
-            buf += "P-1 | B1={}, Stage 2".format(wu["B1_progress"])
-            buf += " ({:.1%})".format(wu["raw"]["pct_complete"])
+            buf += "P-1 | B1={}, B2={} Stage 2 ({:.1%})".format(
+                    wu["B1_progress"], wu["B2_progress"], pct)
         elif done == "B2":
             # Stage 2
-            buf += "P-1 | B1={}, B2={} in GCD".format(wu["B1_progress"], wu["B2_progress"])
-            buf += " ({:.1%})".format(wu["raw"]["pct_complete"])
-            print(wu)
+            buf += "P-1 | B1={}, B2={} in GCD ({:.1%})".format(
+                    wu["B1_progress"], wu["B2_progress"], pct)
         elif done == "DONE":
             # P-1 done
             buf += "P-1 | B1={}".format(wu["B1_progress"])
@@ -541,12 +551,10 @@ def one_line_status(fn, wu, name_pad=15):
             buf += "UNKNOWN STAGE={:d}".format(stage)
 
     elif work == "TEST":
-        buf += "LL  | Iteration {}/{} [{:0.2%}]".format(
-            wu["iterations"], wu["n"], wu["raw"]["pct_complete"])
+        buf += "LL  | Iteration {}/{} [{:0.2%}]".format(wu["iterations"], wu["n"], pct)
 
     elif work == "PRP":
-        buf += "PRP | Iteration {}/{} [{:0.2%}]".format(
-            wu["iterations"], wu["n"], wu["raw"]["pct_complete"])
+        buf += "PRP | Iteration {}/{} [{:0.2%}]".format(wu["iterations"], wu["n"], pct)
 
     elif work == "FACTOR":
         buf += "FACTOR | *unhandled*"
