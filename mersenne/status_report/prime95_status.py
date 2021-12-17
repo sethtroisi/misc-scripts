@@ -495,20 +495,25 @@ def parse_work_unit_from_file(filename):
     return wu
 
 
+
+def number_str(wu):
+    k,b,n,c = [wu['raw'][k] for k in 'kbnc']
+    temp = "{} ^ {}".format(b, n)
+    if k != 1:
+        temp = f"{k} * {temp}"
+    if c > 0:
+        temp += f" + {c}"
+    else:
+        temp += f" - {-c}"
+    return temp
+
+
 def one_line_status(fn, wu, name_pad=15):
     buf = ""
 
     if True:
-        k,b,n,c = [wu['raw'][k] for k in 'kbnc']
-        buf = "{} ^ {}".format(b, n)
-        if k != 1:
-            buf = f"{k} * {buf}"
-        if c > 0:
-            buf += f" + {c}"
-        else:
-            buf += f" - {-c}"
-
-        buf = buf.ljust(16) + " | "
+        # Add "k * b ^ n - c" to status
+        buf = number_str(wu).ljust(16) + " | "
 
     work = wu.get("work_type")
     pct = wu["raw"].get("pct_complete")
@@ -535,25 +540,24 @@ def one_line_status(fn, wu, name_pad=15):
             # Stage 2
             B1 = wu["B1_progress"]
             B2 = wu.get("B2_progress")
-            base = f"P-1 | B1={B1}"
-            buf += base
+            buf += f"P-1 | B1={B1}"
             if B2 and B2 > B1:
-                buf += f", B2={B2}"
+                buf += f" B2={B2}"
 
             if pct != 0 and pct != 1:
-                buf += f"Stage 2 ({pct:.1%})"
+                buf += f" Stage 2 ({pct:.1%})"
 
         elif done == "B2":
             # Stage 2
-            buf += "P-1 | B1={}, B2={} in GCD ({:.1%})".format(
+            buf += "P-1 | B1={} B2={} in GCD ({:.1%})".format(
                     wu["B1_progress"], wu["B2_progress"], pct)
         elif done == "DONE":
             # P-1 done
             buf += "P-1 | B1={}".format(wu["B1_progress"])
             if wu["B2_progress"] > wu["B1_progress"]:
-                buf += ", B2={}".format(wu["B2_progress"])
+                buf += " B2={}".format(wu["B2_progress"])
                 if wu.get("E", 0) >= 2:
-                    buf += ", E={}".format(wu["E"])
+                    buf += " E={}".format(wu["E"])
             buf += " complete"
         else:
             buf += "UNKNOWN STAGE={:d}".format(stage)
