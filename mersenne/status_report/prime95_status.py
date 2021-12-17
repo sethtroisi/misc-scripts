@@ -109,19 +109,30 @@ def get_arg_parser():
     parser.add_argument('--json', type=str, default="",
         help="Save JSON data in this file")
 
+    parser.add_argument('-r', '--recursive', action="store_true",
+        help="Recursively search directory")
+
     parser.add_argument('--skip-failed', action="store_true",
         help="Don't output anything for failed files")
 
     return parser
 
-def scan_directory(dir_name):
-    names = []
-    if not os.path.isdir(dir_name):
-        sys.exit(f"{dir_name!r} does not exist")
+def scan_directory(args):
+    if not os.path.isdir(args.dir):
+        sys.exit(f"{args.dir!r} does not exist")
 
-    for filename in os.listdir(dir_name):
-        if BACKUP_PTN.match(filename):
-            names.append(filename)
+    names = []
+    for root, dirs, files in os.walk(args.dir):
+        rel_dir = os.path.relpath(root, args.dir)
+        if rel_dir == ".":
+            rel_dir = ""
+
+        for filename in files:
+            if BACKUP_PTN.match(filename):
+                names.append(os.path.join(rel_dir, filename))
+
+        if not args.recursive:
+            break
 
     return names
 
@@ -578,14 +589,16 @@ def one_line_status(fn, wu, name_pad=15):
 
 
 def main(args):
-    names = sorted(scan_directory(args.dir))
+    # TODO how to deal with multiple files of the same basename?
+    paths = {os.path.basename(path): path for path in scan_directory(args)}
 
     parsed = {}
     failed = []
-    for name in names:
-        result = parse_work_unit_from_file(os.path.join(args.dir, name))
-        if result is not None:
-            parsed[name] = result
+    for name in sorted(paths):
+        wu = parse_work_unit_from_file(os.path.join(args.dir, paths[name]))
+        if wu is not None:
+            wu["path"] = paths[name]
+            parsed[name] = wu
         else:
             failed.append(name)
 
@@ -597,7 +610,7 @@ def main(args):
         print()
 
     longest_name = min(20, max(map(len, parsed.keys()), default=0))
-    print(f"Found {len(names)} backup files in {args.dir!r}")
+    print(f"Found {len(paths)} backup files in {args.dir!r}")
     for name in sorted(parsed):
         print(one_line_status(name, parsed[name], longest_name))
 
