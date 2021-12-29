@@ -96,7 +96,7 @@ BACKUP_STATUS      = "Backup %-16s | %s."
 BACKUP_NONE        = "No Backup files (*.bu) were found in %s."
 BACKUP_PARSE_ERROR = "Unable to parse (%s)."
 
-BACKUP_PTN = re.compile("[emp][0-9A-Z]{0,3}[0-9]{5,}(_[0-9]+){0,2}(.bu[0-9]*)?(?P<hash>.[0-fa-f]{8})?$")
+BACKUP_PTN = re.compile("[emp][0-9A-Z]{0,3}[0-9]{5,}(_[0-9]+){0,2}(.bu[0-9]*)?(?P<hash>.[0-9a-f]{8})?$")
 
 
 
@@ -474,12 +474,17 @@ def parse_work_unit_from_file(filename):
                             "Please contact Seth and provide this: " + repr(wu), b1, progress)
 
                 elif state == 0:  # PM1_STATE_STAGE1
+                    b1 = raw["B"]
                     processed = raw["processed"]
                     b_done = raw["B_done"]
 
                     wu["done"] = "stage0"
                     wu["B1_progress"] = max(b_done, processed)
-                    # Prime95 get's B1_bound from worktodo.txt
+                    wu["B1_bound"] = b1
+
+                    if b1 == b_done:
+                        assert raw["pct_complete"] == 1
+                        wu["done"] = "B1"
 
                     assert processed == 0 or b_done <= processed, (
                             "Please contact Seth and provide this: " + repr(wu))
@@ -592,7 +597,6 @@ def one_line_status(fn, wu, name_pad=15):
 def add_hash(wu):
     match = BACKUP_PTN.match(os.path.basename(wu["path"]))
     assert match, filename
-    print (match.groupdict())
 
     file_hash = match.group("hash")
     if file_hash:
