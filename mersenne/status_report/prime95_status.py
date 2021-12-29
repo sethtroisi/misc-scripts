@@ -96,7 +96,7 @@ BACKUP_STATUS      = "Backup %-16s | %s."
 BACKUP_NONE        = "No Backup files (*.bu) were found in %s."
 BACKUP_PARSE_ERROR = "Unable to parse (%s)."
 
-BACKUP_PTN = re.compile("[emp][0-9A-Z]{0,3}[0-9]{5,}(_[0-9]+){0,2}(.bu[0-9]*)?$")
+BACKUP_PTN = re.compile("[emp][0-9A-Z]{0,3}[0-9]{5,}(_[0-9]+){0,2}(.bu[0-9]*)?(?P<hash>.[0-fa-f]{8})?$")
 
 
 
@@ -588,8 +588,20 @@ def one_line_status(fn, wu, name_pad=15):
     return fn.ljust(name_pad) + " | " + buf
 
 
+
+def add_hash(wu):
+    match = BACKUP_PTN.match(os.path.basename(wu["path"]))
+    assert match, filename
+    print (match.groupdict())
+
+    file_hash = match.group("hash")
+    if file_hash:
+        wu["hash"] = file_hash
+
+
 def main(args):
-    # TODO how to deal with multiple files of the same basename?
+    # TODO alert about multiple files of the same basename
+    # Should happen less after hash_rename
     paths = {os.path.basename(path): path for path in scan_directory(args)}
 
     parsed = {}
@@ -598,6 +610,7 @@ def main(args):
         wu = parse_work_unit_from_file(os.path.join(args.dir, paths[name]))
         if wu is not None:
             wu["path"] = paths[name]
+            add_hash(wu)
             parsed[name] = wu
         else:
             failed.append(name)

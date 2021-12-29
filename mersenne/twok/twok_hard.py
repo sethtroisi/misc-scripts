@@ -19,33 +19,32 @@ B2_RATIO = 100
 # Ranges above 100M are supposed to be handled by default
 # and TF is very easy there so likely will have no very
 # hard ranges
-STOP = 10 * 10 ** 6
+STOP = 30 * 10 ** 6
 
-# sed '6000000q' mersenneca_known_factors_0G.txt > mersenneca_known_factors_100M.txt
-# (cat mersenneca_known_factors_100M.txt mersenneca_known_factors_0G_30day.txt) | sort -u -n -t',' -k1,1 | sponge mersenneca_known_factors_100M.txt
+# (head -n 6000000 mersenneca_known_factors_0G.txt && cat mersenneca_known_factors_0G_30day.txt) | sort -u -n -t',' -k1,1 | sponge mersenneca_known_factors_100M.txt
 # wc mersenneca_known_factors_100M.txt
 
-#factor_fn = "mersenneca_known_factors_0G.txt"
 factor_fn = "mersenneca_known_factors_100M.txt"
 tf_limits_fn = "mersenneca_tf_pm1_bounds_0G.txt"
 
 # the OG project is looking at ranges of .1M = 100,000
-size = 100000
-rem_threshold = 2 * (size // 100) - 1
-extra_threshold = 0 # 40
+SIZE = 100000
+rem_threshold = 2 * (SIZE // 100) - 1
+extra_threshold = 40
 
-# [0, size], [size, 2*size], [2*size, 3*size]
-# don't have to work about overlap with ] and [ because size is composite
-counts = [[0, 0] for _ in range(0, STOP, size)]
+# [0, SIZE], [SIZE, 2*SIZE], [2*SIZE, 3*SIZE]
+# don't have to work about overlap with ] and [ because SIZE is composite
+counts = [[0, 0] for _ in range(0, STOP, SIZE)]
 
 # I want this to contain all primes without factors
 # Ideally we'd do something in two passes, or one combined pass
 # to avoid adding then removing all primes but that's hard to write.
-unfactored = [set() for _ in range(0, STOP, size)]
+unfactored = [set() for _ in range(0, STOP, SIZE)]
 
 for prime in primesieve.primes(0, STOP):
-    counts[prime // size][0] += 1
-    unfactored[prime // size].add(prime)
+    interval = prime // SIZE
+    counts[interval][0] += 1
+    unfactored[interval].add(prime)
 
 ##### Handle Numbers with factors (and mersenne primes) #####
 
@@ -62,9 +61,9 @@ with open(factor_fn) as f:
             continue
 
         # First factor of m
-        counts[m // size][1] += 1
+        counts[m // SIZE][1] += 1
         last_m = m
-        unfactored[m // size].remove(m)
+        unfactored[m // SIZE].remove(m)
 
 MP = [
     2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203,
@@ -76,15 +75,18 @@ MP = [
 ]
 for m in MP:
     if m < STOP:
-        unfactored[m // size].remove(m)
+        counts[m // SIZE][1] += 1
+        unfactored[m // SIZE].remove(m)
 
 #####
 
 unfactored_per = Counter()
-for start in range(0, STOP, size):
-    c = counts[start // size]
+for start in range(0, STOP, SIZE):
+    c = counts[start // SIZE]
     rem = c[0] - c[1]
-    if rem >= (rem_threshold + extra_threshold):
+    nf = len(unfactored[start // SIZE])
+    assert rem == nf, (start, c, rem, nf)
+    if rem > (rem_threshold + extra_threshold):
         print(f"{start:8}  factored {c[1]} / {c[0]} => {rem} unfactored")
         unfactored_per[start] = rem - rem_threshold
 
@@ -109,14 +111,14 @@ with open(tf_limits_fn) as f:
         if m > STOP:
             break
 
-        interval = (m // size)
-        bottom = interval * size
+        interval = (m // SIZE)
+        bottom = interval * SIZE
         if bottom in unfactored_per:
             if m in unfactored[interval]:
                 if raw[1] == "1":
                     # actually is factored
                     unfactored[interval].remove(m)
-                    counts[m // size][1] += 1
+                    counts[m // SIZE][1] += 1
                     continue
 
                 tf = int(raw[2])
@@ -157,7 +159,7 @@ def pm1_strategy(start, cleared, needed):
     # Doesn't account for what TF each exp has
     # Doesn't estimate optimal B2/B1 (or compute work correctly for new 30.8 prime95)
 
-    exponents = sorted(unfactored[start // size])
+    exponents = sorted(unfactored[start // SIZE])
     first_e = min(exponents)
 
     if start in pm1_limits:
@@ -316,7 +318,7 @@ def work_to_clear(start, threshold):
         expected = to_tf * success
 
         rem -= expected
-        gpu_work += to_tf * tf_work(start + size/2, bit)
+        gpu_work += to_tf * tf_work(start + SIZE/2, bit)
         tfs += to_tf
 
         if to_tf == count:
@@ -342,9 +344,6 @@ def work_to_clear(start, threshold):
 total = 0
 most_work = 0
 for start, rem in unfactored_per.most_common():
-    if start != 6900000:
-        continue
-
     n = sum(tf_limits[start].values())
     tf_str = " + ".join(f"{c} x {b}" for b, c in tf_limits[start].most_common())
     avg_pm1 = list(map(lambda e: sum(e) / n, zip(*pm1_limits[start].elements())))

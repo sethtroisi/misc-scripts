@@ -1,1 +1,0 @@
-/home/five/Downloads/GIMPS/mersenneca_known_factors_0G.txt

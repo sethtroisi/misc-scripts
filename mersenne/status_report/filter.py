@@ -29,24 +29,25 @@ import prime95_status
 
 def sha256_short(fn):
     with open(fn, "rb") as f:
-        h = hashlib.sha256(f).hexdigest()
+        h = hashlib.sha256(f.read()).hexdigest()
 
     return h[:8]
 
 
 
-def archive(files, archive_dir):
-    """
-    Move file in files to archive_dir
-
-    Rename to <file>.buX to <file>.bu.<SHA256>
-    """
-
-    assert os.path.isdir(archive_dir)
+def hash_rename(files):
+    """Renames to <file>{"", .bu, .buX} to <file>.bu.<SHA256>"""
 
     for fn in files:
         h = sha256_short(fn)
-        print (fn, h)
+        file_dir = os.path.dirname(fn)
+        assert os.path.isdir(file_dir)
+
+        new_name = os.path.basename(fn)
+        new_name = os.path.splitext(new_name)[0] + ".bu." + h
+        new_fn = os.path.join(file_dir, new_name)
+        print (f"{fn:35} renamed to {new_fn}")
+        os.rename(fn, new_fn)
 
 
 def rough_PM1_credit(exp, B1, B2):
@@ -205,7 +206,9 @@ if __name__ == "__main__":
     with open(json_fn) as f:
         parsed = json.load(f)
 
-    is_backup_of_finalized(parsed)
+    #is_backup_of_finalized(parsed)
     #trivial(parsed)
     #easy_finish(parsed)
 
+    files = sorted(set(wu["path"] for wu in parsed.values()))
+    hash_rename(files)
