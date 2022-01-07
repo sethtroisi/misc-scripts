@@ -21,7 +21,7 @@ B2_RATIO = 100
 # hard ranges
 STOP = 30 * 10 ** 6
 
-# (head -n 6000000 mersenneca_known_factors_0G.txt && cat mersenneca_known_factors_0G_30day.txt) | sort -u -n -t',' -k1,1 | sponge mersenneca_known_factors_100M.txt
+# (head -n 6000000 mersenneca_known_factors_0G.txt && cat mersenneca_known_factors_0G_30day*.txt) | sort -u -n -t',' -k1,1 | sponge mersenneca_known_factors_100M.txt
 # wc mersenneca_known_factors_100M.txt
 
 factor_fn = "mersenneca_known_factors_100M.txt"
@@ -29,7 +29,7 @@ tf_limits_fn = "mersenneca_tf_pm1_bounds_0G.txt"
 
 # the OG project is looking at ranges of .1M = 100,000
 SIZE = 100000
-rem_threshold = 2 * (SIZE // 100) - 1
+rem_threshold = 2 * (SIZE // 100)
 extra_threshold = 40
 
 # [0, SIZE], [SIZE, 2*SIZE], [2*SIZE, 3*SIZE]
@@ -86,12 +86,12 @@ for start in range(0, STOP, SIZE):
     rem = c[0] - c[1]
     nf = len(unfactored[start // SIZE])
     assert rem == nf, (start, c, rem, nf)
-    if rem > (rem_threshold + extra_threshold):
+    if rem >= (rem_threshold + extra_threshold):
         print(f"{start:8}  factored {c[1]} / {c[0]} => {rem} unfactored")
-        unfactored_per[start] = rem - rem_threshold
+        unfactored_per[start] = rem - (rem_threshold - 1)
 
 print()
-print(f"Ranges with large remaining work: {len(unfactored_per)}")
+print(f"Ranges >{extra_threshold} needed factors: {len(unfactored_per)}")
 print(f"Those ranges need {sum(unfactored_per.values())} factors")
 worst = unfactored_per.most_common(1)[0]
 print(f"Most needed {worst[1]} for {worst[0]}")
