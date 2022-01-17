@@ -55,7 +55,7 @@ This has been tested with
   * v29.8 build 6
   * v30.3 build 6
   * v30.7 build 9
-  * v30.8 build 4 (partial)
+  * v30.8 build 7 (partially)
 """
 
 """
@@ -368,15 +368,16 @@ def parse_work_unit_from_file(filename):
 
                 if state == 0:    # PM1_STATE_STAGE0
                     raw["interim_B"] = read_uint64(f)
-                    raw["max_stage0_prime"] = read_long(f)
-                    raw["stage0_bitnum"] = read_long(f)
 
-                    if version >= 6:
-                        # TODO verify this after 30.8 stable
-                        # probably change a read_long to read_uint64()
-                        assert raw["stage0_bitnum"] == 0, (
-                                "Please contact Seth and provide this: " + repr(wu))
+                    if version <= 5:
+                        raw["max_stage0_prime"] = read_long(f)
                         raw["stage0_bitnum"] = read_long(f)
+                    else:
+                        raw["max_stage0_prime"] = read_uint64(f)
+                        raw["stage0_bitnum"] = read_uint64(f)
+
+                    max_stage0 = raw["max_stage0_prime"]
+                    assert 1e6 < max_stage0 < 4e9, ("Contact Seth with wu please:", max_stage0)
 
                     wu["B1_bound"] = raw["interim_B"]
                     # Annoyingly this can move backwards after stage0 is done
