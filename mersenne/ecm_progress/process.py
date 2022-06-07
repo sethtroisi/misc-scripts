@@ -19,3 +19,7 @@ for row in data.strip().split("\n"):
 
 print ("curve_data =", table)
 print ("max tLEVEL =", 25 + 5 * max(len(v)-2 for v in table))
+print ()
+print ("For James")
+for row in sorted(table):
+    print(f"\tarray({', '.join(map(str, row))}),")

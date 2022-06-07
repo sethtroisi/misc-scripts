@@ -14,9 +14,9 @@ Copied data from James in https://www.mersenneforum.org/showpost.php?p=575451&po
 Then run
 
 ```
-sort -n -k2 B1_B2.txt | awk '$6 ~ /^[0-9]+$/ && $6 > 100 { print $2, $4 }' | xargs -I{} sh -c 'echo {}; echo "2^31-1" | ~/Projects/gmp-ecm/ecm -v {} | grep -A2 "Expected number" | tail -n 2' | tee curves.txt
-# or to run faster with parallel
-awk '$6 ~ /^[0-9]+$/ && $6 > 100 { print $2, $4 }' B1_B2.txt | parallel 'echo {}; echo "2^31-1" | ecm -v {} | grep -A2 "Expected number" | tail -n 2' | tee curves.txt
+awk '$6 ~ /^[0-9]+$/ { print $2, $4 }' B1_B2.txt | xargs -I{} sh -c 'echo {}; echo "2^31-1" | timeout 0.1 ~/Projects/gmp-ecm/ecm -v {} | grep -A2 "Expected number" | tail -n 2' | tee curves.txt
+# or
+awk '$6 ~ /^[0-9]+$/ { print $2, $4 }' B1_B2.txt | parallel 'echo {}; echo "2^31-1" | timeout 0.1 ecm -v {} | grep -A2 "Expected number" | tail -n 2' | tee curves.txt
 ```
 
 join curves to B1/B2 with
