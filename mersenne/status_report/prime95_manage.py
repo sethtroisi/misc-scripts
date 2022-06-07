@@ -34,17 +34,24 @@ def sha256_short(fn):
     return h[:8]
 
 
+def hash_name(fn):
+    """Normalize name to <file>.bu.<SHA256(8)>"""
+
+    assert os.path.isfile(fn), fn
+    short_hash = sha256_short(fn)
+
+    bare_fn = os.path.splitext(os.path.basename(fn))
+    return f"{bare_fn}.bu.{short_hash}"
+
 
 def hash_rename(files):
     """Renames to <file>{"", .bu, .buX} to <file>.bu.<SHA256>"""
 
     for fn in files:
-        h = sha256_short(fn)
         file_dir = os.path.dirname(fn)
-        assert os.path.isdir(file_dir)
+        assert os.path.isdir(file_dir), file_dir
 
-        new_name = os.path.basename(fn)
-        new_name = os.path.splitext(new_name)[0] + ".bu." + h
+        new_name = hash_name(fn)
         new_fn = os.path.join(file_dir, new_name)
         print (f"{fn:35} renamed to {new_fn}")
         os.rename(fn, new_fn)
@@ -57,10 +64,66 @@ def rough_PM1_credit(exp, B1, B2):
     return pm1.credit(exp, B1, B2)
 
 
-
 def core_minutes_to_GHz_days(minutes):
     """Rough approx of GHz-days for $minutes core minutes"""
     return 6 * (minutes / (24 * 60))
+
+
+def is_same_exp(wu_a, wu_b):
+    return all(wu_a["raw"][var] == wu_b["raw"][var] for var in ("k", "b", "n", "c"))
+
+
+def compare_work_done(wu_a, wu_b):
+    '''
+    Returns if a has been complete to higher bounds than b
+
+    Returns 0 if a == b
+    Returns -1 if a < b
+    Returns 1 if a > b
+    '''
+
+    assert is_same_exp(wu_a, wu_b), (wu_a, wu_b)
+
+    # XXX: FIXME: TODO: verify this logic several times (and maybe with tests)
+
+    # Tricky Cases:
+    #   More done than before BUT in stage1 with a HUGE B1
+
+    # MVP only accepts finished files
+    a_done = wu_a["done"]
+    b_done = wu_b["done"]
+    UNFINISHED_DONE = (None, "stage0")
+    assert not all(t in UNFINISHED_DONE for t in (a_done, b_done)), (wu_a, wu_b)
+
+    if a_done in UNFINISHED_DONE:
+        assert b_done not in UNFINISHED_DONE
+        return -1
+
+    # Stage1 at least is done for a
+    if b_done in UNFINISHED_DONE
+        return 1
+
+    a_b1 = wu_a["B1_progress"]
+    b_b1 = wu_b["B1_progress"]
+    assert isinstance(a_b1, int) and isinstance(b_b1, int), (a_b1, b_b1)
+    if wu_a["B1_progress"] > wu_b["B1_progress"]:
+        return 1
+
+    if wu_a["B1_progress"] == wu_b["B1_progress"]:
+        # Check if B2 is more done on a or b
+        a_b2 = wu_a.get("B2_progress", 0)
+        b_b2 = wu_b.get("B2_progress", 0)
+        if a_b2 > b_b2:
+            return 1
+        elif a_b2 == b_b2:
+            return 0
+        else:
+            return -1
+
+
+#### Utilities Above ^ ####
+#### Features  below v ####
+
 
 def trivial(parsed, small = 0.02):
     """list of files with less than $SMALL GHz-Days work done"""

@@ -18,4 +18,4 @@ for row in data.strip().split("\n"):
         table.append([B1, B2, *int_vals])
 
 print ("curve_data =", table)
-
+print ("max tLEVEL =", 25 + 5 * max(len(v)-2 for v in table))
