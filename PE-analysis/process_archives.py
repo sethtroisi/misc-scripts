@@ -28,7 +28,7 @@ for fn in sorted(os.listdir("archives")):
         soup = BeautifulSoup(f, 'html.parser')
 
     results = []
-    for i, row in enumerate(soup.select("#problems_table tr")):
+    for i, row in enumerate(soup.select("#problems_table > tr")):
         children = list(row.children)
 
         ID = children[0].text
@@ -36,12 +36,15 @@ for fn in sorted(os.listdir("archives")):
             assert ID == "ID"
             continue
 
+        if "Pinned Problem" in ID:
+            ID = ID.replace("Pinned Problem", "")
+
         name = children[1].text
         published = next(children[1].children)["title"]
-        assert published.startswith("Published on")
-        published = published[len("Published on "):]
+        if published.startswith("Published on"):
+            published = published[len("Published on "):]
 
-        if int(ID) % 50 in (1,2,3,5,10,20,50):
+        if int(ID) % 50 in (0, 1,2,3,5,10,20):
             print(f"\t{ID:3} {published:20} {name:20}")
 
         results.append((int(ID), published, name))

@@ -9,12 +9,13 @@ but doesn't give back to the community (no posts in the discussion threads).
 
 ### Data
 
-1. Compute timestamp of when solution was published to GitHub
+1. [x] Compute timestamp of when solution was published to GitHub
+1. [x] Collect list of finish times for fastest solvers
+  * https://projecteuler.net/fastest=NUM
+1. [x] Collect list of members by number solved
+  * https://projecteuler.net/level=LEVEL
 1. Collect list of Eulerians
   * https://projecteuler.net/eulerians
-1. Collect list of finish times for fastest solvers
-  * https://projecteuler.net/fastest=NUM
-1. Collect list of members by number solved
 
 ### Analysis
 

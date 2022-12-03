@@ -2,7 +2,10 @@
 
 # Have to do this logged in
 # Copy PHPSESSID
-test -n "$PHPSESSID" || (echo "Must set PHPSESSID"; exit 1)
+if [ -z "$PHPSESSID" ]; then
+    echo "Must set PHPSESSID"
+    exit 1
+fi
 
 cookie_str="cookie: PHPSESSID=$PHPSESSID"
 
