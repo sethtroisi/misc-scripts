@@ -17,7 +17,7 @@ echo "$eulerians_fn"
 test -f "$eulerians_fn" || curl -H "$cookie_str" "https://projecteuler.net/eulerians" -o "$eulerians_fn"
 
 # Slowly download the list of fastest solvers
-for p in {500..815}; do
+for p in {600..815}; do
     fastest_fn="fastest/fastest_${p}.html"
     fastest_url="https://projecteuler.net/fastest=${p}"
     if [ ! -f "$fastest_fn" ]; then

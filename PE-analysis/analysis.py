@@ -95,7 +95,7 @@ data_cleanup()
 
 print(f"Found {len(problems)} problems")
 print(f"Found {len(members)} members with >= {min(m[0] for m in members)} problems solved")
-print(f"Found {len(fastest_solvers)} fastests solver results")
+print(f"Found {len(fastest_solvers)} fastests solver results (only considering problems > 600)")
 print(f"Found {len(solution_postings)} solution posting time")
 print()
 
@@ -103,20 +103,23 @@ print()
 def compare_timings():
     # Have to be at least this much faster than the published time
 
-    MIN_FASTER = 5 * 60
+    MIN_FASTER = 1 * 60
     # Figure out when during the top 100 a solution was published
 
     count_fasters = Counter()
     deltas = []
 
-    print()
+    # Assuming the answer are checked (e.g. submitted), these people are sus
+    ranked_answers = 0
+    before_answer = Counter()
+    count_slower  = Counter()
+
+    #print()
     for num, posted, name in sorted(problems):
         solution_time = solution_postings.get(num)
 
         if solution_time:
             delta = solution_time - posted
-            if delta > datetime.timedelta(days=10):
-                continue
             delta_secs = delta.total_seconds()
         else:
             delta_secs = 86400
@@ -130,24 +133,37 @@ def compare_timings():
         for faster in fasters:
             count_fasters[faster[2]] += 1
 
-        #print(num, name)
-        #if solution_time:
-        #    print("\t", posted, solution_time, delta)
+        if solution_time and len(fasters) < 100:
+            ranked_answers += 1
+            for row in fast_solvers:
+                if row[3] - 60 < delta_secs:
+                    before_answer[row[2]] += 1
+
+            # For solvers after
+            for row in fast_solvers:
+                if row[3] > delta_secs:
+                    count_slower[row[2]] += 1
+
+#        if solution_time:
+#            print("\t", num, posted, solution_time, delta)
 
         deltas.append((delta, num, len(fasters)))
 
+    print()
+    print("Times when github solutions were fast (<12 hr) or top 100")
     deltas.sort()
     for d, num, faster in deltas:
-        if d < datetime.timedelta(days=1) or faster < 100:
-            print(f"Problem {num} solved after {d}, {faster} people before posting")
+        if d < datetime.timedelta(hours=12) or faster < 100:
+            print(f"\t{num:3} solved after {d!s:20} ~ {faster:<3} users solved before posting")
 
-    print("")
-    print("Fast users that were consistently faster")
+    print()
+    print("Users that show up in fastest the most")
     for i, (name, count) in enumerate(count_fasters.most_common()):
-        if i < 10 or i in (20, 30, 40, 50, 75, 100, 150, 200, 300) or "eth" in name:
+        if i < 10 or i in (20, 30, 40, 50, 75, 100, 150, 200, 300) or "Seth" in name:
             print(f"\t{i:3},      {name:25} Solved {count} faster than published timings")
 
     print()
+    print("Users by number of problems solve           | Top 100 finishes above GitHub solutions")
     results = []
     last_solved = 800
     for rank_i, (solved, name, is_team_member) in enumerate(members, 1):
@@ -155,7 +171,7 @@ def compare_timings():
             rank = rank_i
             last_solved = solved
 
-        if rank_i < 100:
+        if rank_i < 10 or rank_i in (20, 30, 40, 50, 75, 100, 150, 200, 300) or "Seth" in name:
             mark = "*" if is_team_member else ""
             print(f"\t{rank:3}, {solved:3}, {name+mark:25} |", count_fasters[name])
 
@@ -164,10 +180,42 @@ def compare_timings():
             results.append((name, rank, solved, count_fasters[name]))
 
     print()
-    print("Suspect")
-    # Sus
+    print("Suspect behaviors")
+    print("-----------------")
+    print()
+    print("Users with lots of solves, but very few faster than GitHub solutions")
     for name, rank, solved, faster in results:
         print(f"\t{rank:3}, {solved:3}, {name:25} |", count_fasters[name])
+
+    number_solved = {name: solved for solved, name, is_team_member in members if not is_team_member}
+
+    print()
+    print(f"From the {ranked_answers} problem where GitHub is top 100, before the solution is posted")
+    for name, count in before_answer.most_common():
+
+        # Want people who are only fast on these problems
+        other_fasts = count_fasters[name]
+        if other_fasts > 15:
+            continue
+
+        solved = number_solved.get(name, "???")
+        print(f"\t{name:25} {solved} | {count}/{other_fasts} = {count/other_fasts:.0%}")
+        if count < 5:
+            break
+
+    print()
+    print(f"From the {ranked_answers} problem where GitHub is top 100, after the solution is posted")
+    for name, count in count_slower.most_common():
+        # Want people who are only fast when a solution is known
+        other_fasts = count_fasters[name]
+        if other_fasts > 10:
+            continue
+
+        solved = number_solved.get(name, "???")
+        print(f"\t{name:25} {solved} | {count}/{other_fasts+count} = {(count)/(other_fasts+count):.0%}")
+        if count < 5:
+            break
+
 
 
 compare_timings()

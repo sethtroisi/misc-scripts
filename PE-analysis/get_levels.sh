@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eux
+
 : '
 Get list of members by level from https://projecteuler.net/level=<LEVEL>
  '
@@ -16,7 +18,7 @@ cookie_str="cookie: PHPSESSID=$PHPSESSID"
 # https://projecteuler.net/eulerians
 
 # Slowly download the list of members by level
-for lvl in {25..31}; do
+for lvl in {22..31}; do
     level_fn="levels/level_${lvl}.html"
     level_url="https://projecteuler.net/level=${lvl}"
     if [ ! -f "$level_fn" ]; then
