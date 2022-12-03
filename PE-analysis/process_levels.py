@@ -41,10 +41,13 @@ for fn in sorted(os.listdir("levels")):
         assert len(solved_column) == 1
         solved = solved_column[0].text
 
-        if i in (0,1,2,3,5,10,20,100):
-            print(f"\t{i:3} {solved:4} {name}")
+        raw_html = row.decode_contents()
+        is_team_member = ("admin" in raw_html) or ("dev_team" in raw_html)
 
-        results.append((solved, name))
+        if i in (0,1,2,3,5,10,20,100) or is_team_member:
+            print(f"\t{i:3} {solved:4} {name:20}{'*' if is_team_member else ''}")
+
+        results.append((solved, name, is_team_member))
 
     print(f"\t{len(results)} results for level {num}")
 
