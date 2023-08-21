@@ -369,21 +369,31 @@ def outputunit(number, scale=False):
 
 
 def from_bytes(abytes):
+    # Possible this can be converted to `int.from_bytes(abytes, 'little')` available in 3.2
     return sum(b << i * 8 for i, b in enumerate(bytearray(abytes)))
 
+
+def parse_struct(aformat, f):
+    size = struct.calcsize(aformat)
+    buf = f.read(size)
+    if len(buf) != size:
+        return None
+    return struct.unpack(aformat, buf)
+
+def get_struct_parser(f):
+    def parse(aformat):
+        return parse_struct(aformat, f)
+    return parse
 
 def parse_work_unit_prime95(filename):
     wu = work_unit()
 
     try:
         with open(filename, "rb") as f:
-            aformat = "<IIdIIi11sxdI"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
-            if len(buffer) != size:
-                return None
-            magicnum, version, wu.k, wu.b, wu.n, wu.c, stage, pct_complete, _sum = struct.unpack(
-                aformat, buffer)
+            parser = get_struct_parser(f)
+
+            magicnum, version, wu.k, wu.b, wu.n, wu.c, stage, pct_complete, _sum = \
+                parser("<IIdIIi11sxdI")
 
             wu.stage = stage.rstrip(b"\0").decode()
             wu.pct_complete = max(0, min(1, pct_complete))
@@ -395,12 +405,7 @@ def parse_work_unit_prime95(filename):
                     return None
 
                 wu.work_type = WORK_CERT
-
-                aformat = "<III"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                wu.error_count, wu.counter, wu.shift_count = struct.unpack(
-                    aformat, buffer)
+                wu.error_count, wu.counter, wu.shift_count = parser("<III")
             elif magicnum == FACTOR_MAGICNUM:
                 if version != FACTOR_VERSION:
                     print("Factor with unsupported version = {0}".format(
@@ -408,12 +413,8 @@ def parse_work_unit_prime95(filename):
                     return None
 
                 wu.work_type = WORK_FACTOR
-
-                aformat = "<IIIIIII"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                wu.factor_found, wu.bits, wu.apass, _fachsw, _facmsw, _endpthi, _endptlo = struct.unpack(
-                    aformat, buffer)
+                wu.factor_found, wu.bits, wu.apass, _fachsw, _facmsw, _endpthi, _endptlo = \
+                    parser("<IIIIIII")
             elif magicnum == LL_MAGICNUM:
                 if version != LL_VERSION:
                     print("LL savefile with unsupported version = {0}".format(
@@ -421,12 +422,7 @@ def parse_work_unit_prime95(filename):
                     return None
 
                 wu.work_type = WORK_TEST
-
-                aformat = "<III"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                wu.error_count, wu.counter, wu.shift_count = struct.unpack(
-                    aformat, buffer)
+                wu.error_count, wu.counter, wu.shift_count = parser("<III")
             elif magicnum == PRP_MAGICNUM:
                 if not 1 <= version <= PRP_VERSION:
                     print("PRP savefile with unsupported version = {0}".format(
@@ -435,42 +431,22 @@ def parse_work_unit_prime95(filename):
 
                 wu.work_type = WORK_PRP
 
-                aformat = "<II"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                wu.error_count, wu.counter = struct.unpack(aformat, buffer)
+                wu.error_count, wu.counter = parser("<II")
 
                 if version >= 2:
-                    aformat = "<III"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.prp_base, wu.shift_count, _two_power_opt = struct.unpack(
-                        aformat, buffer)
+                    wu.prp_base, wu.shift_count, _two_power_opt = parser("<III")
                 if version >= 3:
-                    aformat = "<IIIIIIII"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.residue_type, _error_check_type, _state, _alt_shift_count, wu.L, _start_counter, _next_mul_counter, _end_counter = struct.unpack(
-                        aformat, buffer)
+                    wu.residue_type, _error_check_type, _state, _alt_shift_count, wu.L, _start_counter, _next_mul_counter, _end_counter = \
+                        parser("<IIIIIIII")
                 if version >= 5:
-                    aformat = "<IIII512s16s"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.proof_power, _hashlen, wu.isProbablePrime, _have_res2048, wu.res2048, wu.res64 = struct.unpack(
-                        aformat, buffer)
+                    wu.proof_power, _hashlen, wu.isProbablePrime, _have_res2048, wu.res2048, wu.res64 = \
+                        parser("<IIII512s16s")
                     wu.res2048 = wu.res2048.rstrip(b"\0").decode()
                     wu.res64 = wu.res64.rstrip(b"\0").decode()
                 if version >= 6:
-                    aformat = "<II"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.proof_power_mult, _md5_residues = struct.unpack(
-                        aformat, buffer)
+                    wu.proof_power_mult, _md5_residues = parser("<II")
                 if version >= 7:
-                    aformat = "<I"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.proof_version, = struct.unpack(aformat, buffer)
+                    wu.proof_version, = parser("<I")
             elif magicnum == ECM_MAGICNUM:
                 if not 1 <= version <= ECM_VERSION:
                     print("ECM savefile with unsupported version = {0}".format(
@@ -480,31 +456,21 @@ def parse_work_unit_prime95(filename):
                 wu.work_type = WORK_ECM
 
                 if version == 1:    # 25 - 30.6
-                    aformat = "<IIdQQQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.state, wu.curve, wu.sigma, wu.B, wu.stage1_prime, _C_processed = struct.unpack(
-                        aformat, buffer)
+                    wu.state, wu.curve, wu.sigma, wu.B, wu.stage1_prime, _C_processed = \
+                        parser("<IIdQQQ")
                 else:
-                    aformat = "<IQIdQQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.curve, _average_B2, wu.state, wu.sigma, wu.B, wu.C = struct.unpack(
-                        aformat, buffer)
+                    wu.curve, _average_B2, wu.state, wu.sigma, wu.B, wu.C = \
+                        parser("<IQIdQQ")
 
                     if wu.state == ECM_STATE_STAGE1:
-                        aformat = "<Q"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.stage1_prime, = struct.unpack(aformat, buffer)
+                        wu.stage1_prime, = parser("<Q")
                     elif wu.state == ECM_STATE_MIDSTAGE:
                         pass
                     elif wu.state == ECM_STATE_STAGE2:
-                        aformat = "<IIIIIIQQQQQQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        _stage2_numvals, _totrels, wu.D, _E, _TWO_FFT_STAGE2, _pool_type, _first_relocatable, _last_relocatable, wu.B2_start, _C_done, _numDsections, _Dsection = struct.unpack(
-                            aformat, buffer)
+                        (_stage2_numvals, _totrels, wu.D, _E, _TWO_FFT_STAGE2,
+                                _pool_type, _first_relocatable, _last_relocatable,
+                                wu.B2_start, _C_done, _numDsections, _Dsection) = \
+                            parser("<IIIIIIQQQQQQ")
                     elif wu.state == ECM_STATE_GCD:
                         pass
             elif magicnum == PM1_MAGICNUM:
@@ -516,24 +482,15 @@ def parse_work_unit_prime95(filename):
                 wu.work_type = WORK_PMINUS1
 
                 if version < 4:  # Version 25 through 30.3 save file
-                    aformat = "<I"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    state, = struct.unpack(aformat, buffer)
+                    state, = parser("<I")
 
                     if version == 2:
                         _max_stage0_prime = 13333333
                     else:
-                        aformat = "<I"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        _max_stage0_prime, = struct.unpack(aformat, buffer)
+                        _max_stage0_prime, = parser("<I")
 
-                    aformat = "<QQQQQQIII"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.interim_B, wu.C_done, _C_start, wu.interim_C, processed, wu.D, wu.E, _rels_done = struct.unpack(
-                        aformat, buffer)
+                    wu.B_done, wu.interim_B, wu.C_done, _C_start, wu.interim_C, processed, wu.D, wu.E, _rels_done = \
+                            parser("<QQQQQQIII")
 
                     if state == 3:
                         wu.state = PM1_STATE_STAGE0
@@ -546,44 +503,24 @@ def parse_work_unit_prime95(filename):
                     elif state == 2:
                         wu.state = PM1_STATE_DONE
                 else:  # 4 <= version <= 7  # 30.4 to 30.7
-                    aformat = "<I"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.state, = struct.unpack(aformat, buffer)
+                    wu.state, = parser("<I")
 
                     if wu.state == PM1_STATE_STAGE0:
                         aformat = "<Q" + ("II" if version <= 5 else "QQ")
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.interim_B, _max_stage0_prime, wu.stage0_bitnum = struct.unpack(
-                            aformat, buffer)
+                        wu.interim_B, _max_stage0_prime, wu.stage0_bitnum = parser(aformat)
                     elif wu.state == PM1_STATE_STAGE1:
-                        aformat = "<QQQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.B_done, wu.interim_B, wu.stage1_prime = struct.unpack(
-                            aformat, buffer)
+                        wu.B_done, wu.interim_B, wu.stage1_prime = parser("<QQQ")
                     elif wu.state == PM1_STATE_MIDSTAGE:
-                        aformat = "<QQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                        wu.B_done, wu.C_done = parser("<QQ")
                     elif wu.state == PM1_STATE_STAGE2:
-                        aformat = "<QQQIIIQQQQQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.B_done, wu.C_done, wu.interim_C, _stage2_type, wu.D, _numrels, wu.B2_start, _numDsections, _Dsection, _first_relocatable, _last_relocatable = struct.unpack(
-                            aformat, buffer)
+                        (wu.B_done, wu.C_done, wu.interim_C, _stage2_type,
+                            wu.D, _numrels, wu.B2_start,
+                            _numDsections, _Dsection,
+                            _first_relocatable, _last_relocatable) = parser("<QQQIIIQQQQQ")
                     elif wu.state == PM1_STATE_GCD:
-                        aformat = "<QQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                        wu.B_done, wu.C_done = parser("<QQ")
                     elif wu.state == PM1_STATE_DONE:
-                        aformat = "<QQ"
-                        size = struct.calcsize(aformat)
-                        buffer = f.read(size)
-                        wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                        wu.B_done, wu.C_done = parser("<QQ")
             elif magicnum == PP1_MAGICNUM:
                 if not 1 <= version <= PP1_VERSION:
                     print(
@@ -592,39 +529,21 @@ def parse_work_unit_prime95(filename):
 
                 wu.work_type = WORK_PPLUS1
 
-                aformat = "<III"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                wu.state, wu.numerator, wu.denominator = struct.unpack(
-                    aformat, buffer)
+                wu.state, wu.numerator, wu.denominator = parser("<III")
 
                 if wu.state == PP1_STATE_STAGE1:
-                    aformat = "<QQQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.interim_B, wu.stage1_prime = struct.unpack(
-                        aformat, buffer)
+                    wu.B_done, wu.interim_B, wu.stage1_prime = parser("<QQQ")
                 elif wu.state == PP1_STATE_MIDSTAGE:
-                    aformat = "<QQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                    wu.B_done, wu.C_done = parser("<QQ")
                 elif wu.state == PP1_STATE_STAGE2:
-                    aformat = "<QQQIIIQQQQQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.C_done, wu.interim_C, _stage2_numvals, _totrels, _D, _first_relocatable, _last_relocatable, wu.B2_start, _numDsections, _Dsection = struct.unpack(
-                        aformat, buffer)
+                    (wu.B_done, wu.C_done, wu.interim_C,
+                            _stage2_numvals, _totrels, _D,
+                            _first_relocatable, _last_relocatable,
+                            wu.B2_start, _numDsections, _Dsection) = parser("<QQQIIIQQQQQ")
                 elif wu.state == PP1_STATE_GCD:
-                    aformat = "<QQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                    wu.B_done, wu.C_done = parser("<QQ")
                 elif wu.state == PP1_STATE_DONE:
-                    aformat = "<QQ"
-                    size = struct.calcsize(aformat)
-                    buffer = f.read(size)
-                    wu.B_done, wu.C_done = struct.unpack(aformat, buffer)
+                    wu.B_done, wu.C_done = parser("<QQ")
             else:
                 print("Error: savefile with unknown magicnum = {0:#x}".format(
                     magicnum), file=sys.stderr)
@@ -641,12 +560,9 @@ def parse_work_unit_mlucas(filename, exponent, stage):
 
     try:
         with open(filename, "rb") as f:
-            aformat = "<BB8s"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
-            if len(buffer) != size:
-                return None
-            t, m, tmp = struct.unpack(aformat, buffer)
+            parser = get_struct_parser(f)
+
+            t, m, tmp = parser("<BB8s")
             nsquares = from_bytes(tmp)
 
             p = 1 << exponent if m == MODULUS_TYPE_FERMAT else exponent
@@ -655,47 +571,30 @@ def parse_work_unit_mlucas(filename, exponent, stage):
                                                                       3) + 1 if m == MODULUS_TYPE_FERMAT else 0
             f.seek(nbytes, 1)
 
-            aformat = "<Q5s5s"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
-            res64, _res35m1, _res36m1 = struct.unpack(aformat, buffer)
+            res64, _res35m1, _res36m1 = parser("<Q5s5s")
             _res35m1 = from_bytes(_res35m1)
             _res36m1 = from_bytes(_res36m1)
             # print("{0:016X}".format(res64), "{0:010X}".format(res35m1), "{0:010X}".format(res36m1))
 
-            aformat = "<3sQ"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
-            kblocks, res_shift = struct.unpack(aformat, buffer)
+            kblocks, res_shift = parser("<3sQ")
             kblocks = from_bytes(kblocks)
 
             if t == TEST_TYPE_PRP:
-                aformat = "<I"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                prp_base, = struct.unpack(aformat, buffer)
+                prp_base, = parse_struct("<I")
 
                 f.seek(nbytes, 1)
 
-                aformat = "<Q5s5s"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                _i1, _i2, _i3 = struct.unpack(aformat, buffer)
+                _i1, _i2, _i3 = parser("<Q5s5s")
                 _i2 = from_bytes(_i2)
                 _i3 = from_bytes(_i3)
                 # print("{0:016X}".format(i1), "{0:010X}".format(i2), "{0:010X}".format(i3))
 
-                aformat = "<Q"
-                size = struct.calcsize(aformat)
-                buffer = f.read(size)
-                _gcheck_shift, = struct.unpack(aformat, buffer)
+                _gcheck_shift, = parser("<Q")
 
-            aformat = "<II"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
             nerr_roe = nerr_gcheck = None
-            if len(buffer) == size:
-                nerr_roe, nerr_gcheck = struct.unpack(aformat, buffer)
+            test = parser("<II")
+            if len(test) == 2:
+                nerr_roe, nerr_gcheck = test
 
             if t == TEST_TYPE_PRIMALITY:
                 if m == MODULUS_TYPE_MERSENNE:
@@ -773,13 +672,7 @@ def parse_work_unit_cudalucas(filename, p):
 
             wu.work_type = WORK_TEST
 
-            aformat = "=IIIIII"
-            size = struct.calcsize(aformat)
-            buffer = f.read(size)
-            if len(buffer) != size:
-                return None
-            n, j, offset, total_time, _time_adj, _iter_adj = struct.unpack(
-                aformat, buffer)
+            n, j, offset, total_time, _time_adj, _iter_adj = parse_struct("=IIIIII")
             total_time <<= 15
             _time_adj <<= 15
 
@@ -1182,9 +1075,9 @@ if __name__ == "__main__":
     parser.add_option("-l", "--long", action="store_true", dest="long",
                       help="Output in long format with the file size and modification time")
 
+    # TODO Move args into parser so that --help displays %prog [options] <directories>"
+
     options, args = parser.parse_args()
-    # if args:
-    # parser.error("Unexpected arguments")
 
     workdir = os.path.expanduser(options.workdir)
     dirs = [os.path.join(workdir, adir)
