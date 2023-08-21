@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) 2021 Seth Troisi
+# Copyright (c) 2023 Teal Dulcet
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +24,9 @@ See
   * https://www.mersenneforum.org/showthread.php?p=540022#post540022
   * https://github.com/sethtroisi/prime95/pull/1
 
+Teal Dulcet extended the code to support Mlucus, GpuOwl, and CUDALucus.
 
-This was written looking at 29.8 source code but the save file header are
-likely to be fairly consistent and can be upgraded easily.
+This was written looking at MPrime source code.
 The relevant files for details are
   * commonc.c
     read_header / write_header
@@ -51,16 +52,7 @@ ostensible the file format is
 """
 
 """
-This has been tested with
-  * v29.8 build 6
-  * v30.3 build 6
-  * v30.7 build 9
-  * v30.8 build 7 (partially)
-"""
-
-"""
-TODO
-  * Understand what finished B1 (without B2) looks like for P-1
+See https://www.mersenneforum.org/showthread.php?t=25378 to understand version support.
 """
 
 import argparse
