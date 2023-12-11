@@ -1,0 +1,5 @@
+__pycache__/
+test.json
+test2.json
+v*.json
+v*.zip

@@ -211,9 +211,9 @@ TF_v2_RE = re.compile(br"^OWL TF 2 (\d+) (\d+) (\d+) (\d+) (\d+)$")
 
 
 PRIME95_RE = re.compile(
-    r"^[cpefmn][0-9]+(?:_[0-9]+){0,2}(?:\.(?:[0-9]{3,}|(bu([0-9]*))))?$")
+    r"^[cpefmn][0-9A-F]+(?:_[0-9]+){0,2}(?:\.(?:[0-9]{3,}|(bu([0-9]*))))?$")
 MLUCAS_RE = re.compile(
-    r"^([pfq])([0-9]+)(?:\.(?:s([12])|([0-9]+)M|G))?$")
+    r"^([pfq])([0-9A-F]+)(?:\.(?:s([12])|([0-9]+)M|G))?$")
 CUDALUCAS_RE = re.compile(r"^([ct])([0-9]+)$")
 GPUOWL_RE = re.compile(os.path.join(
     r"(?:([0-9]+)", r"([0-9]+)(?:-([0-9]+)\.(?:prp|p1final|p2)|(?:-[0-9]+-([0-9]+))?\.p1|(-old)?\.(?:(?:ll|p[12])\.)?owl)|[0-9]+(-prev)?\.(?:tf\.)?owl)$"))
@@ -949,12 +949,12 @@ def main(dirs):
     for i, adir in enumerate(dirs):
         if i:
             print()
-        print("{0}:".format(adir))
+        print(f"{adir}:")
         if options.prime95:
             if options.mlucas or options.cudalucas or options.gpuowl:
                 print("\tPrime95/MPrime:")
             entries = {}
-            for entry in glob.iglob(os.path.join(adir, "[cpefmn][0-9_]*")):
+            for entry in glob.iglob(os.path.join(adir, "[cpefmn][A-F0-9_]*")):
                 filename = os.path.basename(entry)
                 match = PRIME95_RE.match(filename)
                 if match:
@@ -963,6 +963,7 @@ def main(dirs):
                         entries[root] = []
                     entries[root].append((int(match.group(2)) if match.group(
                         2) else 1 if match.group(1) else 0, entry))
+
             rows = []
             for entry in entries.values():
                 for j, (num, file) in enumerate(sorted(entry)):
