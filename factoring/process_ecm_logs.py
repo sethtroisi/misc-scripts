@@ -3,6 +3,7 @@
 
 import csv
 import math
+import re
 import sys
 
 import sympy.ntheory
@@ -56,109 +57,90 @@ def split_numbers_to_batches(numbers):
                         f.write(str(number) + "\n")
 
 
-def get_factors():
-    factors = [
-            # From Joint 4e9, 2e15
-            3163013019150650534412151621633579,
-            750312983689932225218814887475111451601,
-            124129135622883824443968581830853501992780885741743617,
-            80109470430049789177721628776680081527006382183194621913,
+def load_allcomp(fn):
+    numbers = []
+    lookup = {}
+    with open(fn) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            n = int(row["CompositeNumber"])
+            lookup[n] = row
+            numbers.append(n)
 
-            # Stage 1 - 1e9
-            7404060493192154517976641971746184393,
-            7777800721604298444684388066053521389,
-            432907204073232239655094010983227828959,
-            984071418255729449467097147936590104643,
-            72458227323361926380559281101094317478857,
-            100041158794537080621316545277272786390523,
-            324056793105934811802507610294993868559907,
-            9422874245679805615653964935544972525496307319501,
+    numbers.sort()
+    assert len(numbers) > 25000, len(numbers)
+    return numbers, lookup
 
-            # Stage 2 - 2e14? 1e14?
-            783984926776744932096181,
-            1737289679429356608967591065359233,
-            533207814245750437450966092477273317,
-            2740742913581000832172011297905045089,
-            6726045540270866626004863821670631059,
-            128739369927123555536268836166387312613,
-            627795208702324914458880001562791774793,
-            1902068621034637535136848863748058513163,
-            11993271422864609744246017402556166679877,
-            22566885831388782728020298599939374665537,
-            30358272040796046695304182622100286336771,
-            173747322858833823449035200391059471151231,
-            105559399884185903125590647759216386183633,
-            3201761828353602683921687606701662392893519,
-            6431134460830201783330609859249466216840691,
-            15128501764661440151241120518617120431834631,
-            254806665113499030259608186919038899558422081,
-            3200897927486857171340190506371922210663972329,
-            11899031169717085153622203077029727954826905253,
-            42030665822347104252278349560778956058421034800651,
 
-            # Stage 1 4e9
-            #11993271422864609744246017402556166679877,
+def get_logs(log_fns):
+    log = []
+    for fn in log_fns:
+        with open(fn) as f:
+            log.extend(f.readlines())
+    return log
 
-            # Stage 2 - 2e14
 
-            39985231475407748778705421355244134881,
-            102224365759884976914702328418500213369,
-            2033714563511092089777855377074330469569,
-            14431491564941358494362670702965703559329,
-            146693763908193324690489509238964455399049,
-            149511525976835907680657617153619689331657,
-            3541046238469364940092058655977042864880459,
-            4509602110536819179930484819235482032591609,
-            8336880910593090283874013013669704282193103,
-            21618438520504071379857282455172504900234229,
-            485725908655449989239797124954958330954190799,
-            4310580243065630730568188564480974671872047369,
-            5390000837387760146750729265989953044866420267,
-            2009709488785137537207095107642489676032417689277,
-            906529866380691380904770048617473553004073410509708951,
-            43303384555023007253400811556157089682672253220605374349,
+def parse_factors_from_logs(logs):
+    unique = set()
+    factors = []
+    for line in logs:
+        match = re.search("Factor found in step .: ([0-9]+)$", line)
+        if match:
+            f = int(match.group(1))
+            assert 2 <= f <= 10 ** 65, f
+            if f not in unique:
+                unique.add(f)
+                factors.append(f)
+    return factors
 
-            # Stage 1 - 1e10
 
-            # Stage 2 - some 2e15 and 8e15
-            28597430719007745280848527607942911,
-            573822661841477526716072150051824511,
-            8575595523805202176287579341241478823,
-            26207790556496421241055416817620161269,
-            57407289076603242192950879913363106057,
-            167993795408284424124110411380136972477,
-            348688979766356532429011726074111362439,
-            626118338997433124554887463007231035723,
-            950939494096403505613748266781850004591,
-            1829445946616899195580332078057724082803,
-            3989733479317737678893462651580997655309,
-            4631819825775891064537001730676852164803,
-            24021249415584369844296406893461923906789,
-            123073731738798910399315746616159322986537,
-            1285006086045694331101230419689642287656351,
-            1457958714252579116182511162188107413808203,
-            3441260105879712888719733308936098190451103,
-            7691775436863063933058363873589084757992959,
-            10112521088342977457610735973190831953032671,
-            33570215353549430912150859311715285277357873,
-            248955087208005406827316453449007019587986331,
-            862874679297670150033859474455515735879735661,
-            874763065992522232828137963896263559035251853,
-            1125344693634070004782716960063213454978586951,
-            129033369231788028652461005184497469081985432669,
-            170922637993642852154931893507528571175449030131,
-            229546838843595702378553145427825824319886064531,
-            473803826426357666171023287778493409291094965317,
-            1655834968019287230188928509866952492778699120569,
-            123091525681663094294316222505799527463303955574457,
-            1631074106538638799503243355173549464731800650618237,
-            5068803653115158116887309305036100959552863142558453,
-            40942320763501154286910157120227707529009535082991703,
-            769074279201501480527391811545497830591910202048077989,
-            2179264001588103959996342051117113399511214181485017627,
-            123839609293869473900489513999970076221293791897264718959,
-    ]
-    factors = [
+def get_contribution_parameters():
+    # TODO get results from logs
+    return {
+        "q": "94447_297",
+        "mode": "submit",
+        "results": "TODO",
+        "software": "GMP-ECM 7.0.6, ecm-db 0.1",
+        "environment": "1080 Ti for PM1 stage1",
+        "name": "Seth Troisi",
+        "mail": "braintwo@gmail.com",
+    }
+
+
+def print_factor_info(f, n, row, logs):
+    assert n % f == 0
+    expr = row["Expression"]
+    label = row['#"Label"']
+    power = row["N"]
+    print(f"\t{f} divides {expr}")
+    print(f"\thttps://stdkmd.net/nrr/c.cgi?q={label}_{power}")
+    print(f"\thttps://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}")
+    factors = sorted(sympy.ntheory.factorint(f-1).items())
+    print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
+    minB2 = max(p for p, e in factors)
+    minB1 = max(p ** e for p, e in factors if p != minB2)
+    print("\tRequires: B1 >= {:9,} B2 >= {:9,} || B1 >= 1e{}, B2 >= 1e{}".format(
+        minB1, minB2, len(str(minB1)), len(str(minB2))))
+
+    # Small remaining composite number, suitable for GNFS
+    cf = n // f
+    if len(str(cf)) < 145 and not sympy.isprime(cf):
+        print(f"\t{len(str(cf))}-digit composite remaining")
+        print("\t\t", cf)
+    print("\n")
+
+
+def main(allcomp_fn, log_fns):
+    numbers, lookup = load_allcomp(allcomp_fn)
+
+    logs = get_logs(log_fns)
+    assert logs, "No logs found"
+    print(f"{len(log_fns)} log files contained {len(logs)} lines\n")
+
+    factors = parse_factors_from_logs(logs)
+
+    # TODO something better here
+    extra_factors = [
             1124454316097622336388524874701151785403,
             1758894179568848098592692044560871267130300898981,
             135007364014709592091635360212683657437974511161,
@@ -181,109 +163,46 @@ def get_factors():
             6503872670596251761784245131633913,
             850351135326050148821427820675652246449,
     ]
-
     '''
     Composite factor
 33696225345898595418519136300455807677197161879159983273906152538118480634518675311038180741771055825530494319368895712771779857659506133711
 Reservation key is 9366?
     '''
-    return factors
 
-
-def load_allcomp(fn):
-    numbers = []
-    lookup = {}
-    with open(fn) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            n = int(row["CompositeNumber"])
-            lookup[n] = row
-            numbers.append(n)
-
-    numbers.sort()
-    assert len(numbers) > 25000, len(numbers)
-    return numbers, lookup
-
-
-def get_contribution_parameters():
-    return {
-        "q": "94447_297",
-        "mode": "submit",
-        "results": "SUBMITTION",
-        "software": "GMP-ECM 7.0.6, ecm-db 0.1",
-        "environment": "1080 Ti for PM1 stage1",
-        "name": "Seth Troisi",
-        "mail": "braintwo@gmail.com",
-    }
-
-
-def factor_info(f, n, row):
-    assert n % f == 0
-    expr = row["Expression"]
-    label = row['#"Label"']
-    power = row["N"]
-    print(f"\t{f} {expr}")
-    print(f"\thttps://stdkmd.net/nrr/c.cgi?q={label}_{power}")
-    print(f"\thttps://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}")
-    factors = sorted(sympy.ntheory.factorint(f-1).items())
-    print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
-    minB2 = max(p for p, e in factors)
-    minB1 = max(p ** e for p, e in factors if p != minB2)
-    print("\tRequires: B1 >= {:9,} B2 >= {:9,} || B1 >= 1e{}, B2 >= 1e{}".format(
-        minB1, minB2, len(str(minB1)), len(str(minB2))))
-
-    cf = n // f
-    if len(str(cf)) < 145 and not sympy.isprime(cf):
-        print(f"\t{len(str(cf))}-digit composite remaining")
-        print("\t\t", cf)
-    print("\n")
-
-
-def main(allcomp_fn):
-    numbers, lookup = load_allcomp(allcomp_fn)
-
-    factors = get_factors()
-
-    if len(factors) != len(set(factors)):
-        assert False, ("DUPLICATES:", [f for f in factors if factors.count(f) > 1])
+    for f in extra_factors:
+        if f not in factors:
+            factors.append(f)
 
     print(f"\n\nFound {len(factors)} unique factors!\n\n")
 
-    if True and factors:
+    # Factor length distribution
+    if False and factors:
         #print(min(factors), "to", max(factors))
         sizes = [len(str(f)) for f in sorted(factors)]
         for digits in range(sizes[0], sizes[-1] + 1):
             count = sizes.count(digits)
             print(f'{digits:2d} | {count:3d} {"*" * count}')
+        print()
 
+    # Factor info
     if True:
-        found = []
         for f in factors:
             print (f"{len(str(f))} digits: {f}")
-            for n, row in lookup.items():
-                cf, mod = divmod(n, f)
-                if mod == 0:
-                    found.append(n)
-                    factor_info(f, n, row)
-                    break
-            else:
-                print("No factor???")
+            found = [n for n in lookup if n % f == 0]
+            assert len(found) == 1, f"{factor} divides {len(found)} numbers"
 
-    if False:
-        print("\n")
-        starts = "|".join([str(f)[:10] for f in found])
-        print(f"sed -E -i '/(^|\")({starts})/d'")
+            for n in found:
+                print_factor_info(f, n, lookup[n], logs)
 
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"{sys.argv[0]} takes one arg [allcomp path]")
+    # TODO also pass in log files and find stuff
+    if len(sys.argv) < 3:
+        print(f"{sys.argv[0]} takes two arg [allcomp path] [log files]+")
         exit(1)
 
     allcomp_fn = sys.argv[1]
+    log_fns = sys.argv[2:]
 
-    main(allcomp_fn)
-
-
-
+    main(allcomp_fn, log_fns)
