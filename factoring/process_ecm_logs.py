@@ -2,9 +2,15 @@
 """Helper tool for reporting found factors to Studio Kamada."""
 
 import csv
+import json
 import math
 import re
 import sys
+import time
+import urllib.parse
+import urllib.request
+
+from collections import defaultdict
 
 import sympy.ntheory
 
@@ -76,30 +82,84 @@ def get_logs(log_fns):
     log = []
     for fn in log_fns:
         with open(fn) as f:
-            log.extend(f.readlines())
+            log.extend((l.strip() for l in f.readlines()))
     return log
 
 
-def parse_factors_from_logs(logs):
-    unique = set()
-    factors = []
-    for line in logs:
-        match = re.search("Factor found in step .: ([0-9]+)$", line)
-        if match:
-            f = int(match.group(1))
-            assert 2 <= f <= 10 ** 65, f
-            if f not in unique:
-                unique.add(f)
-                factors.append(f)
+def parse_logs(logs):
+    """Parse logs into per-ECM output."""
+
+    factors = defaultdict(list)
+
+    # Regular Expression that indicate start of log
+    starts = (
+        re.compile('^Resuming.*residue'),
+        re.compile('^Input number is'),
+        re.compile('^GMP-ECM'),
+        re.compile('^v{10}'),
+    )
+    ends = (
+        re.compile('Step 2 took'),
+        re.compile('^\^{10}'),
+    )
+
+    groups = []
+    grouped = []
+    for i, line in enumerate(logs):
+        is_start = any(re.search(start, line) for start in starts)
+
+        # First line should be start line
+        assert len(grouped) > 0 or is_start, (grouped, line)
+
+        # If new start, one of the recent lines should be an end
+        if len(grouped) >= 5 and is_start or line.startswith('^^^^^^'):
+            # DEBUG Truncated inputs
+            if False:
+                if not grouped[0].startswith("vvvvv"):
+                    # Step 2 took, Factor found, Found Prime factor, cofactor
+                    if not any(re.search(end, prev) for end in ends for prev in grouped[-4:]):
+                        print("TRUNCATED INPUT")
+                        for g in grouped:
+                            out = g.replace("\t", "  ").strip()
+                            print(f"\t|{out:81}|")
+                        print("*" * 80)
+
+            groups.append(grouped)
+            grouped = []
+
+        grouped.append(line)
+
+    if grouped:
+        groups.append(grouped)
+
+    for group in groups:
+        for line in group:
+            match = re.search("Factor found in step .: ([0-9]+)$", line)
+            if match:
+                f = int(match.group(1))
+                assert 2 <= f <= 10 ** 65, f
+                factors[f].append(group)
+
+    print("\t", len(groups), "ecm runs", sum(len(g) for g in groups), "lines")
+
     return factors
 
 
-def get_contribution_parameters():
-    # TODO get results from logs
+def get_contribution_parameters(classification, logs):
+    """
+    Get URL params for submitting to https://stdkmd.net/nrr/c.cgi
+
+    Params:
+        classification: number label e.g. "94447_297"
+        logs: logs as a list
+    """
+
+    assert isinstance(logs, (list, tuple)), logs
+    results = "".join(l.strip() + "\n" for l in logs)
     return {
-        "q": "94447_297",
+        "q": classification,
         "mode": "submit",
-        "results": "TODO",
+        "results": results,
         "software": "GMP-ECM 7.0.6, ecm-db 0.1",
         "environment": "1080 Ti for PM1 stage1",
         "name": "Seth Troisi",
@@ -107,13 +167,15 @@ def get_contribution_parameters():
     }
 
 
-def print_factor_info(f, n, row, logs):
+def print_factor_info(f, n, row, log):
     assert n % f == 0
     expr = row["Expression"]
     label = row['#"Label"']
     power = row["N"]
+    classification = f"{label}_{power}"
+    contribute_url = f"\thttps://stdkmd.net/nrr/c.cgi?q={classification}"
     print(f"\t{f} divides {expr}")
-    print(f"\thttps://stdkmd.net/nrr/c.cgi?q={label}_{power}")
+    print(contribute_url)
     print(f"\thttps://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}")
     factors = sorted(sympy.ntheory.factorint(f-1).items())
     print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
@@ -127,7 +189,40 @@ def print_factor_info(f, n, row, logs):
     if len(str(cf)) < 145 and not sympy.isprime(cf):
         print(f"\t{len(str(cf))}-digit composite remaining")
         print("\t\t", cf)
-    print("\n")
+    print()
+
+    # Submit numbers
+    if False:
+        time.sleep(0.1)
+        page = urllib.request.urlopen(contribute_url)
+        assert page.code == 200, page.code
+        data = page.read().decode()
+        assert len(data) > 2000, len(data)
+
+        if str(f) in data or "This number has been factored." in data:
+            print("ALREADY KNOWN")
+            return
+        if "Please wait until the factor table" in data:
+            print("WAITING ON factor table UPDATE")
+            return
+
+        print("-"*80)
+        for line in log[0]:
+            print(line.strip())
+        print("-"*80)
+
+        if input("Submit [N]:").lower() in ("y", "yes"):
+            print("Submitting")
+            params = get_contribution_parameters(classification, log[0])
+            form_data = urllib.parse.urlencode(params).encode()
+
+            req = urllib.request.Request(contribute_url, data=form_data, method='POST')
+            with urllib.request.urlopen(req) as f:
+                data = f.read().decode()
+                received = "Contribution was received" in data
+                print("\tResponse:", f.code, "Contribution received:", received)
+                assert f.code == 200 and received, data
+    print()
 
 
 def main(allcomp_fn, log_fns):
@@ -137,7 +232,7 @@ def main(allcomp_fn, log_fns):
     assert logs, "No logs found"
     print(f"{len(log_fns)} log files contained {len(logs)} lines\n")
 
-    factors = parse_factors_from_logs(logs)
+    factors = parse_logs(logs)
 
     # TODO something better here
     extra_factors = [
@@ -168,31 +263,34 @@ def main(allcomp_fn, log_fns):
 33696225345898595418519136300455807677197161879159983273906152538118480634518675311038180741771055825530494319368895712771779857659506133711
 Reservation key is 9366?
     '''
+    extra_factors = []
 
     for f in extra_factors:
         if f not in factors:
-            factors.append(f)
+            factors[f].append([])
 
     print(f"\n\nFound {len(factors)} unique factors!\n\n")
 
     # Factor length distribution
     if False and factors:
-        #print(min(factors), "to", max(factors))
+        print(min(factors), "to", max(factors))
+        print()
         sizes = [len(str(f)) for f in sorted(factors)]
         for digits in range(sizes[0], sizes[-1] + 1):
             count = sizes.count(digits)
             print(f'{digits:2d} | {count:3d} {"*" * count}')
         print()
+        exit()
 
     # Factor info
     if True:
-        for f in factors:
-            print (f"{len(str(f))} digits: {f}")
+        for f, log in factors.items():
+            print (f"\n{len(str(f))} digits: {f}")
             found = [n for n in lookup if n % f == 0]
             assert len(found) == 1, f"{factor} divides {len(found)} numbers"
 
             for n in found:
-                print_factor_info(f, n, lookup[n], logs)
+                print_factor_info(f, n, lookup[n], log)
 
 
 
