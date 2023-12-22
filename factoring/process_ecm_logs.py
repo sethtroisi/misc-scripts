@@ -15,6 +15,9 @@ from collections import defaultdict
 import sympy.ntheory
 
 
+def number_with_digits(n):
+    return f"{n}<{len(str(n))}>"
+
 def split_numbers_to_batches(numbers):
         # Breakpoints related to kernel sizes
         BREAK_POINTS = [256 * k - 8 for k in (3, 4, 6)]
@@ -93,7 +96,7 @@ def parse_logs(logs):
 
     # Regular Expression that indicate start of log
     starts = (
-        re.compile('^Resuming.*residue'),
+        re.compile('^Resuming ... residue'),
         re.compile('^Input number is'),
         re.compile('^GMP-ECM'),
         re.compile('^v{10}'),
@@ -106,7 +109,7 @@ def parse_logs(logs):
     groups = []
     grouped = []
     for i, line in enumerate(logs):
-        is_start = any(re.search(start, line) for start in starts)
+        is_start = line.startswith(("R", "I", "G", "v")) and any(re.search(start, line) for start in starts)
 
         # First line should be start line
         assert len(grouped) > 0 or is_start, (grouped, line)
@@ -167,20 +170,20 @@ def get_contribution_parameters(classification, logs):
     }
 
 
-def print_factor_info(f, n, row, log):
+def handle_factor(f, n, row, log):
     assert n % f == 0
     expr = row["Expression"]
     label = row['#"Label"']
     power = row["N"]
     classification = f"{label}_{power}"
-    contribute_url = f"\thttps://stdkmd.net/nrr/c.cgi?q={classification}"
-    print(f"\t{f} divides {expr}")
-    print(contribute_url)
-    print(f"\thttps://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}")
+    contribute_url = f"https://stdkmd.net/nrr/c.cgi?q={classification}"
+    details_url = f"https://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}"
     factors = sorted(sympy.ntheory.factorint(f-1).items())
-    print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
     minB2 = max(p for p, e in factors)
     minB1 = max(p ** e for p, e in factors if p != minB2)
+    print(f"\t{f} divides {expr}")
+    print(f"\t{contribute_url:45} {details_url}")
+    print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
     print("\tRequires: B1 >= {:9,} B2 >= {:9,} || B1 >= 1e{}, B2 >= 1e{}".format(
         minB1, minB2, len(str(minB1)), len(str(minB2))))
 
@@ -236,37 +239,27 @@ def main(allcomp_fn, log_fns):
 
     # TODO something better here
     extra_factors = [
-            1124454316097622336388524874701151785403,
-            1758894179568848098592692044560871267130300898981,
-            135007364014709592091635360212683657437974511161,
-            77584963804370623318377261901492932182167057,
-
-            244873247732029431528427679518897269211061263,
-            121547489614908980531274700026144404942094229,
-            6074450236085204945666461485763132838606015443,
-
-            31734041227814641692974565848888870878622696731,
-            897438063383371813207119041644261263103457,
-            92699495662649251267496033462225436898037,
-            777681778665587298011461383504803404249,
-            820609099557622784987305420015539988393763,
-            42555595286255615516481485542800355199237,
-            30125829040214338235380675150762029118875538347077,
-            9607225096023100803198937141644381008255180711,
-            4233482583905114491215398986607349712163,
             25878125464895606953511092966790890207517,
-            6503872670596251761784245131633913,
-            850351135326050148821427820675652246449,
+            42555595286255615516481485542800355199237,
+            92699495662649251267496033462225436898037,
+            820609099557622784987305420015539988393763,
+            897438063383371813207119041644261263103457,
+            121547489614908980531274700026144404942094229,
+            244873247732029431528427679518897269211061263,
+            6074450236085204945666461485763132838606015443,
+            9607225096023100803198937141644381008255180711,
+            31734041227814641692974565848888870878622696731,
+            30125829040214338235380675150762029118875538347077,
     ]
     '''
     Composite factor
 33696225345898595418519136300455807677197161879159983273906152538118480634518675311038180741771055825530494319368895712771779857659506133711
 Reservation key is 9366?
     '''
-    extra_factors = []
 
     for f in extra_factors:
         if f not in factors:
+            print(f, "Not in any log file!")
             factors[f].append([])
 
     print(f"\n\nFound {len(factors)} unique factors!\n\n")
@@ -284,14 +277,22 @@ Reservation key is 9366?
 
     # Factor info
     if True:
-        for f, log in factors.items():
-            print (f"\n{len(str(f))} digits: {f}")
+        new = 0
+        for f, log in sorted(factors.items()):
             found = [n for n in lookup if n % f == 0]
-            assert len(found) == 1, f"{factor} divides {len(found)} numbers"
+            if not found:
+                # Number has already been submitted.
+                continue
 
+            log_lines = sum(len(l) for l in log)
+            print (f"\n{number_with_digits(f)} with {log_lines} log lines")
+            new += 1
+
+            assert len(found) == 1, f"{f} divides {len(found)} numbers"
             for n in found:
-                print_factor_info(f, n, lookup[n], log)
+                handle_factor(f, n, lookup[n], log)
 
+        print(new, "factors not yet in allcomp.txt")
 
 
 if __name__ == "__main__":
