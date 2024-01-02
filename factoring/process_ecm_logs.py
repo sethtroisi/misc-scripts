@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Helper tool for reporting found factors to Studio Kamada."""
 
+import argparse
 import csv
 import json
 import math
@@ -13,6 +14,21 @@ import urllib.request
 from collections import defaultdict
 
 import sympy.ntheory
+
+
+def get_argparser():
+    parser = argparse.ArgumentParser(
+            description='Process ECM logs for factors')
+
+    parser.add_argument('-a', '--allcomp', help='allcomp.txt filename')
+    parser.add_argument('-l', '--logs', help='list of log files', nargs='*')
+    parser.add_argument('-d', '--factor-distribution',
+            action='store_true',
+            help='print distribution of found factor length')
+    parser.add_argument('--submit',
+            action='store_true',
+            help='if factors should be submitted to https://stdkmd.net/')
+    return parser
 
 
 def number_with_digits(n):
@@ -86,6 +102,7 @@ def get_logs(log_fns):
     for fn in log_fns:
         with open(fn) as f:
             log.extend((l.strip() for l in f.readlines()))
+
     return log
 
 
@@ -170,7 +187,7 @@ def get_contribution_parameters(classification, logs):
     }
 
 
-def handle_factor(f, n, row, log):
+def handle_factor(f, n, submit, row, log):
     assert n % f == 0
     expr = row["Expression"]
     label = row['#"Label"']
@@ -195,7 +212,7 @@ def handle_factor(f, n, row, log):
     print()
 
     # Submit numbers
-    if False:
+    if submit:
         time.sleep(0.1)
         page = urllib.request.urlopen(contribute_url)
         assert page.code == 200, page.code
@@ -228,28 +245,18 @@ def handle_factor(f, n, row, log):
     print()
 
 
-def main(allcomp_fn, log_fns):
-    numbers, lookup = load_allcomp(allcomp_fn)
+def main(args):
+    numbers, lookup = load_allcomp(args.allcomp)
 
-    logs = get_logs(log_fns)
+    assert args.logs, "No log filenames specified"
+    logs = get_logs(args.logs)
     assert logs, "No logs found"
-    print(f"{len(log_fns)} log files contained {len(logs)} lines\n")
+    print(f"{len(args.logs)} log files contained {len(logs)} lines\n")
 
     factors = parse_logs(logs)
 
     # TODO something better here
     extra_factors = [
-            25878125464895606953511092966790890207517,
-            42555595286255615516481485542800355199237,
-            92699495662649251267496033462225436898037,
-            820609099557622784987305420015539988393763,
-            897438063383371813207119041644261263103457,
-            121547489614908980531274700026144404942094229,
-            244873247732029431528427679518897269211061263,
-            6074450236085204945666461485763132838606015443,
-            9607225096023100803198937141644381008255180711,
-            31734041227814641692974565848888870878622696731,
-            30125829040214338235380675150762029118875538347077,
     ]
     '''
     Composite factor
@@ -265,7 +272,8 @@ Reservation key is 9366?
     print(f"\n\nFound {len(factors)} unique factors!\n\n")
 
     # Factor length distribution
-    if False and factors:
+    if args.factor_distribution:
+        assert factors
         print(min(factors), "to", max(factors))
         print()
         sizes = [len(str(f)) for f in sorted(factors)]
@@ -282,6 +290,7 @@ Reservation key is 9366?
             found = [n for n in lookup if n % f == 0]
             if not found:
                 # Number has already been submitted.
+                print (f"\n{number_with_digits(f)} already submitted")
                 continue
 
             log_lines = sum(len(l) for l in log)
@@ -290,18 +299,13 @@ Reservation key is 9366?
 
             assert len(found) == 1, f"{f} divides {len(found)} numbers"
             for n in found:
-                handle_factor(f, n, lookup[n], log)
+                handle_factor(f, n, args.submit, lookup[n], log)
 
         print(new, "factors not yet in allcomp.txt")
 
 
 if __name__ == "__main__":
-    # TODO also pass in log files and find stuff
-    if len(sys.argv) < 3:
-        print(f"{sys.argv[0]} takes two arg [allcomp path] [log files]+")
-        exit(1)
+    parser = get_argparser()
+    args = parser.parse_args()
 
-    allcomp_fn = sys.argv[1]
-    log_fns = sys.argv[2:]
-
-    main(allcomp_fn, log_fns)
+    main(args)
