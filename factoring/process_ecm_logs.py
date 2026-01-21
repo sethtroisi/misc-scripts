@@ -3,8 +3,10 @@
 
 import argparse
 import csv
+import datetime
 import json
 import math
+import os
 import re
 import sys
 import time
@@ -25,6 +27,7 @@ def get_argparser():
     parser.add_argument('-d', '--factor-distribution',
             action='store_true',
             help='print distribution of found factor length')
+    parser.add_argument('--split', help="Split allcomp.txt to runs", action='store_true')
     parser.add_argument('--submit',
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
@@ -36,7 +39,7 @@ def number_with_digits(n):
 
 def split_numbers_to_batches(numbers):
         # Breakpoints related to kernel sizes
-        BREAK_POINTS = [256 * k - 8 for k in (3, 4, 6)]
+        BREAK_POINTS = list(reversed([128 * k - 8 for k in (6, 8, 10, 12, 14, 16, 20)]))
 
         GROUP_SIZE = 1792
 
@@ -46,7 +49,7 @@ def split_numbers_to_batches(numbers):
             assert 1 < number < 2 ** 2048
 
             bit_size = number.bit_length()
-            if bit_size >= BREAK_POINTS[0] or len(current) == GROUP_SIZE:
+            if bit_size >= BREAK_POINTS[-1] or len(current) == GROUP_SIZE:
                 if current:
                     print("new batch of {} {} to {} bits".format(
                         len(current),
@@ -55,9 +58,9 @@ def split_numbers_to_batches(numbers):
                     groups.append(current)
                     current = []
 
-                while bit_size >= BREAK_POINTS[0]:
+                while bit_size >= BREAK_POINTS[-1]:
                     print()
-                    BREAK_POINTS.pop(0)
+                    BREAK_POINTS.pop(-1)
 
             current.append(number)
 
@@ -70,16 +73,15 @@ def split_numbers_to_batches(numbers):
             current = []
 
 
+        date = datetime.datetime.now().strftime("%Y%m%d")
         for i, group in enumerate(groups):
             max_bits = group[-1].bit_length()
-            fn = f"pm1_stdkmd_batch_{i:2d}_{max_bits}.txt"
+            fn = f"pm1_stdkmd_{date}_batch_{i:02d}_{max_bits}.txt"
             print(f"Writing {len(group)} rows to {fn!r}")
-            if True:
-                print("dry run")
-            else:
-                with open(fn, "w") as f:
-                    for number in group:
-                        f.write(str(number) + "\n")
+            assert not os.path.exists(fn)
+            with open(fn, "w") as f:
+                for number in group:
+                    f.write(str(number) + "\n")
 
 
 def load_allcomp(fn):
@@ -120,7 +122,7 @@ def parse_logs(logs):
     )
     ends = (
         re.compile('Step 2 took'),
-        re.compile('^\^{10}'),
+        re.compile(r'^\^{10}'),
     )
 
     groups = []
@@ -247,6 +249,10 @@ def handle_factor(f, n, submit, row, log):
 
 def main(args):
     numbers, lookup = load_allcomp(args.allcomp)
+
+    if args.split:
+        split_numbers_to_batches(numbers)
+        return
 
     assert args.logs, "No log filenames specified"
     logs = get_logs(args.logs)
