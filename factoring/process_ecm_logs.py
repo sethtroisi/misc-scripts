@@ -13,21 +13,26 @@ import time
 import urllib.parse
 import urllib.request
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import sympy.ntheory
+
+import ecm_resume
 
 
 def get_argparser():
     parser = argparse.ArgumentParser(
             description='Process ECM logs for factors')
 
-    parser.add_argument('-a', '--allcomp', help='allcomp.txt filename')
+    parser.add_argument('-a', '--allcomp', help='allcomp.txt filename', required=True)
     parser.add_argument('-l', '--logs', help='list of log files', nargs='*')
     parser.add_argument('-d', '--factor-distribution',
             action='store_true',
             help='print distribution of found factor length')
     parser.add_argument('--split', help="Split allcomp.txt to runs", action='store_true')
+    parser.add_argument('--rebatch',
+            nargs="+",
+            help="Load all residuals split to batches")
     parser.add_argument('--submit',
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
@@ -36,6 +41,7 @@ def get_argparser():
 
 def number_with_digits(n):
     return f"{n}<{len(str(n))}>"
+
 
 def split_numbers_to_batches(numbers):
         # Breakpoints related to kernel sizes
@@ -82,6 +88,56 @@ def split_numbers_to_batches(numbers):
             with open(fn, "w") as f:
                 for number in group:
                     f.write(str(number) + "\n")
+
+
+def validate_residual(parsed):
+    keys = ("METHOD", "N", "B1", "X", "X0")
+    return all(key in parsed for key in keys)
+
+def rebatch_residuals(args):
+    """
+    Load all residuals
+        Drop all but largest B1
+    Figure out for each N in residual if it has new factors
+        N should appear in allcomp_2023.txt
+        Get factors from newest allcomp_<DATE>.txt
+    Split up residuals by batch size
+        When B1 doesn't match ask for CPU eval?
+    """
+
+    loaded = 0
+    residuals = {}
+
+    print(args.rebatch)
+
+    for fn in args.rebatch:
+        with open(fn) as f:
+            for i, line in enumerate(f):
+                if not line:
+                    continue
+
+                loaded += 1
+                parsed = ecm_resume.parse_resume(line)
+                if not validate_residual(parsed):
+                    print(f"Bad residual line {i} in {f}: {line[:40]}...")
+                    exit(1)
+
+                n = parsed['N']
+                current = residuals.get(n)
+                update = current is None
+                if current:
+                    update = parsed['B1'] > current[0]['B1']
+
+                if update:
+                    residuals[n] = (parsed, line)
+
+    print(f"Loaded {loaded} residuals, {len(residuals)} unique")
+    for B1, count in sorted(Counter(p['B1'] for p,l in residuals.values()).items()):
+        print(f"\t{B1=:,} x {count}")
+
+    for p, l in residuals.values():
+        if p['B1'] == 1000000:
+            print(p)
 
 
 def load_allcomp(fn):
@@ -252,6 +308,10 @@ def main(args):
 
     if args.split:
         split_numbers_to_batches(numbers)
+        return
+
+    if args.rebatch:
+        rebatch_residuals(args)
         return
 
     assert args.logs, "No log filenames specified"
