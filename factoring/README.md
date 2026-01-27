@@ -8,6 +8,8 @@ List of all composites: https://stdkmd.net/nrr/allcomp.txt
 
 In 2023 using a 1080ti I ran P-1 up to B1=1e10 and B2=1.34e16
 
+In 2026 I'm resuming the P-1 from 2023 up to 1e11
+
 ## Misc commands
 
 ```shell
@@ -17,4 +19,6 @@ for fn in pm1_stdkmd_batch_{16..17}*; do printf "$fn\n"; ~/Projects/gmp-ecm/ecm_
 ecm -resume resume.pm1_stdkmd_batch_14_866.pm1.1e9.txt 1e9 1e12
 scp "four:~/Projects/ecm-db/client/log.batch_14.1e16.log" .
 python ecm_runner.py -b ../../gmp-ecm/ecm --resume ~/Downloads/pm1/small_run/resume.pm1_stdkmd_batch_17_1015.pm1.1e10.txt --B1 10000000000 -B2 1e16 -t 5 --log_name log.batch_17.txt -- -maxmem 8400
+
+python process_ecm_logs.py --rebatch backups/pm1/small_run_v0/resume.pm1_stdkmd_batch*.txt 20260126/manual_cpu.1e9.txt --allcomp allcomp_20260126.txt
 ```

@@ -20,7 +20,7 @@ import sympy.ntheory
 import ecm_resume
 
 
-def get_argparser():
+def _get_argparser():
     parser = argparse.ArgumentParser(
             description='Process ECM logs for factors')
 
@@ -43,72 +43,103 @@ def number_with_digits(n):
     return f"{n}<{len(str(n))}>"
 
 
-def split_numbers_to_batches(numbers):
-        # Breakpoints related to kernel sizes
-        BREAK_POINTS = list(reversed([128 * k - 8 for k in (6, 8, 10, 12, 14, 16, 20)]))
+def split_to_batches(numbers):
+    # Breakpoints related to kernel sizes
+    BREAK_POINTS = list(reversed([128 * k - 8 for k in (6, 8, 10, 12, 14, 16, 20)]))
 
-        GROUP_SIZE = 1792
+    GROUP_SIZE = 1792
 
-        groups = []
+    groups = []
+    current = []
+    for number in sorted(numbers):
+        assert 1 < number < 2 ** 2048
+
+        bit_size = number.bit_length()
+        if bit_size >= BREAK_POINTS[-1] or len(current) == GROUP_SIZE:
+            if current:
+                print("new batch of {} {} to {} bits".format(
+                    len(current),
+                    current[0].bit_length(),
+                    current[-1].bit_length()))
+                groups.append(current)
+                current = []
+
+            while bit_size >= BREAK_POINTS[-1]:
+                print()
+                BREAK_POINTS.pop(-1)
+
+        current.append(number)
+
+    if current:
+        print("new batch of {} {} to {} bits".format(
+            len(current),
+            current[0].bit_length(),
+            current[-1].bit_length()))
+        groups.append(current)
         current = []
-        for number in numbers:
-            assert 1 < number < 2 ** 2048
 
-            bit_size = number.bit_length()
-            if bit_size >= BREAK_POINTS[-1] or len(current) == GROUP_SIZE:
-                if current:
-                    print("new batch of {} {} to {} bits".format(
-                        len(current),
-                        current[0].bit_length(),
-                        current[-1].bit_length()))
-                    groups.append(current)
-                    current = []
-
-                while bit_size >= BREAK_POINTS[-1]:
-                    print()
-                    BREAK_POINTS.pop(-1)
-
-            current.append(number)
-
-        if current:
-            print("new batch of {} {} to {} bits".format(
-                len(current),
-                current[0].bit_length(),
-                current[-1].bit_length()))
-            groups.append(current)
-            current = []
+    return groups
 
 
-        date = datetime.datetime.now().strftime("%Y%m%d")
-        for i, group in enumerate(groups):
-            max_bits = group[-1].bit_length()
-            fn = f"pm1_stdkmd_{date}_batch_{i:02d}_{max_bits}.txt"
-            print(f"Writing {len(group)} rows to {fn!r}")
-            assert not os.path.exists(fn)
-            with open(fn, "w") as f:
-                for number in group:
-                    f.write(str(number) + "\n")
+def _split_numbers_and_output_batches(numbers):
+    groups = split_to_batches(numbers)
+
+    date = datetime.datetime.now().strftime("%Y%m%d")
+    for i, group in enumerate(groups):
+        max_bits = group[-1].bit_length()
+        fn = f"pm1_stdkmd_{date}_batch_{i:02d}_{max_bits}.txt"
+        print(f"Writing {len(group)} rows to {fn!r}")
+        assert not os.path.exists(fn)
+        with open(fn, "w") as f:
+            for number in group:
+                f.write(str(number) + "\n")
 
 
-def validate_residual(parsed):
+def _validate_residual(parsed):
     keys = ("METHOD", "N", "B1", "X", "X0")
     return all(key in parsed for key in keys)
 
-def rebatch_residuals(args):
+
+def update_resume(parsed, line, factor):
+
+    def assert_replaced(s, old, new):
+        assert old in s
+        temp = s.replace(old, new)
+        assert new in temp
+        return temp
+
+    """Update resume line with a found factor."""
+    old_n = parsed["N"]
+    n, mod = divmod(old_n, factor)
+    assert mod == 0, (old_n, factor)
+
+    # Replace N with n
+    line = assert_replaced(
+            line, f"N={old_n};", f"N={n};")
+
+    # Replace X, X0 with mod (N//factor)
+    assert parsed["X0"] < n
+    old_x = parsed["X"]
+    line = assert_replaced(
+            line, f"X={old_x:#x};", f"X={old_x % n:#x};")
+
+    return line
+
+
+def _rebatch_residuals(args, lookup):
     """
-    Load all residuals
+    1. Load all residuals
         Drop all but largest B1
-    Figure out for each N in residual if it has new factors
+    2. Figure out for each N in residual if it has new factors
         N should appear in allcomp_2023.txt
         Get factors from newest allcomp_<DATE>.txt
-    Split up residuals by batch size
+    3. Split up residuals by batch size
         When B1 doesn't match ask for CPU eval?
     """
 
+    # 1. Load all residuals
     loaded = 0
     residuals = {}
-
-    print(args.rebatch)
 
     for fn in args.rebatch:
         with open(fn) as f:
@@ -118,7 +149,7 @@ def rebatch_residuals(args):
 
                 loaded += 1
                 parsed = ecm_resume.parse_resume(line)
-                if not validate_residual(parsed):
+                if not _validate_residual(parsed):
                     print(f"Bad residual line {i} in {f}: {line[:40]}...")
                     exit(1)
 
@@ -135,9 +166,148 @@ def rebatch_residuals(args):
     for B1, count in sorted(Counter(p['B1'] for p,l in residuals.values()).items()):
         print(f"\t{B1=:,} x {count}")
 
-    for p, l in residuals.values():
-        if p['B1'] == 1000000:
-            print(p)
+    # 2. Load old and newer allcomp.txt
+    OG_ALLCOMP = "allcomp_2023.txt"
+    assert args.allcomp != OG_ALLCOMP
+    _, og_lookup = load_allcomp(OG_ALLCOMP)
+    print()
+    print(f"Allcomp was {len(og_lookup)} is now {len(lookup)}")
+
+    LABEL_KEY = '#"Label"'
+
+    # reindex lookup and og_lookup by "Label"+"N"
+    def new_label(row):
+        return row[LABEL_KEY].replace('"', '') + "_" + row["N"]
+
+    lookup_label = {new_label(row): row for row in lookup.values()}
+    og_lookup_label = {new_label(row): row for row in og_lookup.values()}
+
+    to_run = []
+
+    # Present in lookup
+    same = 0
+
+    # present in og_lookup, label not present in lookup
+    factored_completely = 0
+    # Present in og_lookup, label present in lookup (as smaller n)
+    factored_partial = 0
+    # Not Present in either, will have to do a search or something
+    missing = 0
+
+    add_residuals = {}
+
+    # Update residuals, possibly removing a factor or dismissing if factored.
+    for n, (parsed, line) in residuals.items():
+        if n in lookup:
+            same += 1
+            to_run.append(n)
+            continue
+
+        if n in og_lookup:
+            # Lookup label and check if factored partially or completely
+            label = new_label(og_lookup[n])
+            if label not in lookup_label:
+                factored_completely += 1
+                continue
+            else:
+                factored_partial += 1
+                n_new = int(lookup_label[label]["CompositeNumber"])
+                f, mod = divmod(n, n_new)
+                assert mod == 0, (label, n)
+
+                # Update resume line removing factor of f.
+                new_line = update_resume(parsed, line, f)
+                new_parsed = ecm_resume.parse_resume(new_line)
+                assert new_parsed["N"] == n_new
+                assert 1 < new_parsed["X"] < n_new
+
+                assert n_new in lookup
+                if n_new in residuals:
+                    # Residuals for both the old and new number have to merge
+                    if residuals[n_new][0]['B1'] < parsed['B1']:
+                        # More P-1 complete for old number, Merge
+                        residuals[n_new] = (new_parsed, new_line)
+                else:
+                    # Technically we might need to merge again but very few numbers.
+                    add_residuals[n_new] = (new_parsed, new_line)
+                    to_run.append(n_new)
+
+
+    # Add any residuals which had a factored removed
+    for k, v in add_residuals.items():
+        residuals[k] = v
+    del add_residuals
+
+    if True:
+        # select all the same B1 so that all B1 in resume match.
+        SELECT_B1 = 4 * 10 ** 9
+        to_run = [n for n in to_run if residuals[n][0]["B1"] == SELECT_B1]
+
+        print(f"B1 of needed residuals")
+        for B1, count in sorted(Counter(residuals[n][0]["B1"] for n in to_run).items()):
+            print(f"\t{B1=:,} x {count}")
+
+    print("{} the same, {} with a new factor, {} completely factored".format(
+        same, factored_partial, factored_completely))
+    print(f"{len(to_run)} numbers with residuals")
+
+    if False:
+        # Present in lookup, no existing residual
+        new_allcomp_n = set(lookup.keys())
+        for n in to_run:
+            assert n in new_allcomp_n
+            new_allcomp_n.remove(n)
+
+        if len(new_allcomp_n) > 0:
+            print(f"{len(new_allcomp_n)} numbers from {args.allcomp} don't yet have residuals")
+
+            # These sequences got extended with new terms I would have tried
+            EXTENSIONS = ("37771", "51115", "83336", "53335", "53333", "49992", "54444", "39991", "88878")
+            new_allcomp_n = [n for n in new_allcomp_n if lookup[n][LABEL_KEY] not in EXTENSIONS]
+            print(f"\tMissing {len(new_allcomp_n)} numbers after filtering known extensions")
+            new_allcomp_n = [n for n in new_allcomp_n if n.bit_length() < 1020]
+            print(f"\tMissing {len(new_allcomp_n)} numbers after filtering < 1020 bits")
+
+            # Seems like these numbers are extensions / large numbers with new factors.
+            # TODO can manual ecm them and add to the queue
+
+            if False:
+                # By Digit Length
+                digit_counter = Counter(len(str(n)) for n in new_allcomp_n)
+                for digits, count in sorted(digit_counter.items()):
+                    min_bits = int(math.log2(10) * digits) + 1
+                    print(f"\tMissing {count} x {digits} numbers (bits: {min_bits})")
+            if False:
+                # By Label
+                label_counter = Counter(lookup[n][LABEL_KEY] for n in new_allcomp_n)
+                for label, count in label_counter.most_common():
+                    print(f"\tMissing {count} from {label}")
+
+            if False:
+                for i, n in enumerate(sorted(new_allcomp_n)):
+                    print(i, lookup[n])
+                    if i > 10:
+                        break
+
+
+    # 3. Split to_run by batch
+    groups = split_to_batches(to_run)
+
+    date = datetime.datetime.now().strftime("%Y%m%d")
+    folder = f"resumes_{date}"
+    assert not os.path.exists(folder)
+    os.mkdir(folder)
+
+    for i, group in enumerate(groups):
+        max_bits = group[-1].bit_length()
+        path = os.path.join(folder, f"pm1_stdkmd_batch_{i:02d}_{max_bits}.resume.txt")
+        print(f"Writing {len(group)} rows to {path!r}")
+        assert not os.path.exists(path)
+        with open(path, "w") as f:
+            for number in group:
+                f.write(residuals[number][1].strip())
+                f.write("\n")
+
 
 
 def load_allcomp(fn):
@@ -223,7 +393,7 @@ def parse_logs(logs):
     return factors
 
 
-def get_contribution_parameters(classification, logs):
+def _get_contribution_parameters(classification, logs):
     """
     Get URL params for submitting to https://stdkmd.net/nrr/c.cgi
 
@@ -245,7 +415,7 @@ def get_contribution_parameters(classification, logs):
     }
 
 
-def handle_factor(f, n, submit, row, log):
+def _handle_factor(f, n, submit, row, log):
     assert n % f == 0
     expr = row["Expression"]
     label = row['#"Label"']
@@ -291,7 +461,7 @@ def handle_factor(f, n, submit, row, log):
 
         if input("Submit [N]:").lower() in ("y", "yes"):
             print("Submitting")
-            params = get_contribution_parameters(classification, log[0])
+            params = _get_contribution_parameters(classification, log[0])
             form_data = urllib.parse.urlencode(params).encode()
 
             req = urllib.request.Request(contribute_url, data=form_data, method='POST')
@@ -307,11 +477,11 @@ def main(args):
     numbers, lookup = load_allcomp(args.allcomp)
 
     if args.split:
-        split_numbers_to_batches(numbers)
+        _split_numbers_and_output_batches(numbers)
         return
 
     if args.rebatch:
-        rebatch_residuals(args)
+        _rebatch_residuals(args, lookup)
         return
 
     assert args.logs, "No log filenames specified"
@@ -324,11 +494,6 @@ def main(args):
     # TODO something better here
     extra_factors = [
     ]
-    '''
-    Composite factor
-33696225345898595418519136300455807677197161879159983273906152538118480634518675311038180741771055825530494319368895712771779857659506133711
-Reservation key is 9366?
-    '''
 
     for f in extra_factors:
         if f not in factors:
@@ -365,13 +530,13 @@ Reservation key is 9366?
 
             assert len(found) == 1, f"{f} divides {len(found)} numbers"
             for n in found:
-                handle_factor(f, n, args.submit, lookup[n], log)
+                _handle_factor(f, n, args.submit, lookup[n], log)
 
         print(new, "factors not yet in allcomp.txt")
 
 
 if __name__ == "__main__":
-    parser = get_argparser()
+    parser = _get_argparser()
     args = parser.parse_args()
 
     main(args)
