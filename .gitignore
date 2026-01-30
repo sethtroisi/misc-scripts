@@ -5,3 +5,6 @@ mersenne/many_factors/many_factor_progress.txt
 mersenne/many_factors/worktodo.txt*
 
 __pycache__/
+
+# No use cases yet.
+*.txt
