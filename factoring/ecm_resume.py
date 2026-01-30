@@ -4,8 +4,8 @@ def number_with_digits(n):
 
 def parse_resume(line):
     """Parse an ECM resume line."""
-    IGNORE = ["PROGRAM", "WHO", "TIME", "CHECKSUM"]
-    INT = ["N", "B1", "X", "Y", "X0", "Y0"]
+    IGNORE = ["PROGRAM", "WHO", "TIME"]
+    INT = ["N", "B1", "X", "Y", "X0", "Y0", "CHECKSUM"]
 
     parsed = {}
     for part in line.split(";"):

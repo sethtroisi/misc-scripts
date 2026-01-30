@@ -96,7 +96,7 @@ def _split_numbers_and_output_batches(numbers):
 
 
 def _validate_residual(parsed):
-    keys = ("METHOD", "N", "B1", "X", "X0")
+    keys = ("METHOD", "N", "B1", "X", "X0", "CHECKSUM")
     return all(key in parsed for key in keys)
 
 
@@ -122,6 +122,10 @@ def update_resume(parsed, line, factor):
     old_x = parsed["X"]
     line = assert_replaced(
             line, f"X={old_x:#x};", f"X={old_x % n:#x};")
+
+    # Remove checksum so ecm will resume these lines.
+    checksum = parsed["CHECKSUM"]
+    line = assert_replaced(line, f"CHECKSUM={checksum};", f"")
 
     return line
 
@@ -240,7 +244,7 @@ def _rebatch_residuals(args, lookup):
 
     if True:
         # select all the same B1 so that all B1 in resume match.
-        SELECT_B1 = 4 * 10 ** 9
+        SELECT_B1 = 10 ** 9
         to_run = [n for n in to_run if residuals[n][0]["B1"] == SELECT_B1]
 
         print(f"B1 of needed residuals")
