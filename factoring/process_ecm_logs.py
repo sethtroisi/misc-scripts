@@ -45,9 +45,9 @@ def number_with_digits(n):
 
 def split_to_batches(numbers):
     # Breakpoints related to kernel sizes
-    BREAK_POINTS = list(reversed([128 * k - 8 for k in (6, 8, 10, 12, 14, 16, 20)]))
+    BREAK_POINTS = list(reversed([128 * k - 8 for k in (10, 12, 14, 16, 20)]))
 
-    GROUP_SIZE = 1792
+    BATCH_SIZE = 8192
 
     groups = []
     current = []
@@ -55,7 +55,7 @@ def split_to_batches(numbers):
         assert 1 < number < 2 ** 2048
 
         bit_size = number.bit_length()
-        if bit_size >= BREAK_POINTS[-1] or len(current) == GROUP_SIZE:
+        if bit_size >= BREAK_POINTS[-1] or len(current) == BATCH_SIZE:
             if current:
                 print("new batch of {} {} to {} bits".format(
                     len(current),
@@ -148,16 +148,25 @@ def _rebatch_residuals(args, lookup):
     for fn in args.rebatch:
         with open(fn) as f:
             for i, line in enumerate(f):
+                line = line.strip()
                 if not line:
                     continue
 
                 loaded += 1
                 parsed = ecm_resume.parse_resume(line)
                 if not _validate_residual(parsed):
-                    print(f"Bad residual line {i} in {f}: {line[:40]}...")
+                    print(f"Bad residual line {i} in {fn}: {line[:40]}...")
                     exit(1)
 
                 n = parsed['N']
+
+                # This likely happens when a stage 1 factor was found.
+                # Maybe the number still needs to be factored.
+                if parsed['X'] == 0:
+                    # Not sure why this happened but need to drop
+                    print(f"\tDropping line {i} in {fn}: X=0 N={str(n)[:10]}...")
+                    continue
+
                 current = residuals.get(n)
                 update = current is None
                 if current:
@@ -309,7 +318,7 @@ def _rebatch_residuals(args, lookup):
         assert not os.path.exists(path)
         with open(path, "w") as f:
             for number in group:
-                f.write(residuals[number][1].strip())
+                f.write(residuals[number][1])
                 f.write("\n")
 
 
