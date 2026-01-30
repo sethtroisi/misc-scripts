@@ -1,7 +1,3 @@
-def number_with_digits(n):
-    return f"{n}<{len(str(n))}>"
-
-
 def parse_resume(line):
     """Parse an ECM resume line."""
     IGNORE = ["PROGRAM", "WHO", "TIME"]
