@@ -33,7 +33,7 @@ def _get_argparser():
     parser.add_argument('--rebatch',
             nargs="+",
             help="Load all residuals split to batches")
-    parser.add_argument('--submit',
+    parser.add_argument('--submit', default=False,
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
     return parser
@@ -421,8 +421,8 @@ def _get_contribution_parameters(classification, logs):
         "q": classification,
         "mode": "submit",
         "results": results,
-        "software": "GMP-ECM 7.0.6, ecm-db 0.1",
-        "environment": "1080 Ti for PM1 stage1",
+        "software": "GMP-ECM 7.0.7, ecm-db 0.12",
+        "environment": "GPU PM1 stage1",
         "name": "Seth Troisi",
         "mail": "braintwo@gmail.com",
     }
@@ -511,7 +511,7 @@ def main(args):
     for f in extra_factors:
         if f not in factors:
             print(f, "Not in any log file!")
-            factors[f].append([])
+            factors[f] = [[]]
 
     print(f"\n\nFound {len(factors)} unique factors!\n\n")
 
