@@ -21,3 +21,5 @@ for B1 in $(seq 2 $LIM); do
     LAST_FN="$NEW_FN"
     sleep 5;
 done
+
+# runpodctl stop pod $RUNPOD_POD_ID

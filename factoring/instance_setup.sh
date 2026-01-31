@@ -19,4 +19,6 @@ autoreconf -i
 make -j
 
 # scp files
-scp -P<P> resumes_20260127/* "root@<MACHINE>:~/resumes_20260127/"
+#scp -P<P> resumes_20260130/* "root@<MACHINE>:~/resumes_20260130/"
+
+./run_batches.sh resumes_20260130/ pm1_stdkmd_batch_01_799.resume.txt 4

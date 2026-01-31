@@ -15,13 +15,20 @@
 #    'Wrong result for <fn>:<line>: LINE'
 
 import argparse
+import os
 import random
 import re
 import subprocess
+import sys
+import time
+
 
 parser = argparse.ArgumentParser(description='ecm resume files testing and spot verification')
 
 parser.add_argument('resume_files', type=str, nargs="+")
+
+parser.add_argument('-n', '--count', type=int, default=3,
+    help='Number of results to verify')
 
 parser.add_argument('--ecm_cmd', type=str, default="ecm",
     help='which ecm (e.g. ecm, ./ecm) to run')
@@ -86,6 +93,22 @@ def entries_match(e_a, e_b):
     return True, None
 
 
+def read_and_parse_resume_file(fn):
+    with open(fn) as f:
+        for i, line in enumerate(f):
+            line = line.strip()
+            if not line:
+                continue
+
+            p = parse_resume(line)
+            keys = ("METHOD", "N", "B1", "CHECKSUM")
+            if any(key not in p for key in keys):
+                print("BAD Resume line {i} in {fn}: {abbr(line)}")
+                continue
+
+            yield p, line
+
+
 def diff_resume_files(args, fn_a, fn_b):
     """Compare the results in two files."""
 
@@ -94,24 +117,13 @@ def diff_resume_files(args, fn_a, fn_b):
 
     def read_and_parse(fn):
         lines = {}
-        with open(fn) as f:
-            for i, line in enumerate(f):
-                line = line.strip()
-                if not line:
-                    continue
+        for p, line in read_and_parse_resume_file(fn):
+            key = p["METHOD"] + "_" + str(p["N"])
+            if key in lines:
+                print("Ignoring duplicate entry for", key)
+                continue
 
-                p = parse_resume(line)
-                keys = ("METHOD", "N", "B1", "CHECKSUM")
-                if any(key not in p for key in keys):
-                    print("BAD Resume line {i} in {fn}: {abbr(line)}")
-                    continue
-
-                key = p["METHOD"] + "_" + str(p["N"])
-                if key in lines:
-                    print("Ignoring duplicate entry for", key)
-                    continue
-
-                lines[key] = (p, line)
+            lines[key] = (p, line)
         return lines
 
     if args.verbose:
@@ -148,7 +160,7 @@ def diff_resume_files(args, fn_a, fn_b):
                 continue
 
     if args.verbose:
-        print(f"{matching} of lines matched. Files had {len(a)} and {len(b)} lines")
+        print(f"{matching} lines matched. Files had {len(a)} and {len(b)} lines")
 
     if mismatches:
         print(f"ERROR: files had {mismatches} mismatches")
@@ -156,11 +168,53 @@ def diff_resume_files(args, fn_a, fn_b):
     return mismatches
 
 
-def spot_check(fn):
-    """TODO"""
-    pass
+def spot_check(args):
+    """Read a resume file, select a set of lines to try and verify, run ecm, verify."""
 
+    fn = args.resume_files[0]
+    assert os.path.isfile(fn), fn
+    lines = list(read_and_parse_resume_file(fn))
+    if args.verbose:
+        print(f"Found {len(lines)} lines in {fn!r}")
 
+    N = min(args.count, len(lines))
+    assert N > 0
+
+    # First, (N-2) random, Last
+    samples = [lines[0]]
+    if N > 2:
+        indexes = sorted(random.sample(range(1, len(lines)-1), N-2))
+        for line_i in indexes:
+            samples.append(lines[line_i])
+    if N > 1:
+        samples.append(lines[-1])
+
+    assert len(samples) == N, (len(samples), N)
+
+    ecm = args.ecm_cmd
+    ts = int(time.time())
+    save_fn = f"verify_{ts}_{os.path.basename(fn)}"
+    if not save_fn.endswith(".txt"):
+        save_fn += ".txt"
+
+    commands = []
+    for parsed, line in samples:
+        print(parsed)
+        method = {"P-1": "-pm1", "P+1": "pp1", "ECM": ""}[parsed['METHOD']]
+        B1 = parsed["B1"]
+        X0 = parsed["X0"]
+        N = parsed["N"]
+        cmd = f'echo "{N}" | {ecm} {method} -savea "{save_fn}" -x0 {X0} {B1} 0'
+        commands.append(cmd)
+
+    print("AUTOMATE THIS IN THE FUTURE")
+    print("Run these:")
+    print()
+    for cmd in commands:
+        print("\t", cmd, "&")
+    print()
+    print("Afterwards run:")
+    print("\t", f'python {sys.argv[0]} {fn!r} {save_fn!r}')
 
 
 if __name__ == '__main__':
@@ -170,5 +224,11 @@ if __name__ == '__main__':
     if seed is None:
         args.seed = random.randrange(2 ^ 32)
 
-    if len(args.resume_files) == 2:
-        diff_resume_files(args, *args.resume_files)
+    if len(args.resume_files) == 1:
+        spot_check(args)
+    elif len(args.resume_files) == 2:
+        mismatches = diff_resume_files(args, *args.resume_files)
+        exit(0 if mismatches == 0 else 1)
+    else:
+        print("Not sure what to do with", len(args.resume_files), "files")
+        exit(1)
