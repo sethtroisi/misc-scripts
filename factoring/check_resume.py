@@ -15,6 +15,7 @@
 #    'Wrong result for <fn>:<line>: LINE'
 
 import argparse
+import multiprocessing
 import os
 import random
 import re
@@ -35,6 +36,9 @@ parser.add_argument('--ecm_cmd', type=str, default="ecm",
 
 parser.add_argument('--seed', type=int, default=1,
     help='Random seed')
+
+parser.add_argument('--threads', type=int, default=4,
+    help="Number of simultanious process to run for spot checking")
 
 parser.add_argument('--verbose', '-v', action='count', default=1,
     help='Print more output (pass -v -v for even more)')
@@ -168,6 +172,13 @@ def diff_resume_files(args, fn_a, fn_b):
     return mismatches
 
 
+def _run_cmd(command):
+    print("\t", command, "&")
+    subprocess.check_call(
+            command,
+            stderr=subprocess.STDOUT,
+            shell=True)
+
 def spot_check(args):
     """Read a resume file, select a set of lines to try and verify, run ecm, verify."""
 
@@ -199,7 +210,6 @@ def spot_check(args):
 
     commands = []
     for parsed, line in samples:
-        print(parsed)
         method = {"P-1": "-pm1", "P+1": "pp1", "ECM": ""}[parsed['METHOD']]
         B1 = parsed["B1"]
         X0 = parsed["X0"]
@@ -207,14 +217,17 @@ def spot_check(args):
         cmd = f'echo "{N}" | {ecm} {method} -savea "{save_fn}" -x0 {X0} {B1} 0'
         commands.append(cmd)
 
-    print("AUTOMATE THIS IN THE FUTURE")
-    print("Run these:")
-    print()
-    for cmd in commands:
-        print("\t", cmd, "&")
-    print()
-    print("Afterwards run:")
-    print("\t", f'python {sys.argv[0]} {fn!r} {save_fn!r}')
+    with multiprocessing.Pool(processes=args.threads) as pool:
+            results = pool.map(_run_cmd, commands)
+
+    if args.verbose:
+        print()
+        print("Testing output (can be rerun with):")
+        print("\t", f'python {sys.argv[0]} {fn!r} {save_fn!r}')
+        print()
+
+    diff_resume_files(args, fn, save_fn)
+
 
 
 if __name__ == '__main__':
