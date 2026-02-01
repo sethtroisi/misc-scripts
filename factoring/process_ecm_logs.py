@@ -36,6 +36,9 @@ def _get_argparser():
     parser.add_argument('--submit', default=False,
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
+    parser.add_argument('-i', '--ignore', default=[], type=int, nargs='*',
+            help='Factors to ignore')
+
     return parser
 
 
@@ -175,16 +178,19 @@ def _rebatch_residuals(args, lookup):
                 if update:
                     residuals[n] = (parsed, line)
 
+    print()
     print(f"Loaded {loaded} residuals, {len(residuals)} unique")
-    for B1, count in sorted(Counter(p['B1'] for p,l in residuals.values()).items()):
-        print(f"\t{B1=:,} x {count}")
 
     # 2. Load old and newer allcomp.txt
     OG_ALLCOMP = "allcomp_2023.txt"
     assert args.allcomp != OG_ALLCOMP
     _, og_lookup = load_allcomp(OG_ALLCOMP)
-    print()
     print(f"Allcomp was {len(og_lookup)} is now {len(lookup)}")
+    print()
+
+    if False:
+        for B1, count in sorted(Counter(p['B1'] for p,l in residuals.values()).items()):
+            print(f"\t{B1=:,} x {count}")
 
     LABEL_KEY = '#"Label"'
 
@@ -252,16 +258,26 @@ def _rebatch_residuals(args, lookup):
     del add_residuals
 
     if True:
+        print("Wanted residuals by B1 level")
+        B1_to_run = Counter(residuals[n][0]["B1"] for n in to_run)
+        for B1, count in sorted(B1_to_run.items()):
+            print(f"\t{B1=:,} x {count}")
+
         # select all the same B1 so that all B1 in resume match.
-        SELECT_B1 = 10 ** 9
+        SELECT_B1 = 4 * 10 ** 9
+        print(f"Selecting only residuals with B1={SELECT_B1:,}")
         to_run = [n for n in to_run if residuals[n][0]["B1"] == SELECT_B1]
 
         print(f"B1 of needed residuals")
         for B1, count in sorted(Counter(residuals[n][0]["B1"] for n in to_run).items()):
             print(f"\t{B1=:,} x {count}")
 
-    print("{} the same, {} with a new factor, {} completely factored".format(
+    print()
+    print(f"Comparing with {OG_ALLCOMP!r}")
+    print("\t{} the same, {} with a new factor, {} completely factored".format(
         same, factored_partial, factored_completely))
+
+    print()
     print(f"{len(to_run)} numbers with residuals")
 
     if False:
@@ -308,18 +324,22 @@ def _rebatch_residuals(args, lookup):
 
     date = datetime.datetime.now().strftime("%Y%m%d")
     folder = f"resumes_{date}"
-    assert not os.path.exists(folder)
-    os.mkdir(folder)
+    if args.submit:
+        assert not os.path.exists(folder)
+        os.mkdir(folder)
 
     for i, group in enumerate(groups):
         max_bits = group[-1].bit_length()
         path = os.path.join(folder, f"pm1_stdkmd_batch_{i:02d}_{max_bits}.resume.txt")
-        print(f"Writing {len(group)} rows to {path!r}")
-        assert not os.path.exists(path)
-        with open(path, "w") as f:
-            for number in group:
-                f.write(residuals[number][1])
-                f.write("\n")
+        if not args.submit:
+            print(f"Would write {len(group)} rows to {path!r} (with --submit)")
+        else:
+            print(f"Writing {len(group)} rows to {path!r}")
+            assert not os.path.exists(path)
+            with open(path, "w") as f:
+                for number in group:
+                    f.write(residuals[number][1])
+                    f.write("\n")
 
 
 
@@ -513,7 +533,17 @@ def main(args):
             print(f, "Not in any log file!")
             factors[f] = [[]]
 
-    print(f"\n\nFound {len(factors)} unique factors!\n\n")
+    ignored = 0
+    for f in args.ignore:
+        if f in factors:
+            factors.pop(f)
+            ignored += 1
+
+    if ignored:
+        print(f"\n\nFound {len(factors)} unique factors!")
+        print(f"Plus {ignored} ignored factors!\n\n")
+    else:
+        print(f"\n\nFound {len(factors)} unique factors!\n\n")
 
     # Factor length distribution
     if args.factor_distribution:
