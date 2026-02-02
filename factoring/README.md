@@ -8,7 +8,7 @@ List of all composites: https://stdkmd.net/nrr/allcomp.txt
 
 In 2023 using a 1080ti I ran P-1 up to B1=1e9 (some numbers 4e9) and B2=1.34e16
 
-In 2026 I'm resuming the P-1 from 2023 up to 1e10
+In 2026 I'm resuming the P-1 from 2023 up to B1=1e10
 
 ## Misc commands
 
@@ -23,8 +23,8 @@ python ecm_runner.py -b ../../gmp-ecm/ecm --resume ~/Downloads/pm1/small_run/res
 # Original rebatch
 python process_ecm_logs.py --rebatch backups/pm1/small_run_v0/resume.pm1_stdkmd_batch*.txt 20260126/manual_cpu.1e9.txt --allcomp allcomp_20260126.txt
 
-# Rebatching after 4e9 (add --submit to actually save files)
-python process_ecm_logs.py -a allcomp_20260126.txt --rebatch 202305/pm1/small_run_v0/resume.pm1_stdkmd_batch*.txt 20260127/manual_cpu.1e9.txt runpod/resumes_20260130/batch_*9.txt
+# Rebatched after 4e9
+clear && python process_ecm_logs.py -a allcomp_20260126.txt --rebatch 202305/pm1/small_run_v0/resume.pm1_stdkmd_batch*.txt 20260127/manual_cpu.1e9.txt runpod/resumes_20260130/batch_*9.txt runpod/1080ti/batch_00_1015.4e9.txt runpod/resumes_20260131/batch_*40e8.txt
 
 # Used to setup a VM
 ./instance_setup.sh
@@ -32,9 +32,21 @@ python process_ecm_logs.py -a allcomp_20260126.txt --rebatch 202305/pm1/small_ru
 # Used to run <RESUME_FN> in 1B increments up to <LIM>
 ./run_batches <RESUME_DIR> <RESUME_FN>
 
+# Used to watch progress
+while true; do echo "$(date +'%Y%m%d-%H%M%S') | $(cat batch_*.txt | wc -l) |  $(nvidia-smi | grep MiB | awk '{print $3, $4,   $5, $6, $7, $13}')"; sleep 30; done
+
 # Used checking for found factors in early batches
 python process_ecm_logs.py -a allcomp_20260126.txt -l runpod/resumes_20260130/batch_00_703.4e9.1e14.txt
-
 ```
 
+## Misc Timing
+
+Ryzen 3900X P-1 Stage 2 timing
+
+`OMP_NUM_THREADS` | Digits | B2 | Time per P-1
+24 threads (2/core) | 138 | 1.3e16 | 120-130 seconds
+12 threads (1/core) | 138 | 1.3e16 | 120-130 seconds
+6 threads           | 138 | 1.3e16 | 140-160 seconds
+4 threads           | 138 | 1.3e16 | 194-210 seconds
+3 threads           | 138 | 1.3e16 | 237-248 seconds
 

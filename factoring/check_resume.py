@@ -37,7 +37,7 @@ parser.add_argument('--ecm_cmd', type=str, default="ecm",
 parser.add_argument('--seed', type=int, default=1,
     help='Random seed')
 
-parser.add_argument('--threads', type=int, default=4,
+parser.add_argument('-t', '--threads', type=int, default=4,
     help="Number of simultanious process to run for spot checking")
 
 parser.add_argument('--verbose', '-v', action='count', default=1,
@@ -204,9 +204,10 @@ def spot_check(args):
 
     ecm = args.ecm_cmd
     ts = int(time.time())
-    save_fn = f"verify_{ts}_{os.path.basename(fn)}"
-    if not save_fn.endswith(".txt"):
-        save_fn += ".txt"
+
+    folder, filename = os.path.split(fn)
+    filename = filename.removesuffix(".txt")
+    save_fn = os.path.join(folder, f"verify_{ts}_{filename}.txt")
 
     commands = []
     for parsed, line in samples:
