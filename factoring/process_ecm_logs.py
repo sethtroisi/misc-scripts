@@ -359,15 +359,21 @@ def load_allcomp(fn):
 
 
 def get_logs(log_fns):
-    log = []
+    logs = {}
     for fn in log_fns:
         with open(fn) as f:
-            log.extend((l.strip() for l in f.readlines()))
+            file_logs = [l.strip() for l in f.readlines()]
+        if file_logs:
+            logs[fn] = file_logs
 
-    return log
+    return logs
 
 
-def parse_logs(logs):
+def parse_json_logs(logs):
+    """Parse logs from ecm-db."""
+    return [json.loads(line) for line in logs if not line.isspace()]
+
+def parse_logs(all_logs):
     """Parse logs into per-ECM output."""
 
     factors = defaultdict(list)
@@ -385,43 +391,57 @@ def parse_logs(logs):
     )
 
     groups = []
-    grouped = []
-    for i, line in enumerate(logs):
-        is_start = line.startswith(("R", "I", "G", "v")) and any(re.search(start, line) for start in starts)
+    for fn, logs in all_logs.items():
+        if fn.endswith("json.log"):
+            groups.extend(parse_json_logs(logs))
+            continue
 
-        # First line should be start line
-        assert len(grouped) > 0 or is_start, (grouped, line)
+        grouped = []
+        for i, line in enumerate(logs):
+            is_start = line.startswith(("R", "I", "G", "v")) and any(re.search(start, line) for start in starts)
 
-        # If new start, one of the recent lines should be an end
-        if len(grouped) >= 5 and is_start or line.startswith('^^^^^^'):
-            # DEBUG Truncated inputs
-            if False:
-                if not grouped[0].startswith("vvvvv"):
-                    # Step 2 took, Factor found, Found Prime factor, cofactor
-                    if not any(re.search(end, prev) for end in ends for prev in grouped[-4:]):
-                        print("TRUNCATED INPUT")
-                        for g in grouped:
-                            out = g.replace("\t", "  ").strip()
-                            print(f"\t|{out:81}|")
-                        print("*" * 80)
+            # First line should be start line
+            assert len(grouped) > 0 or is_start, (grouped, line)
 
+            # If new start, one of the recent lines should be an end
+            if len(grouped) >= 5 and is_start or line.startswith('^^^^^^'):
+                # DEBUG Truncated inputs
+                if False:
+                    if not grouped[0].startswith("vvvvv"):
+                        # Step 2 took, Factor found, Found Prime factor, cofactor
+                        if not any(re.search(end, prev) for end in ends for prev in grouped[-4:]):
+                            print("TRUNCATED INPUT")
+                            for g in grouped:
+                                out = g.replace("\t", "  ").strip()
+                                print(f"\t|{out:81}|")
+                            print("*" * 80)
+
+                groups.append(grouped)
+                grouped = []
+
+            grouped.append(line)
+
+        if grouped:
             groups.append(grouped)
-            grouped = []
 
-        grouped.append(line)
-
-    if grouped:
-        groups.append(grouped)
-
+    total_lines = 0
     for group in groups:
-        for line in group:
-            match = re.search("Factor found in step .: ([0-9]+)$", line)
-            if match:
-                f = int(match.group(1))
-                assert 2 <= f <= 10 ** 65, f
+        if len(group) == 2 and isinstance(group[0], dict):
+            # json log.
+            wu, result = group
+            for f in result['factors']:
                 factors[f].append(group)
+            total_lines += result['output'].count('\n')
+        else:
+            total_lines += len(group)
+            for line in group:
+                match = re.search("Factor found in step .: ([0-9]+)$", line)
+                if match:
+                    f = int(match.group(1))
+                    assert 2 <= f <= 10 ** 65, f
+                    factors[f].append(group)
 
-    print("\t", len(groups), "ecm runs", sum(len(g) for g in groups), "lines")
+    print("\t", len(groups), "ecm runs", total_lines, "lines")
 
     return factors
 
@@ -520,7 +540,8 @@ def main(args):
     assert args.logs, "No log filenames specified"
     logs = get_logs(args.logs)
     assert logs, "No logs found"
-    print(f"{len(args.logs)} log files contained {len(logs)} lines\n")
+    total_lines = sum(len(l) for l in logs.values())
+    print(f"{len(args.logs)} log files contained {total_lines} lines\n")
 
     factors = parse_logs(logs)
 
