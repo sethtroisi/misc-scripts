@@ -37,6 +37,7 @@ def _get_argparser():
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
     parser.add_argument('-i', '--ignore', default=[], type=int, nargs='*',
+            action="append",
             help='Factors to ignore')
 
     return parser
@@ -376,7 +377,7 @@ def parse_json_logs(logs):
 def parse_logs(all_logs):
     """Parse logs into per-ECM output."""
 
-    factors = defaultdict(list)
+    factors = {}
 
     # Regular Expression that indicate start of log
     starts = (
@@ -430,7 +431,11 @@ def parse_logs(all_logs):
             # json log.
             wu, result = group
             for f in result['factors']:
-                factors[f].append(group)
+                assert type(f) == int
+                if f in factors:
+                    print("DUPLICATE FACTOR", f)
+                    exit(1)
+                factors[f] = group
             total_lines += result['output'].count('\n')
         else:
             total_lines += len(group)
@@ -439,14 +444,18 @@ def parse_logs(all_logs):
                 if match:
                     f = int(match.group(1))
                     assert 2 <= f <= 10 ** 65, f
-                    factors[f].append(group)
+                    if f in factors:
+                        print("DUPLICATE FACTOR:", f)
+                        exit(1)
+
+                    factors[f] = group
 
     print("\t", len(groups), "ecm runs", total_lines, "lines")
 
     return factors
 
 
-def _get_contribution_parameters(classification, logs):
+def _get_contribution_parameters(classification, results):
     """
     Get URL params for submitting to https://stdkmd.net/nrr/c.cgi
 
@@ -455,8 +464,6 @@ def _get_contribution_parameters(classification, logs):
         logs: logs as a list
     """
 
-    assert isinstance(logs, (list, tuple)), logs
-    results = "".join(l.strip() + "\n" for l in logs)
     return {
         "q": classification,
         "mode": "submit",
@@ -477,8 +484,8 @@ def _handle_factor(f, n, submit, row, log):
     contribute_url = f"https://stdkmd.net/nrr/c.cgi?q={classification}"
     details_url = f"https://stdkmd.net/nrr/cont/{label[0]}/{label}.htm#N{power}"
     factors = sorted(sympy.ntheory.factorint(f-1).items())
-    minB2 = max(p for p, e in factors)
-    minB1 = max(p ** e for p, e in factors if p != minB2)
+    minB2 = int(max(p for p, e in factors))
+    minB1 = int(max(p ** e for p, e in factors if p != minB2))
     print(f"\t{f} divides {expr}")
     print(f"\t{contribute_url:45} {details_url}")
     print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
@@ -507,14 +514,21 @@ def _handle_factor(f, n, submit, row, log):
             print("WAITING ON factor table UPDATE")
             return
 
-        print("-"*80)
-        for line in log[0]:
-            print(line.strip())
-        print("-"*80)
+        if len(log) > 2:
+            assert isinstance(log, (list, tuple)), log
+            results = "".join(l.strip() + "\n" for l in log)
+        else:
+            work_unit = json.dumps(log[0], indent=4)
+            #result = json.dumps({k: v for k, v in log[1].items() if k != 'output'}, indent=4)
+            output = log[1]['output']
+            #results = f"Workunit:\n{work_unit}\nResult:\n{result}\nOutput:\n{output}"
+            results = f"Workunit:\n{work_unit}\n\nOutput:\n{output}"
+
+        print(results)
 
         if input("Submit [N]:").lower() in ("y", "yes"):
             print("Submitting")
-            params = _get_contribution_parameters(classification, log[0])
+            params = _get_contribution_parameters(classification, results)
             form_data = urllib.parse.urlencode(params).encode()
 
             req = urllib.request.Request(contribute_url, data=form_data, method='POST')
@@ -552,13 +566,14 @@ def main(args):
     for f in extra_factors:
         if f not in factors:
             print(f, "Not in any log file!")
-            factors[f] = [[]]
+            factors[f] = []
 
     ignored = 0
-    for f in args.ignore:
-        if f in factors:
-            factors.pop(f)
-            ignored += 1
+    for fs in args.ignore:
+        for f in fs:
+            if f in factors:
+                factors.pop(f)
+                ignored += 1
 
     if ignored:
         print(f"\n\nFound {len(factors)} unique factors!")
