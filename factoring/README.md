@@ -3,6 +3,7 @@
 From [Studio Kamada's](https://stdkmd.net/nrr/) NRR project.
 
 List of all composites: https://stdkmd.net/nrr/allcomp.txt
+List of all prime factors: https://stdkmd.net/nrr/allfact.txt
 
 ## Current Limits
 
