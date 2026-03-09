@@ -97,6 +97,10 @@ def entries_match(e_a, e_b):
     return True, None
 
 
+def abbr(line, n=30):
+    return line if len(line) <= n + 3 else (line[:n] + "...")
+
+
 def read_and_parse_resume_file(fn):
     with open(fn) as f:
         for i, line in enumerate(f):
@@ -105,9 +109,9 @@ def read_and_parse_resume_file(fn):
                 continue
 
             p = parse_resume(line)
-            keys = ("METHOD", "N", "B1", "CHECKSUM")
+            keys = ("METHOD", "N", "B1") #, "CHECKSUM")
             if any(key not in p for key in keys):
-                print("BAD Resume line {i} in {fn}: {abbr(line)}")
+                print(f"BAD Resume line {i} in {fn}: {abbr(line)}")
                 continue
 
             yield p, line
@@ -115,9 +119,6 @@ def read_and_parse_resume_file(fn):
 
 def diff_resume_files(args, fn_a, fn_b):
     """Compare the results in two files."""
-
-    def abbr(line, n=30):
-        return line if len(line) <= n + 3 else (line[:n] + "...")
 
     def read_and_parse(fn):
         lines = {}
