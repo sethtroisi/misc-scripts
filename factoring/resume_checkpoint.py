@@ -9,7 +9,7 @@ from pathlib import Path
 
 def find_max_checkpoint(file_prefix):
     reB1 = re.compile(r"B1=(\d+);")
-    reDate = re.compile(r"_(20\d{6}).txt")
+    reDate = re.compile(r"_(20\d{6}_\d{6}).txt")
 
     folder = Path(file_prefix).parent
     fn_prefix = Path(file_prefix).name
@@ -36,7 +36,7 @@ def find_max_checkpoint(file_prefix):
                 continue
 
             B1 = int(b1.group(1))
-            day = int(date.group(1))
+            day = date.group(1)
             print("\tMatch:", B1, day, fn.name)
             found.append((B1, day, fn))
 
@@ -54,10 +54,10 @@ def resume_cmd(file_prefix):
     fn = str(fn)
     print(f"Resuming {fn!r} B1={b1} Date={date}")
 
-    new_date = datetime.datetime.today().strftime("%Y%m%d")
+    new_date = datetime.datetime.today().strftime("%Y%m%d_%H%M%S")
     chkpnt_fn = file_prefix + "_" + new_date + ".txt"
     final = file_prefix + "_final.txt"
-    print(f"./ecm -resume {fn!r} -chkpnt {file_prefix} -save {final} 100e9 0")
+    print(f"./ecm -gpu -pm1 -v -v -resume {fn!r} -chkpnt {chkpnt_fn} -save {final} 100e9 0 | tee {chkpnt_fn}.log")
 
 
 if __name__ == "__main__":
