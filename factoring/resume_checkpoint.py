@@ -3,9 +3,10 @@
 import datetime
 import os
 import re
+import subprocess
 import sys
+import time
 from pathlib import Path
-
 
 def find_max_checkpoint(file_prefix):
     reB1 = re.compile(r"B1=(\d+);")
@@ -57,7 +58,10 @@ def resume_cmd(file_prefix):
     new_date = datetime.datetime.today().strftime("%Y%m%d_%H%M%S")
     chkpnt_fn = file_prefix + "_" + new_date + ".txt"
     final = file_prefix + "_final.txt"
-    print(f"./ecm -gpu -pm1 -v -v -resume {fn!r} -chkpnt {chkpnt_fn} -save {final} 100e9 0 | tee {chkpnt_fn}.log")
+    cmd = f"./ecm -gpu -pm1 -v -v -resume {fn!r} -chkpnt {chkpnt_fn!r} -save {final!r} 100e9 0 | tee -a {chkpnt_fn}.log"
+    print(cmd)
+    time.sleep(1)
+    subprocess.run(cmd, shell=True)
 
 
 if __name__ == "__main__":
@@ -67,4 +71,4 @@ if __name__ == "__main__":
 
     assert not os.path.isfile(sys.argv[1] + "_final.txt")
 
-    resume_cmd(sys.argv[1])
+    resume_cmd(sys.argv[1]
