@@ -36,6 +36,9 @@ def _get_argparser():
     parser.add_argument('--submit', default=False,
             action='store_true',
             help='if factors should be submitted to https://stdkmd.net/')
+    parser.add_argument('--stats', default=False,
+            action='store_true',
+            help='show facts about all factors')
     parser.add_argument('-i', '--ignore', default=[], type=int, nargs='*',
             action="append",
             help='Factors to ignore')
@@ -452,7 +455,7 @@ def parse_logs(all_logs):
 
     print("\t", len(groups), "ecm runs", total_lines, "lines")
 
-    return factors
+    return factors, groups
 
 
 def _get_contribution_parameters(classification, results):
@@ -557,41 +560,19 @@ def main(args):
     total_lines = sum(len(l) for l in logs.values())
     print(f"{len(args.logs)} log files contained {total_lines} lines\n")
 
-    factors = parse_logs(logs)
+    factors, groups = parse_logs(logs)
 
-    # TODO something better here
-    extra_factors = [
-    ]
-
-    for f in extra_factors:
-        if f not in factors:
-            print(f, "Not in any log file!")
-            factors[f] = []
-
-    ignored = 0
+    extra = {}
     for fs in args.ignore:
         for f in fs:
             if f in factors:
-                factors.pop(f)
-                ignored += 1
+                extra[f] = factors.pop(f)
 
-    if ignored:
+    if extra:
         print(f"\n\nFound {len(factors)} unique factors!")
-        print(f"Plus {ignored} ignored factors!\n\n")
+        print(f"Plus {len(extra)} ignored factors!\n\n")
     else:
         print(f"\n\nFound {len(factors)} unique factors!\n\n")
-
-    # Factor length distribution
-    if args.factor_distribution:
-        assert factors
-        print(min(factors), "to", max(factors))
-        print()
-        sizes = [len(str(f)) for f in sorted(factors)]
-        for digits in range(sizes[0], sizes[-1] + 1):
-            count = sizes.count(digits)
-            print(f'{digits:2d} | {count:3d} {"*" * count}')
-        print()
-        exit()
 
     # Factor info
     if True:
@@ -612,6 +593,45 @@ def main(args):
                 _handle_factor(f, n, args.submit, lookup[n], log)
 
         print(new, "factors not yet in allcomp.txt")
+
+    # Factor length distribution
+    if args.factor_distribution:
+        all_factors = sorted(list(factors.keys()) + list(extra.keys()))
+        assert all_factors
+        print()
+        print("Factor info:", min(all_factors), "to", max(all_factors))
+        print()
+        sizes = [len(str(f)) for f in all_factors]
+        for digits in range(sizes[0], sizes[-1] + 1):
+            count = sizes.count(digits)
+            print(f'{digits:2d} | {count:3d} {"*" * count}')
+        print()
+
+    if args.stats:
+        print()
+        print("Stats about factors (found and in args.ignore)")
+        print()
+
+        def print_stats(f):
+            factors = sorted(sympy.ntheory.factorint(f-1).items())
+            minB2 = int(max(p for p, e in factors))
+            minB1 = int(max(p ** e for p, e in factors if p != minB2))
+            print("\tP-1 =", " * ".join(f"{p}" if e == 1 else f"{p}^{e}" for p, e in factors))
+            print("\tRequires: B1 >= {:9,} B2 >= {:9,} || B1 >= 1e{}, B2 >= 1e{}".format(
+                minB1, minB2, len(str(minB1)), len(str(minB2))))
+            print()
+
+        all_factors = sorted(list(factors.keys()) + [f for fs in args.ignore for f in fs])
+        for i, g in enumerate(groups, 1):
+            for f in g[1]['factors']:
+                print(f"{f}<{len(str(f))}> found in entry {i}")
+                print_stats(f)
+                if f in all_factors:
+                    all_factors.remove(f)
+        print()
+        for f in all_factors:
+            print(f"{f}<{len(str(f))}>")
+            print_stats(f)
 
 
 if __name__ == "__main__":
